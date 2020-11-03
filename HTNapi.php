@@ -1,9 +1,9 @@
 <?php
-namespace Stanford\ClassNameHere;
+namespace Stanford\HTNapi;
 
 require_once "emLoggerTrait.php";
 
-class ClassNameHere extends \ExternalModules\AbstractExternalModule {
+class HTNapi extends \ExternalModules\AbstractExternalModule {
 
     use emLoggerTrait;
 

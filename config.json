@@ -1,9 +1,9 @@
 {
-	"name": "ClassNameHere",
+	"name": "HTN API",
 
-	"namespace": "Stanford\\ClassNameHere",
+	"namespace": "Stanford\\HTNapi",
 
-	"description": "A template for a REDCap External Module",
+	"description": "A standalone em for API connections",
 
 	"documentation": "README.md",
 
@@ -11,6 +11,11 @@
 		{
 			"name": "Andrew Martin",
 			"email": "andy123@stanford.edu",
+			"institution": "Stanford University"
+		},
+		{
+			"name": "Irvin Szeto",
+			"email": "irvins@stanford.edu",
 			"institution": "Stanford University"
 		}
 	],
@@ -25,7 +30,12 @@
 
 	"links": {
 		"project": [
-
+			{
+		        "name": "HTN api Instructions",
+		        "icon": "gear",
+		        "url" : "pages/instructions.php",
+		        "show-header-and-footer": false
+			 }
 		],
 		"control-center": [
 
@@ -33,7 +43,7 @@
 	},
 
 	"no-auth-pages": [
-
+		"pages/redirect"
 	],
 
 	"project-settings": [

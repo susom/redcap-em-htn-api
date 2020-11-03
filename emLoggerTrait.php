@@ -1,6 +1,6 @@
 <?php
-namespace Stanford\ClassNameHere;
-/** @var ClassNameHere $this */
+namespace Stanford\HTNapi;
+/** @var HTNapi $this */
 
 trait emLoggerTrait
 {
