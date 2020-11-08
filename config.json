@@ -35,6 +35,12 @@
 		        "icon": "gear",
 		        "url" : "pages/instructions.php",
 		        "show-header-and-footer": false
+			 },
+			 {
+		        "name": "HTN - Omeron Oauth",
+		        "icon": "gear",
+		        "url" : "pages/oauth.php",
+		        "show-header-and-footer": false
 			 }
 		],
 		"control-center": [
@@ -43,15 +49,40 @@
 	},
 
 	"no-auth-pages": [
-		"pages/redirect"
+		"pages/redirect",
+		"pages/oauth"
 	],
 
 	"project-settings": [
 		{
-			"key": "enable-project-debug-logging",
-			"name": "<b>Enable Debug Logging</b><br><i>(optional)</i> Requires installation and configuration of emLogger",
+			"key": "omron-client-id",
+			"name": "<b>Omron Client Id</b> <br> <i>Different for staging vs prod</i>",
 			"required": false,
-			"type": "checkbox"
+			"type": "text"
+		},
+		{
+			"key": "omron-client-secret",
+			"name": "<b>Omron Client Secret</b> <br> <i>Different for staging vs prod</i>",
+			"required": false,
+			"type": "text"
+		},
+		{
+			"key": "omron-auth-url",
+			"name": "<b>Omron Auth URL</b> <br> <i>Different for staging vs prod</i>",
+			"required": false,
+			"type": "text"
+		},
+		{
+			"key": "omron-auth-scope",
+			"name": "<b>Omron Scope of Access</b> <br> <i>seperated by space, see documentation for available data types</i>",
+			"required": false,
+			"type": "text"
+		},
+		{
+			"key": "omron-postback",
+			"name": "<b>Omron Postback URL</b> <br> <i>Will ideally be dynamic/automatic based on current project, but Omron requires a whitelist so for now use the URL from Production Project : <strong>21382</strong></i>",
+			"required": false,
+			"type": "text"
 		}
 	],
 
