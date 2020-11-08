@@ -26,6 +26,16 @@
 		"redcap_module_save_configuration"
 	],
 	
+	"crons": [
+		{
+			"cron_name": "htn_access_token_expire_check",
+			"cron_description": "Cron that runs everyday to check for expiring access tokens (within 48 hours) and refreshing them with refresh_token",
+			"method": "refreshOmronAccessTokens",
+			"cron_frequency": "86400",
+			"cron_max_run_time": "1800"
+		}
+	],
+
 	"enable-every-page-hooks-on-system-pages": false,	
 
 	"links": {
@@ -69,6 +79,12 @@
 		{
 			"key": "omron-auth-url",
 			"name": "<b>Omron Auth URL</b> <br> <i>Different for staging vs prod</i>",
+			"required": false,
+			"type": "text"
+		},
+		{
+			"key": "omron-api-url",
+			"name": "<b>Omron Data API URL</b> <br> <i>Different for staging vs prod</i>",
 			"required": false,
 			"type": "text"
 		},

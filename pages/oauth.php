@@ -3,26 +3,7 @@ namespace Stanford\HTNapi;
 /** @var \Stanford\HTNapi\HTNapi $module */
 
 //Build the OMRON generic OAUTH URL
-$client_id      = $module->getProjectSetting("omron-client-id");
-$client_secret  = $module->getProjectSetting("omron-client-secret");
-$oauth_url      = $module->getProjectSetting("omron-auth-url");
-$oauth_postback = $module->getProjectSetting("omron-postback");
-$oauth_scope    = $module->getProjectSetting("omron-auth-scope");
-$record_id      = 1; //this needs to be dynamic per Patient
-
-$oauth_params   = array(
-    "client_id"     => $client_id,
-    "response_type" => "code",
-    "scope"         => $oauth_scope,
-    "redirect_uri"  => $oauth_postback
-);
-$oauth_params["state"] = $record_id;
-$oauth_url .= "/connect/authorize?". http_build_query($oauth_params);
-
-//IT IS A _GET request
-//Once they LOGIN on the OMRON side, it WILL POST BACK to $oauth_postback URL /redirect.php
-
-//SINCE IT IS GENERIC, Lets Just make a single URL that Doctors can Copy and Paste To their Patients
+$oauth_url      = $module->getOAUTHurl();
 ?>
 <html lang="en" >
 <head>
@@ -122,7 +103,6 @@ $oauth_url .= "/connect/authorize?". http_build_query($oauth_params);
             <div class="well">
                 <h3>Omron + Heartex Study : Data Use Authorization</h3>
                 <p>In order for Stanford and your Provider to have access to your Blood Pressure readings.  You will be asked to Login to your Omron account on the following page.  It will inform you that the <b>[Stanford Hypertension Study]</b> is requesting authorization to your data.  Please allow it.</p>
-                
                 <a class="btn" href="<?= $oauth_url ?>">Go To the Omron Authorization Page</a>
             </div>
         </div>

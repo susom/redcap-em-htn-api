@@ -2,7 +2,6 @@
 namespace Stanford\HTNapi;
 /** @var \Stanford\HTNapi\HTNapi $module */
 
-
 if(!empty($_REQUEST)){
     $module->emDebug("POSTBACK FROM OMRON AUTH REQUEST", $_REQUEST);
 
@@ -10,8 +9,47 @@ if(!empty($_REQUEST)){
     $acode = isset($_REQUEST["code"]) ? $_REQUEST["code"] : null;
 
     if($acode){
-        $postback = $module->getOmronAccessToken($acode);
-        $module->emDebug("postback", $postback);
+        $postback = $module->getOrRefreshOmronAccessToken($acode);
+        $module->emDebug("Authorization Granted", $acode, $postback);
+
+        $id_token           = $postback["id_token"];
+        $record_id          = $postback["state"];
+        $id_details         = $module->decodeJWT($id_token);
+        $omron_client_id    = $id_details["sub"]; //patient uniuqe omron id
+
+        $access_token       = $postback["access_token"];
+        $refresh_token      = $postback["refresh_token"];
+        $token_type         = $postback["token_type"]; //always gonna be "Bearer"
+        $token_expire       = date("Y-m-d H:i:s", time() + $postback["expires_in"]); 
+        
+        $data = array(
+            "record_id"             => $record_id,
+            "omron_client_id"       => $omron_client_id,
+            "omron_access_token"    => $access_token,
+            "omron_refresh_token"   => $refresh_token,
+            "omron_token_expire"    => $token_expire,
+            "omron_token_type"      => $token_type
+        );
+        $r  = \REDCap::saveData('json', json_encode(array($data)) );
+        if(empty($r["errors"])){
+            $module->emDebug("record $record_id saved", $data);
+
+            // NOW DO FIRST PULL OF HIstorical PAtient BP DATA if ANY
+            if($omron_client_id){
+                //dont pass token details (even though we have them) because need to run first pass with no "since" in the recurseive funciton 
+                $success = $module->recurseSaveOmronApiData($omron_client_id);
+        
+                if($success){
+                    $module->emDebug("First API Pull of Historical BP Data for patient RC $record_id");
+                }else{
+                    $module->emDebug("ERROR FAILED : First API Pull of Historical BP Data for patient RC $record_id");
+                }
+            }
+        }
+    }
+
+    if($error){
+        $module->emDebug("Authorization Failed", $error);
     }
 }
 
