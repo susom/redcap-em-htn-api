@@ -83,7 +83,13 @@
 			"name": "<b>Omron Postback URL</b> <br> <i>Will ideally be dynamic/automatic based on current project, but Omron requires a whitelist so for now use the URL from Production Project : <strong>21382</strong></i>",
 			"required": false,
 			"type": "text"
-		}
+		},
+		{
+	      "key": "enable-project-debug-logging",
+	      "name": "<b>Enable Debug Logging</b>",
+	      "required": false,
+	      "type": "checkbox"
+	    }
 	],
 
 
