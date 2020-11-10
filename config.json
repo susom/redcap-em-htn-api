@@ -35,6 +35,8 @@
 			"cron_max_run_time": "1800"
 		}
 	],
+	
+	"framework-version": 5,
 
 	"enable-every-page-hooks-on-system-pages": false,	
 

@@ -77,45 +77,27 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	*/
 	
 	//get oauthURL to presetn to Patient
-	public function getOAUTHurl($record_id = 1){
-		$client_id      = $this->getProjectSetting("omron-client-id");
-		$oauth_url      = $this->getProjectSetting("omron-auth-url");
-		$oauth_postback = $this->getProjectSetting("omron-postback");
-		$oauth_scope    = $this->getProjectSetting("omron-auth-scope");
-
-		$oauth_params   = array(
-			"client_id"     => $client_id,
-			"response_type" => "code",
-			"scope"         => $oauth_scope,
-			"redirect_uri"  => $oauth_postback,
-			"state"         => $record_id
-		);
-		$oauth_params["state"] = $record_id;
-		$oauth_url .= "/connect/authorize?". http_build_query($oauth_params);
-
-		return $oauth_url;
-	}
-
-	// get patients with tokens
-	public function getPatientsWithTokens($record_id = null){
-		global $project_id;
-
-		$filter	= "[omron_client_id] != '' ";
-		$fields	= array("record_id","omron_client_id","omron_acess_token","omron_refresh_token", "omron_token_expire", "omron_token_type");
-		$params	= array(
-			'project_id'	=> $project_id,
-            'return_format' => 'json',
-            'fields'        => $fields,
-            'filterLogic'   => $filter 
-		);
+	public function getOAUTHurl($record_id = null){
+		$oauth_url = null;
+		
 		if($record_id){
-			$params['records'] = array($record_id);
+			$client_id      = $this->getProjectSetting("omron-client-id");
+			$oauth_url      = $this->getProjectSetting("omron-auth-url");
+			$oauth_postback = $this->getProjectSetting("omron-postback");
+			$oauth_scope    = $this->getProjectSetting("omron-auth-scope");
+
+			$oauth_params   = array(
+				"client_id"     => $client_id,
+				"response_type" => "code",
+				"scope"         => $oauth_scope,
+				"redirect_uri"  => $oauth_postback,
+				"state"         => $record_id
+			);
+			$oauth_params["state"] = $record_id;
+			$oauth_url .= "/connect/authorize?". http_build_query($oauth_params);
 		}
 
-        $q = \REDCap::getData($params);
-        $records = json_decode($q, true);
-
-		return $records;
+		return $oauth_url;
 	}
 
 	// gets or refresh omron access token
@@ -225,10 +207,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	}
 
 	// get Omron Token Details by OmronClientId
-	// public function getTokenDetails($omron_client_id){
-	public function getTokenDetails($omron_access_token){
-		// $filter	= "[omron_client_id] = '$omron_client_id'";
-		$filter	= "[omron_access_token] = '$omron_access_token'";
+	public function getTokenDetails($omron_client_id){
+		$filter	= "[omron_client_id] = '$omron_client_id'";
 		$fields	= array("record_id","omron_access_token","omron_token_type");
 		$params	= array(
 			'return_format' => 'json',
@@ -238,23 +218,19 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$q 			= \REDCap::getData($params);
 		$records 	= json_decode($q, true);
 		if(empty($records)){
-			// $this->emDebug("Omron getTokenDetail() : Could not find Patient with omron_client_id = $omron_client_id");
-			$this->emDebug("Omron getTokenDetail() : Could not find Patient with omron_access_token = $omron_access_token");
+			$this->emDebug("Omron getTokenDetail() : Could not find Patient with omron_client_id = $omron_client_id");
 			return false;
 		}
 		return current($records);
 	}
 	
 	// get data via API and recurse if pagination
-	// public function recurseSaveOmronApiData($omron_client_id, $since_ts=null, $token_details=array()){
-	public function recurseSaveOmronApiData($omron_access_token, $since_ts=null, $token_details=array()){
-		//TODO CHANGE THIS BACK TO $omron_client_id
+	public function recurseSaveOmronApiData($omron_client_id, $since_ts=null, $token_details=array()){
 		$first_pass = false;
 		if(empty($token_details)){
 			$first_pass = true;
 			//should only need on first pass
-			// $token_details 	= $this->getTokenDetails($omron_client_id);
-			$token_details 	= $this->getTokenDetails($omron_access_token);
+			$token_details 	= $this->getTokenDetails($omron_client_id);
 			if(!$token_details){
 				return false;
 			}
@@ -268,6 +244,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			//USING THE TOKEN , HIT OMRON API TO GET LATEST READINGS SINCE (hook timestamp?)
 			$result             = $this->getOmronAPIData($omron_access_token, $omron_token_type, $since_ts);
 			$api_data           = json_decode($result, true); 
+
 			$status             = $api_data["status"];
 			$truncated          = $api_data["result"]["truncated"];
 			$bp_readings        = $api_data["result"]["bloodPressure"];
@@ -320,8 +297,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 					
 					if($truncated){
 						//last bp_reading_ts from the foreach will be the paginating ts
-						// $this->recurseSaveOmronApiData($omron_client_id, $bp_reading_ts, $token_details);
-						$this->recurseSaveOmronApiData($omron_access_token, $bp_reading_ts, $token_details);
+						$this->recurseSaveOmronApiData($omron_client_id, $bp_reading_ts, $token_details);
 					}else{
 						return true;
 					}
@@ -397,20 +373,34 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$result = curl_exec($ch);
         curl_close($ch);
 
+		$this->emDebug("revokeToken", $result, $data);
+
+
+
 		// there is no response, only 200
         return $result;
 	}
 
-	// cron to refresh omron access tokens expiring within 48 hours
-	public function htnAPICron(){
-		$projects 	= $this->framework->getProjectsWithModuleEnabled();
-		$url 		= $this->getUrl('pages/refresh_omron_tokens.php', true); //has to be page
-		foreach($projects as $index => $project_id){
-			$thisUrl 	= $url . "&pid=$project_id"; //project specific
-			$client 	= new \GuzzleHttp\Client();
-			$response 	= $client->request('GET', $thisUrl, array(\GuzzleHttp\RequestOptions::SYNCHRONOUS => true));
-			$this->emDebug("running cron for refreshOmronAccessTokens() on project $project_id");
+	// get patients with tokens
+	public function getPatientsWithTokens($record_id = null){
+		global $project_id;
+
+		$filter	= "[omron_token_expire] != '' ";
+		$fields	= array("record_id","omron_client_id","omron_acess_token","omron_refresh_token", "omron_token_expire", "omron_token_type");
+		$params	= array(
+			'project_id'	=> $project_id,
+            'return_format' => 'json',
+            'fields'        => $fields,
+            'filterLogic'   => $filter 
+		);
+		if($record_id){
+			$params['records'] = array($record_id);
 		}
+
+        $q = \REDCap::getData($params);
+        $records = json_decode($q, true);
+
+		return $records;
 	}
 
 	// cron to refresh omron access tokens expiring within 48 hours
@@ -420,6 +410,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 		$data = array();
 		$patients_with_tokens   = $this->getPatientsWithTokens();
+
 		foreach($patients_with_tokens as $patient){
 			$omron_token_expire = $patient["omron_token_expire"];
 			$diff_in_seconds    = strtotime($omron_token_expire) - time();
@@ -449,14 +440,30 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				}
 			}
 		}
-
-		$r = \REDCap::saveData('json', json_encode(array($data)) );
-		if(empty($r["errors"])){
-			$module->emDebug("REFRESH TOKENS CRON : " . $r["item_count"] . " tokens updated");
+		if(!empty($data)){
+			$r = \REDCap::saveData('json', json_encode($data) );
+			if(empty($r["errors"])){
+				$this->emDebug("REFRESH TOKENS CRON : " . count($data) . " tokens updated");
+			}else{
+				$this->emDebug("ERRORS during REFRESH TOKENS CRON : " ,  $r["errors"] ,$data );
+			}
 		}else{
-			$module->emDebug("ERRORS during REFRESH TOKENS CRON : " ,  $r["errors"] );
+			$this->emDebug("refreshOmronAccessTokens : no tokens needed refreshing in the next 48 hours");
 		}
+		
 
 		return;
+	}
+
+	// cron to refresh omron access tokens expiring within 48 hours
+	public function htnAPICron(){
+		$projects 	= $this->framework->getProjectsWithModuleEnabled();
+		$url 		= $this->getUrl('pages/refresh_omron_tokens.php', true); //has to be page
+		foreach($projects as $index => $project_id){
+			$thisUrl 	= $url . "&pid=$project_id"; //project specific
+			$client 	= new \GuzzleHttp\Client();
+			$response 	= $client->request('GET', $thisUrl, array(\GuzzleHttp\RequestOptions::SYNCHRONOUS => true));
+			$this->emDebug("running cron for refreshOmronAccessTokens() on project $project_id");
+		}
 	}
 }

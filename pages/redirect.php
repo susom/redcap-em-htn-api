@@ -43,10 +43,9 @@ if(!empty($_REQUEST)){
                     $module->emDebug("record $record_id saved", $data);
 
                     // NOW DO FIRST PULL OF HIstorical PAtient BP DATA if ANY
-                    if($access_token){
+                    if($omron_client_id){
                         //dont pass token details (even though we have them) because need to run first pass with no "since" in the recurseive funciton 
-                        //TODO change this to $omron_client_id
-                        $success = $module->recurseSaveOmronApiData($access_token);
+                        $success = $module->recurseSaveOmronApiData($omron_client_id);
                 
                         if($success){
                             $module->emDebug("First API Pull of Historical BP Data for patient RC $record_id");

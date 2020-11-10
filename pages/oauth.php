@@ -3,7 +3,8 @@ namespace Stanford\HTNapi;
 /** @var \Stanford\HTNapi\HTNapi $module */
 
 //Build the OMRON generic OAUTH URL
-$oauth_url      = $module->getOAUTHurl();
+$record_id      = $_REQUEST["state"] ?? null;
+$oauth_url      = $module->getOAUTHurl($record_id);
 ?>
 <html lang="en" >
 <head>
@@ -102,8 +103,15 @@ $oauth_url      = $module->getOAUTHurl();
         <div class="container">
             <div class="well">
                 <h3>Omron + Heartex Study : Data Use Authorization</h3>
-                <p>In order for Stanford and your Provider to have access to your Blood Pressure readings.  You will be asked to Login to your Omron account on the following page.  It will inform you that the <b>[Stanford Hypertension Study]</b> is requesting authorization to your data.  Please allow it.</p>
-                <a class="btn" href="<?= $oauth_url ?>">Go To the Omron Authorization Page</a>
+                <?php
+                    if($record_id){
+                        echo "<p>In order for Stanford and your Provider to have access to your Blood Pressure readings.  You will be asked to Login to your Omron account on the following page.  It will inform you that the <b>[Stanford Hypertension Study]</b> is requesting authorization to your data.  Please allow it.</p>
+                        <a class='btn' href='$oauth_url'>Go To the Omron Authorization Page</a>";
+                    }else{
+                        echo "<p>Sorry there was an error, please contact your provider to request a new link.</p>";
+                    }
+                ?>
+                
             </div>
         </div>
     </div>
