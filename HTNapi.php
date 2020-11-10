@@ -27,7 +27,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 	public function redcap_module_link_check_display($link){
 		//only show the links in the main project?
-		
+
 		// $pid  = $this->getProjectId();
         // $this->emDebug("pid", $pid, $this->patients_project);
 		// if($pid == $this->patients_project){
@@ -137,7 +137,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$data["grant_type"] 	= "refresh_token";
 		}else{
 			$data["code"] 			= $access_refresh_token;
-			$data["grant_type"] 	= "authorize_code";
+			$data["grant_type"] 	= "authorization_code";
 			$data["scope"] 			= $oauth_scope;
 		}
 
@@ -146,10 +146,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
         $header_data = array();
 		array_push($header_data, 'Content-Type: application/x-www-form-urlencoded');
-		array_push($header_data, 'Content-Length: ' . strlen($data));
+		array_push($header_data, 'Content-Length: ' . strlen(http_build_query($data)));
 		array_push($header_data, 'Cache-Control: no-cache' );
 		
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
 		curl_setopt($ch, CURLOPT_POST, true);
 	
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header_data);
@@ -158,9 +158,9 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		curl_setopt($ch, CURLOPT_TIMEOUT, 105200);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_VERBOSE, 0);
+        curl_setopt($ch, CURLOPT_VERBOSE, 1);
         
-        $info 	= curl_getinfo($ch);
+		$info 	= curl_getinfo($ch);
 		$result = curl_exec($ch);
         curl_close($ch);
 
@@ -173,8 +173,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	}
 
 	// get Omron Token Details by OmronClientId
-	public function getTokenDetails($omron_client_id){
-		$filter	= "[omron_client_id] = '$omron_client_id'";
+	// public function getTokenDetails($omron_client_id){
+		// $filter	= "[omron_client_id] = '$omron_client_id'";
+	public function getTokenDetails($omron_access_token){
+		$filter	= "[omron_access_token] = '$omron_access_token'";
 		$fields	= array("record_id","omron_access_token","omron_token_type");
 		$params	= array(
             'return_format' => 'json',
@@ -184,18 +186,18 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
         $q 			= \REDCap::getData($params);
 		$records 	= json_decode($q, true);
 		if(empty($records)){
-			$this->emDebug("Omron getTokenDetail() : Could not find Patient with omron_client_id = $omron_client_id");
+			$this->emDebug("Omron getTokenDetail() : Could not find Patient with omron_access_token = $omron_access_token");
 			return false;
 		}
 		return current($records);
 	}
 
 	// gets or refresh omron access token
-	public function getOmronAPIData($omron_client_id, $omron_access_token, $omron_token_type, $hook_timestamp=null, $limit=null, $type="bloodpressure", $includeHourlyActivity=false, $sortOrder="asc"){
+	public function getOmronAPIData($omron_access_token, $omron_token_type, $hook_timestamp=null, $limit=null, $type="bloodpressure", $includeHourlyActivity=false, $sortOrder="asc"){
 		//There are two typical use cases when you will use the Omron API to retrieve data for a user: 
 		// To retrieve historical data at the time the user authorizes your application
 		// To retrieve data whenever your application receives notification that an upload has occurred
-		$omron_url   		= $this->getProjectSetting("omron-api-url");
+		$omron_url = $this->getProjectSetting("omron-api-url");
 
 		$data = array(
 			"type" 					=> $type,
@@ -238,11 +240,11 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
         return $result;
 	}
 
-	public function recurseSaveOmronApiData($omron_client_id, $since_ts=null, $token_details=array()){
+	public function recurseSaveOmronApiData($omron_access_token, $since_ts=null, $token_details=array()){
 		$first_pass = false;
 		if(empty($token_details)){
 			//should only need on first pass
-			$token_details 	= $module->getTokenDetails($omron_client_id);
+			$token_details 	= $module->getTokenDetails($omron_access_token);
 			if(!$token_details){
 				return false;
 			}
@@ -256,7 +258,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		
 		if(!empty($since_ts) || $firstpass){
 			//USING THE TOKEN , HIT OMRON API TO GET LATEST READINGS SINCE (hook timestamp?)
-			$result             = $module->getOmronAPIData($omron_client_id, $omron_access_token, $omron_token_type, $since_ts);
+			$result             = $module->getOmronAPIData($omron_access_token, $omron_token_type, $since_ts);
 			$api_data           = json_decode($result, true); 
 			$status             = $api_data["status"];
 			$truncated          = $api_data["result"]["truncated"];
@@ -298,7 +300,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 					
 					if($truncated){
 						//last bp_reading_ts from the foreach will be the paginating ts
-						$this->recurseSaveOmronApiData($omron_client_id, $bp_reading_ts, $token_details);
+						$this->recurseSaveOmronApiData($omron_access_token, $bp_reading_ts, $token_details);
 					}else{
 						return true;
 					}
