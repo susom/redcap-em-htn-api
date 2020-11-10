@@ -172,26 +172,6 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		return json_decode(base64_decode(str_replace('_', '/', str_replace('-','+',explode('.', $token)[1]))), true);
 	}
 
-	// get Omron Token Details by OmronClientId
-	// public function getTokenDetails($omron_client_id){
-		// $filter	= "[omron_client_id] = '$omron_client_id'";
-	public function getTokenDetails($omron_access_token){
-		$filter	= "[omron_access_token] = '$omron_access_token'";
-		$fields	= array("record_id","omron_access_token","omron_token_type");
-		$params	= array(
-            'return_format' => 'json',
-            'fields'        => $fields,
-            'filterLogic'   => $filter 
-		);
-        $q 			= \REDCap::getData($params);
-		$records 	= json_decode($q, true);
-		if(empty($records)){
-			$this->emDebug("Omron getTokenDetail() : Could not find Patient with omron_access_token = $omron_access_token");
-			return false;
-		}
-		return current($records);
-	}
-
 	// gets or refresh omron access token
 	public function getOmronAPIData($omron_access_token, $omron_token_type, $hook_timestamp=null, $limit=null, $type="bloodpressure", $includeHourlyActivity=false, $sortOrder="asc"){
 		//There are two typical use cases when you will use the Omron API to retrieve data for a user: 
@@ -201,7 +181,6 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 		$data = array(
 			"type" 					=> $type,
-			"includeHourlyActivity"	=> $includeHourlyActivity,
 			"sortOrder"				=> $sortOrder
 		);
 
@@ -209,9 +188,14 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		if($limit){
 			$data["limit"] = $limit;
 		}
-		if($hook_timestamp){
-			$data["since"] = date("Y-m-d", strtotime($hook_timestamp));
+		if($includeHourlyActivity){
+			$data["includeHourlyActivity"] = $includeHourlyActivity;
 		}
+		if(!$hook_timestamp){
+			//supposed to default to "from the beginning" with this field empty, but it appears to be required?
+			$hook_timestamp = date("Y")."-".date("m")."-01";
+		}
+		$data["since"] 	= $hook_timestamp;
 
 		$api_url 		= $omron_url;
 		$ch 			= curl_init($api_url);
@@ -219,10 +203,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$header_data = array();
 		array_push($header_data, "Authorization: $omron_token_type $omron_access_token");
 		array_push($header_data, 'Content-Type: application/x-www-form-urlencoded');
-		array_push($header_data, 'Content-Length: ' . strlen($data));
+		array_push($header_data, 'Content-Length: ' . strlen(http_build_query($data)));
 		array_push($header_data, 'Cache-Control: no-cache' );
 		
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
 		curl_setopt($ch, CURLOPT_POST, true);
 	
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header_data);
@@ -240,25 +224,49 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
         return $result;
 	}
 
+	// get Omron Token Details by OmronClientId
+	// public function getTokenDetails($omron_client_id){
+	public function getTokenDetails($omron_access_token){
+		// $filter	= "[omron_client_id] = '$omron_client_id'";
+		$filter	= "[omron_access_token] = '$omron_access_token'";
+		$fields	= array("record_id","omron_access_token","omron_token_type");
+		$params	= array(
+			'return_format' => 'json',
+			'fields'        => $fields,
+			'filterLogic'   => $filter 
+		);
+		$q 			= \REDCap::getData($params);
+		$records 	= json_decode($q, true);
+		if(empty($records)){
+			// $this->emDebug("Omron getTokenDetail() : Could not find Patient with omron_client_id = $omron_client_id");
+			$this->emDebug("Omron getTokenDetail() : Could not find Patient with omron_access_token = $omron_access_token");
+			return false;
+		}
+		return current($records);
+	}
+	
+	// get data via API and recurse if pagination
+	// public function recurseSaveOmronApiData($omron_client_id, $since_ts=null, $token_details=array()){
 	public function recurseSaveOmronApiData($omron_access_token, $since_ts=null, $token_details=array()){
+		//TODO CHANGE THIS BACK TO $omron_client_id
 		$first_pass = false;
 		if(empty($token_details)){
+			$first_pass = true;
 			//should only need on first pass
-			$token_details 	= $module->getTokenDetails($omron_access_token);
+			// $token_details 	= $this->getTokenDetails($omron_client_id);
+			$token_details 	= $this->getTokenDetails($omron_access_token);
 			if(!$token_details){
 				return false;
 			}
-
-			$first_pass 	= true;
 		}
 
 		$record_id 			= $token_details["record_id"];
 		$omron_access_token = $token_details["omron_access_token"];
 		$omron_token_type 	= $token_details["omron_token_type"];
-		
-		if(!empty($since_ts) || $firstpass){
+
+		if(!empty($since_ts) || $first_pass){
 			//USING THE TOKEN , HIT OMRON API TO GET LATEST READINGS SINCE (hook timestamp?)
-			$result             = $module->getOmronAPIData($omron_access_token, $omron_token_type, $since_ts);
+			$result             = $this->getOmronAPIData($omron_access_token, $omron_token_type, $since_ts);
 			$api_data           = json_decode($result, true); 
 			$status             = $api_data["status"];
 			$truncated          = $api_data["result"]["truncated"];
@@ -266,9 +274,19 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$measuremnetCount   = $api_data["result"]["measurementCount"];
 
 			if($status == 0){
+				$bp_instance_data = $this->getBPInstanceData($record_id);
+				$next_instance_id = $bp_instance_data["next_instance_id"];
+				$used_bp_id 	  = $bp_instance_data["used_bp_id"];
+
 				$data = array();
 				foreach($bp_readings as $reading){
 					$omron_bp_id            = $reading["id"];
+
+					if(in_array($omron_bp_id, $used_bp_id) ){
+						//reading already in RC, skip
+						continue;
+					}
+
 					$bp_reading_ts          = date("Y-m-d H:i:s", strtotime($reading["dateTime"]));
 					$bp_reading_local_ts    = date("Y-m-d H:i:s", strtotime($reading["dateTimeLocal"]));
 					$bp_systolic            = $reading["systolic"];
@@ -279,37 +297,68 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 					$bp_device_type         = $reading["deviceType"];
 
 					$temp = array(
-						"record_id"             => $record_id,
-						"omron_bp_id"           => $omron_bp_id,
-						"bp_reading_ts"         => $bp_reading_ts,
-						"bp_reading_local_ts"   => $bp_reading_local_ts,
-						"bp_systolic"           => $bp_systolic,
-						"bp_diastolic"          => $bp_diastolic,
-						"bp_units"              => $bp_units,
-						"bp_pulse"              => $bp_pulse,
-						"bp_pulse_units"        => $bp_pulse_units,
-						"bp_device_type"        => $bp_device_type
+						"redcap_repeat_instance" 	=> $next_instance_id,
+						"redcap_repeat_instrument" 	=> "bp_readings_log",
+						"record_id"             	=> $record_id,
+						"omron_bp_id"           	=> $omron_bp_id,
+						"bp_reading_ts"         	=> $bp_reading_ts,
+						"bp_reading_local_ts"   	=> $bp_reading_local_ts,
+						"bp_systolic"           	=> $bp_systolic,
+						"bp_diastolic"          	=> $bp_diastolic,
+						"bp_units"              	=> $bp_units,
+						"bp_pulse"              	=> $bp_pulse,
+						"bp_pulse_units"        	=> $bp_pulse_units,
+						"bp_device_type"        	=> $bp_device_type
 					);
-
+					$next_instance_id++;
 					$data[] = $temp;
 				}
 			
 				$r = \REDCap::saveData('json', json_encode($data) );
 				if(empty($r["errors"])){
-					$module->emDebug("Saved $measurementCount Omron BP readings for RC $record_id");
+					$this->emDebug("Saved $measurementCount Omron BP readings for RC $record_id");
 					
 					if($truncated){
 						//last bp_reading_ts from the foreach will be the paginating ts
+						// $this->recurseSaveOmronApiData($omron_client_id, $bp_reading_ts, $token_details);
 						$this->recurseSaveOmronApiData($omron_access_token, $bp_reading_ts, $token_details);
 					}else{
 						return true;
 					}
 				}else{
-					$module->emDebug("ERROR trying to save $measurementCount Omron BP readings for RC $record_id", $r["errrors"], $data);
+					$this->emDebug("ERROR trying to save $measurementCount Omron BP readings for RC $record_id", $r["errrors"], $data);
 					return false;
 				}
         	}
 		}
+	}
+
+	// get the next instance id (repeating) in bp_readings_log
+	public function getBPInstanceData($record_id){
+		$filter	= "[omron_bp_id] != '' ";
+		$fields	= array("record_id","omron_bp_id");
+
+		$params	= array(
+            'return_format' => 'json',
+			'fields'        => $fields,
+            'filterLogic'   => $filter 
+		);
+		if($record_id){
+			$params['records'] = array($record_id);
+		}
+
+        $q 			= \REDCap::getData($params);
+		$records 	= json_decode($q, true);
+		
+		$used_bp_id 		= array();
+		$last_instance_id 	= 0;
+		foreach($records as $record){
+			array_push($used_bp_id, $record["omron_bp_id"]);
+			$last_instance_id = $record["redcap_repeat_instance"];
+		}
+		$last_instance_id++;
+
+		return array("used_bp_id" => $used_bp_id, "next_instance_id" => $last_instance_id);
 	}
 
 	// revoke omron access or refresh (why?) token, no return only 200 no matter what
@@ -330,10 +379,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
         $header_data = array();
 		array_push($header_data, 'Content-Type: application/x-www-form-urlencoded');
-		array_push($header_data, 'Content-Length: ' . strlen($data));
+		array_push($header_data, 'Content-Length: ' . strlen(http_build_query($data)));
 		array_push($header_data, 'Cache-Control: no-cache' );
 		
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
 		curl_setopt($ch, CURLOPT_POST, true);
 	
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header_data);

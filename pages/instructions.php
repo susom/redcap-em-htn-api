@@ -19,3 +19,9 @@ require_once APP_PATH_DOCROOT . 'ProjectGeneral/header.php';
 <pre style="width:80%;">
 <?= $module->getUrl("pages/redirect.php",true, true) ?>
 </pre>
+
+<h3>WEBHOOK Postback URL for OMRON new reading</h3>
+<p><i>*TODO: This should be dynamic, but Omron requires urls to be whitelisted so currently tied to Prod Project : <b>21382</b></i></p>
+<pre style="width:80%;">
+<?= $module->getUrl("pages/newdata_hook.php",true, true) ?>
+</pre>

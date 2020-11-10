@@ -7,7 +7,7 @@ namespace Stanford\HTNapi;
 if(!empty($_POST)){
     //id, ts
     $omron_client_id = $_POST["id"] ?? null;
-    $new_data_ts     = $_POST["timestamp"] ?? null;
+    $new_data_ts     = $_POST["timestamp"] ?? null;  //not as granular so should be ok
 
     if($omron_client_id){
         $success = $module->recurseSaveOmronApiData($omron_client_id, $new_data_ts);

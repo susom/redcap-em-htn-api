@@ -45,6 +45,7 @@ if(!empty($_REQUEST)){
                     // NOW DO FIRST PULL OF HIstorical PAtient BP DATA if ANY
                     if($access_token){
                         //dont pass token details (even though we have them) because need to run first pass with no "since" in the recurseive funciton 
+                        //TODO change this to $omron_client_id
                         $success = $module->recurseSaveOmronApiData($access_token);
                 
                         if($success){
@@ -201,11 +202,7 @@ https://oauth.omronwellness.com
                         Please try the link again at a later time.</p>";
                         echo "<a class='btn' href='$oauth_url'>Go To the Omron Authorization Page</a>";
                     }
-                ?>
-                
-
-                
-                
+                ?>  
             </div>
         </div>
     </div>

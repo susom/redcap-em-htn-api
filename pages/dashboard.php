@@ -2,6 +2,16 @@
 namespace Stanford\HTNapi;
 /** @var \Stanford\HTNapi\HTNapi $module */
 
+$access_token = "c09cb8b4d008e541b305b5d341752fbe";
+$success = $module->recurseSaveOmronApiData($access_token);
+                
+if($success){
+    $module->emDebug("First API Pull of Historical BP Data for patient RC $record_id");
+}else{
+    $module->emDebug("ERROR FAILED : First API Pull of Historical BP Data for patient RC $record_id");
+}
+
+exit;
 $UI_INTF        = $module->getAllPatients();
 $all_patients   = $UI_INTF["patients"];
 $rx_change      = $UI_INTF["rx_change"];
