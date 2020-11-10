@@ -25,16 +25,16 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	// public function redcap_module_project_enable( $version, $project_id ) {}
 	// public function redcap_module_save_configuration( $project_id ) {}
 
-	public function redcap_module_link_check_display($link){
-		//only show the links in the main project?
+	// public function redcap_module_link_check_display($link){
+	// 	//only show the links in the main project?
 
-		// $pid  = $this->getProjectId();
-        // $this->emDebug("pid", $pid, $this->patients_project);
-		// if($pid == $this->patients_project){
-		// 	return $link;
-		// }
-		return $link;
-    }
+	// 	// $pid  = $this->getProjectId();
+    //     // $this->emDebug("pid", $pid, $this->patients_project);
+	// 	// if($pid == $this->patients_project){
+	// 	// 	return $link;
+	// 	// }
+	// 	return $link;
+    // }
 	
 	//Load the pertinent EM stuff, as well as the broken off Classes for Dashboard and Tree
 	public function loadEM(){
