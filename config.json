@@ -3,7 +3,7 @@
 
 	"namespace": "Stanford\\HTNapi",
 
-	"description": "A standalone em for API connections",
+	"description": "An EM to manage the HTN Provider Dashboard + Omron Data Authorization Workflows",
 
 	"documentation": "README.md",
 
@@ -30,7 +30,7 @@
 		{
 			"cron_name": "htn_access_token_expire_check",
 			"cron_description": "Cron that runs everyday to check for expiring access tokens (within 48 hours) and refreshing them with refresh_token",
-			"method": "refreshOmronAccessTokens",
+			"method": "htnAPICron",
 			"cron_frequency": "86400",
 			"cron_max_run_time": "1800"
 		}
@@ -41,17 +41,23 @@
 	"links": {
 		"project": [
 			{
-		        "name": "HTN api Instructions",
+		        "name": "HTN - Omron Auth Workflow Instructions",
 		        "icon": "gear",
 		        "url" : "pages/instructions.php",
 		        "show-header-and-footer": false
-			 },
-			 {
-		        "name": "HTN - Omeron Oauth",
+			},
+			{
+		        "name": "HTN - Omeron Oauth Sample View",
 		        "icon": "gear",
 		        "url" : "pages/oauth.php",
 		        "show-header-and-footer": false
-			 }
+			},
+			{
+		        "name": "HTN - Provider Dashboard",
+		        "icon": "gear",
+		        "url" : "pages/dashboard.php",
+		        "show-header-and-footer": false
+			}
 		],
 		"control-center": [
 
@@ -60,7 +66,19 @@
 
 	"no-auth-pages": [
 		"pages/redirect",
-		"pages/oauth"
+		"pages/newdata_hook",
+		"pages/oauth",
+
+		"pages/dashboard",
+		"pages/login",
+		"pages/registration",
+		"pages/help",
+		"pages/reset_password",
+		"pages/templates_select",
+		"pages/tree_view2",
+		"pages/treatment_plans",
+		"pages/refresh_session"
+
 	],
 
 	"project-settings": [
@@ -101,13 +119,42 @@
 			"type": "text"
 		},
 		{
+			"key": "project-pepper",
+			"name": "<b>A word used for hashing passwords</b>",
+			"required": false,
+			"type": "text"
+		},
+		{
+			"key": "em-mode",
+			"name": "<b>EM Mode</b><br>This EM is used in more than one project with different functionality.  Please indicate which project this is?",
+			"required": true,
+			"type": "radio",
+            "choices":[
+                {
+                  "name" : "PATIENTS",
+                  "value" : "patients"
+                },
+                {
+                  "name" : "TREE TEMPLATES",
+                  "value" : "tree_templates"
+                },
+                {
+                  "name" : "MEDS",
+                  "value" : "meds"
+                },
+                {
+                  "name" : "PROVIDERS",
+                  "value" : "providers"
+                }
+            ]
+		},
+		{
 	      "key": "enable-project-debug-logging",
 	      "name": "<b>Enable Debug Logging</b>",
 	      "required": false,
 	      "type": "checkbox"
 	    }
 	],
-
 
 	"system-settings": [
 		{

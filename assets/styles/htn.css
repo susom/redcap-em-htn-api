@@ -1,0 +1,486 @@
+body { color:#2f5f73; }
+body, .footer { background-color:#e8f0f2; }
+h1,h2,h3,h4,h5,h6{ font-family:georgia; letter-spacing:2px; }
+nav{ background-color:#2f5f73; }
+nav .nav a{
+    color:#fff;
+    font-size:130%;
+    font-weight:500;
+}
+nav .dropdown button{ 
+    background:none; 
+}
+nav .dropdown-toggle::after{
+    display: inline-block;
+    margin-left: .5em;
+    vertical-align:middle;
+    border:none;
+    background:url(<?php echo $module->getUrl('assets/images/icon_anon.gif') ?>) 0 0 no-repeat;
+    background-size:contain;
+    width:40px; height:40px; 
+}
+
+.navbar-brand {
+    display:inline-block;
+    background:url(<?php echo $module->getUrl('assets/images/logo_heartex.gif') ?>) 0 0 no-repeat;
+    /*background: url(https://identity.stanford.edu/img/stanford-university-white.png) 0 50% no-repeat;*/
+    background-size: contain;
+    text-indent: -5000px;
+    width: 170px;
+    height: 39px;
+}
+.project_title{
+    color:#fff; 
+    margin:0; 
+}
+.tab-content{
+    border-color: #DEE1E5;
+}
+#myTabContent {
+    min-height:500px;
+}
+#patient_baseline label.d-block{ font-size:92%; }
+#manual_diastolic, #manual_systolic {
+    border-style: solid;
+    border-width: 1px;
+    border-color: #DEE1E5;
+    font-size:92%; 
+}
+.emtext{
+    font-size:77%;
+}
+.dose_actions a{
+    width: 15px;
+    height: 15px;
+    text-decoration: none;
+    line-height: 85%;
+}
+a.dupe_prev_dose { 
+    line-height:100%; 
+}
+.drug_dose{ 
+    width:80px;
+    font-size:85%;
+}
+.drug_dose:last-child {
+    width:86px;
+}
+#plan_summary .drug_dose,
+#dose_head .drug_dose {
+    height:auto;
+    min-height:25px;
+}
+#dose_head .drug_dose input{
+    width: 30px;
+    font-size: 85%; 
+}
+#med_steps > .drug_step ~ .drug_step .trashit { 
+    display:inline-block; 
+    opacity:1;  
+}
+.drug_name .trashit { 
+    display:none;
+    opacity:0;
+    width: 15px;
+    height: 15px;            
+    text-decoration: none;
+    line-height: 65%;
+}
+.dose_ladder .drug_dose .dose_selects{
+    display:none;
+    font-size:100%;
+}
+.dose_ladder .drug_dose .dose_selects input{
+    font-size: 85%;
+    width: 65%;
+}
+.dose_ladder .drug_dose:first-child .dupe_prev_dose{
+    display:none;
+}
+.med_notes {
+    font-size:77%;
+    line-height:1;
+}
+.alt_med_custom_dose{
+    font-size:77%;
+}
+#plan_summary .drug_name, 
+#dose_head .drug_name{
+    font-size:85%;
+}
+#plan_summary .drug_dose{
+    font-size:65%;
+}
+#plan_summary .drug_dose span{
+    display:block;
+    background: #ffc;
+    color: #333;
+}
+
+.drug_dose.active {  
+    background:#ffc !important;
+}
+
+
+.drug_dose select{
+    font-size:92%;
+    display:block; 
+}
+.drug_dose i{
+    display:block;
+    font-size:77%;
+    font-style:normal;  
+}
+
+.current_tree{ display:none; }
+label + em{
+    display:block;
+    font-weight:normal;
+    margin-left: 10px;
+    font-size: 85%;
+}
+
+.filtered,
+.patient_count{ 
+    font-size:120%;
+    border-left:2px solid #2f5f73;
+    height:50px;
+    line-height:300%;
+}
+
+.filtered {
+    line-height:initial;
+    height:auto;
+}
+.filtered i {
+    font-style:normal;
+    font-size:85%;
+    font-weight:normal;
+}
+.filtered .all_patients{
+    line-height:42px;
+}
+
+
+
+
+
+#overview .header{ display:block; }
+#overview aside input{
+     border:1px solid #ccc;
+}
+#overview aside .add_patient{
+    color: #2f5f73
+}
+#overview h1, #alerts h1{
+    cursor:pointer;
+}
+#overview .stat{
+    border-width:5px;
+    border-style: solid;
+    border-radius:180px;
+    min-width:180px;
+    min-height:180px;
+    text-decoration:none;
+
+    border-color: transparent;
+}
+
+.overview_stats {
+   
+}
+/* #overview .picked .stat { 
+    border-color: initial;
+} */
+
+
+.stat-group{
+    max-width:180px;
+}
+.stat i{ font-style:normal;  }
+.stat .h1{
+    font-size:500%;
+    line-height:100%; 
+}
+.stat-title{
+    line-height:100%;
+}
+.stat-text{
+    font-style:normal; 
+    font-size:85%;
+}
+
+ .all_patients .stat,
+ .stat i {
+    color:#2f5f73;
+}
+.results_needed,
+.alerts{
+    margin-right:80px;
+}
+.alerts .stat{
+    background:#2f5f73; 
+    color:#E9F0F2;
+    position:relative;
+}
+.alerts .stat i{
+    color:#fff;
+}
+.data_needed .stat::before, 
+.alerts .stat::before{
+    content:"";
+    display:block;
+    background:none;
+    position:absolute;
+    top:0; right:-40px; 
+    width:0;
+    height:180px;
+    border-right:2px solid #B1B9BF;
+}
+.alerts .stat::after{
+    display:none;
+}
+.data_needed .stat::before{
+    right:initial;
+    left:-40px;
+}
+.alerts .stat p{
+    line-height: 400%;
+}
+.alerts .stat i{
+    background: #920806;
+    width: 50px;
+    height: 50px;
+    border: 2px solid #fff;
+    border-radius: 50px;
+    line-height: 200%;
+    font-size: 140%;
+    top: 0;
+    right: 0;
+    position: absolute;
+    z-index: 100;
+}
+.results_needed .stat,
+.rx_change .stat,
+.data_needed .stat { position:relative; }
+
+#overview .picked.rx_change .stat{ border-color:#D46A20; position:relative;  }
+.rx_change .h1,
+.rx_change.filtered {color:#D46A20; border-left-color:#D46A20;}
+
+#overview .picked.results_needed .stat{ border-color:#D9B12B; position:relative; }
+.results_needed .h1,
+.results_needed.filtered {color:#D9B12B; border-left-color:#D9B12B;}
+
+#overview .picked.data_needed .stat{ border-color:#4374DD; }
+.data_needed .h1 {color:#4374DD; border-left-color:#4374DD;}
+
+
+.patient_list,
+.patient_details{
+    min-height:200px;
+}
+.profile .patient_detail{
+    height:100%; 
+}
+
+.patient_tab{
+    position:relative;
+    width:calc(100% - 20px);
+    border-left:15px solid #2f5f73;
+    cursor:pointer;
+}
+.patient_tab.active{
+    background:#b30004;
+    color:#FFF;
+}
+.patient_tab.active::after{
+    content: "";
+    position: absolute;
+    right: -30px;
+    top: 50%;
+    margin-top: -20px;
+    width: 20px;
+    height: 20px;
+    border: 15px solid #b30004;
+    border-top: 15px solid transparent !important;
+    border-bottom: 15px solid transparent !important;
+    border-right: 15px solid transparent !important;
+}
+.patient_tab dt img{ width:80%; max-width:76px; }
+
+
+
+
+
+.patient_tab.rx_change,
+.patient_tab.rx_change.active::after { border-color:#D46A20; }
+.patient_tab.rx_change.active{ background-color:#D46A20; }
+
+.patient_tab.results_needed,
+.patient_tab.results_needed.active::after { border-color:#D9B12B; }
+.patient_tab.results_needed.active{ background-color:#D9B12B; }
+
+.patient_tab.data_needed,
+.patient_tab.data_needed.active::after { border-color:#4374DD; }
+.patient_tab.data_needed.active{ background-color:#4374DD; }
+
+
+.patient_name img{
+    max-width: 185px;
+    max-height: 185px;
+    height: 100%;
+}
+.patient_name {
+    position:relative; 
+}
+
+.patient_status{
+    position:absolute;
+    left:15px;
+    top:0;
+}
+.add_notes{
+    position:absolute;
+    top:0;
+    right:15px;
+}
+.add_photo{
+    width:185px; height:185px; line-height:185px;
+    border:1px dashed #ccc; 
+}
+
+.patient_details .nav-tabs .nav-link {
+    border:none;
+    border-bottom: 1px solid  #F8F9FA;
+    background:#E9ECEF;
+    color:#2f5f73;
+    border-top-left-radius: .25rem;
+    border-top-right-radius: .25rem;
+}
+
+.patient_details .nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active{
+    border:none;
+    border-bottom: 1px solid #F8F9FA;
+    background:#F8F9FA;
+    font-weight:bold; 
+}
+
+
+.none_selected h1{
+    text-align:center;
+    color:#E8EFF1;
+    width:100%;
+    position:absolute;
+    top:40%;
+}
+
+.patient_data{
+    border-radius:10px 10px 10px 10px;
+    background:#e8f0f2;
+}
+.patient_data .content{
+    min-height:15px;
+}
+section {
+    /*border-left:3px solid #e8f0f2;*/
+    /*border-right:3px solid #e8f0f2;*/
+}
+
+
+
+
+
+section.information{
+
+}
+
+section h3{
+    font-family:inherit;
+}
+.patient_details dl dt { min-width:140px; }
+.patient_details dl dd { color:#a65c43; font-weight:bold; white-space: nowrap; }
+
+.text-infolink{
+    color:#007C92;
+}
+
+#alerts {
+    display:none;
+}
+#alerts h1 span {
+    vertical-align:text-bottom;
+}
+#alerts tr{
+    font-weight:bold;
+}
+#alerts tr.read{
+    font-weight:normal;
+}
+#alerts caption a {
+    display:inline-block; 
+}
+#alerts table caption{
+    padding-bottom:0;
+}
+
+.reg_link{
+    display:block;
+    text-align:center; 
+    font-weight:bold;
+    color:#000;
+}
+
+
+#registration h4{
+    font-family:inherit;
+    font-weight:normal;
+    border-bottom:1px solid #435F72;
+}
+
+.hide{
+    display:none;
+}
+
+.recommendation .accept .btn{
+    font-size:77%;
+}
+.recommendation .patient_name img{
+    max-width: 145px;
+    max-height: 145px;
+}
+.recommendation .change h5,
+.recommendation .change h6{
+    font-family:inherit;
+}
+.recommendation .change h5{
+    font-family:inherit;
+    font-size:92%;
+}
+.recommendation .change h6{
+    color: #a65c43;
+    font-size:85%;
+}
+
+.recommendation .patient_data .content{
+    color: #a65c43;
+    font-size:85%;
+    line-height:108%
+}
+.recommendation .btns {
+    text-align:center;
+}
+.recommendation .btns b{
+    color: #a65c43;
+    font-size:92%;
+    display:block;
+    font-weight:bold; 
+}
+.patient_status b{
+    color:red;
+}
+
+.patient_summary{
+
+
+}

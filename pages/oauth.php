@@ -49,7 +49,7 @@ $oauth_url      = $module->getOAUTHurl();
         }
         .heartex_logo{
             float:left;
-            background:url(<?= $module->getURL("pages/logo_heartex.png")?>) no-repeat;
+            background:url(<?= $module->getURL("assets/images/logo_heartex_trans.png")?>) no-repeat;
             background-size:contain;
             width:100px;
             height:23px; 

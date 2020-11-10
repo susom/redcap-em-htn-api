@@ -1,0 +1,29 @@
+body { color:#2f5f73; }
+body, .footer { background-color:#e8f0f2; }
+h1,h2,h3,h4,h5,h6{ font-family:georgia; letter-spacing:2px; }
+nav{ background-color:#2f5f73; }
+nav .nav a{
+    color:#fff;
+    font-size:130%;
+    font-weight:500;
+}
+nav .dropdown button{ 
+    background:none; 
+}
+nav .dropdown-toggle::after{
+    display: inline-block;
+    margin-left: .5em;
+    vertical-align:middle;
+    border:none;
+    width:40px; height:40px; 
+}
+.navbar-brand {
+    display:inline-block;
+    text-indent: -5000px;
+    width: 170px;
+    height: 39px;
+}
+.project_title{
+    color:#fff; 
+    margin:0; 
+}

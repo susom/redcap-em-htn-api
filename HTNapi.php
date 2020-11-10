@@ -1,31 +1,80 @@
 <?php
 namespace Stanford\HTNapi;
 
-require_once "emLoggerTrait.php";
+include_once "emLoggerTrait.php";
+include_once 'HTNdashboard.php';
+include_once 'HTNTree.php';
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 class HTNapi extends \ExternalModules\AbstractExternalModule {
 
     use emLoggerTrait;
+
+	private $dashboard
+			,$tree;
 
     public function __construct() {
 		parent::__construct();
 		// Other code to run when object is instantiated
 	}
 	
-	public function redcap_module_system_enable( $version ) {
+	// public function redcap_module_system_enable( $version ) {}
+	// public function redcap_module_project_enable( $version, $project_id ) {}
+	// public function redcap_module_save_configuration( $project_id ) {}
+
+	public function redcap_module_link_check_display($link){
+		//only show the links in the main project?
+		
+		// $pid  = $this->getProjectId();
+        // $this->emDebug("pid", $pid, $this->patients_project);
+		// if($pid == $this->patients_project){
+		// 	return $link;
+		// }
+		return $link;
+    }
+	
+	//Load the pertinent EM stuff, as well as the broken off Classes for Dashboard and Tree
+	public function loadEM(){
+		$this->dashboard 	= new \Stanford\HTNapi\HTNdashboard($this);
+		$this->tree			= new \Stanford\HTNapi\HTNtree($this);
+
+		// what else?  API stuff?
 	}
 
-	public function redcap_module_project_enable( $version, $project_id ) {
+	//Get All Patients
+	public function getAllPatients(){
+		$this->loadEM();
+		
+		return $this->dashboard->getAllPatients();
 	}
 
-	public function redcap_module_save_configuration( $project_id ) {
-	}
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	/*
+		BELOW HERE IS ALL THE OMRON AUTHORIZATION WORK FLOW STUFF
+	*/
 	
 	//get oauthURL to presetn to Patient
 	public function getOAUTHurl($record_id = 1){
@@ -49,9 +98,12 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 	// get patients with tokens
 	public function getPatientsWithTokens($record_id = null){
+		global $project_id;
+
 		$filter	= "[omron_client_id] != '' ";
 		$fields	= array("record_id","omron_client_id","omron_acess_token","omron_refresh_token", "omron_token_expire", "omron_token_type");
 		$params	= array(
+			'project_id'	=> $project_id,
             'return_format' => 'json',
             'fields'        => $fields,
             'filterLogic'   => $filter 
@@ -296,6 +348,18 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 		// there is no response, only 200
         return $result;
+	}
+
+	// cron to refresh omron access tokens expiring within 48 hours
+	public function htnAPICron(){
+		$projects 	= $this->framework->getProjectsWithModuleEnabled();
+		$url 		= $this->getUrl('pages/refresh_omron_tokens.php', true); //has to be page
+		foreach($projects as $index => $project_id){
+			$thisUrl 	= $url . "&pid=$project_id"; //project specific
+			$client 	= new \GuzzleHttp\Client();
+			$response 	= $client->request('GET', $thisUrl, array(\GuzzleHttp\RequestOptions::SYNCHRONOUS => true));
+			$this->emDebug("running cron for refreshOmronAccessTokens() on project $project_id");
+		}
 	}
 
 	// cron to refresh omron access tokens expiring within 48 hours

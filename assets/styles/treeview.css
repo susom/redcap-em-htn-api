@@ -1,0 +1,262 @@
+#prescription_tree{
+    overflow:scroll;
+    height:5000px;
+    border-radius:15px;
+}
+#viewer {
+    height:5000px;
+    position:relative;
+    background:#fff;
+    border-radius:15px;
+    padding:50px 0;
+}
+
+
+.tree_step {
+    width:600px; 
+    margin:40px auto 60px;
+    border-radius:10px 10px 5px 5px ;
+    box-shadow:0 0 3px 1px #ccc;
+    position:relative;
+}
+.tree_step:before{
+    content:"";
+    position:absolute;
+    top:-60px;
+    left:50%;
+    height:60px;
+    border:1px solid #bbb;
+}
+.tree_step .change_condition{
+    position: absolute;
+    top: -45px;
+    width: 600px;
+    text-align: center;
+}
+.tree_step .change_condition span{
+    display: inline-block;
+    background: #fff;
+    padding: 2px 5px;
+}
+.tree_step.preview:before{
+    border:1px dashed #bbb;
+}
+.tree_step.noconnect:before{
+    display:none;
+}
+.tree_step h4 {
+    background:#5DA1B5;
+    color:#fff;
+    text-align:center;
+    padding:3px 0; 
+    border-radius:10px 10px 0 0 ;
+    margin:0;
+}
+.tree_step.previous {
+    background:#efefef; 
+}
+.tree_step.previous.hide .box{
+    height:32px;
+    overflow:hidden;
+}
+.tree_step.previous.hide .box .label span{
+    margin-top:5px;
+}
+.tree_step.previous.hide .box .step_drugs li {
+    display:inline-block;
+}
+.tree_step.preview {
+    background:#ffffe6; 
+}
+
+.tree_step.end{
+    background:#EFD6D9; 
+}
+.tree_step.end h4{
+    background:red;
+}
+.tree_step.end:before{
+    border:1px solid #bbb;
+}
+.tree_step.end .msg,
+.tree_step.end .label span{
+    color:red;
+}
+.tree_step.end .continue{
+    display:none;
+}
+
+
+.tree_step.previous h4 {
+    background:#6E757C;
+    position:relative;
+}
+.tree_step h4 i {
+    font-style:normal;
+}
+.tree_step h4 .btn.showhide{
+    position:absolute;
+    top:6px; left:10px; 
+    padding:0 5px; 
+    width:22px;
+    display:none;
+}
+.tree_step.previous h4 .btn.showhide{
+    display:block;
+}
+.tree_step.preview h4 {
+    background:#EFC030;
+    position:relative;
+}
+
+.tree_step h4 .continue{
+    position:absolute;
+    top:0; right:10px; 
+    display:none;
+}
+.tree_step.preview h4 .continue{
+    display:block;
+}
+.tree_step.preview .actions{
+    display:none;
+}
+
+.tree_step h4 .continue .btn{
+    margin:0 0 0 5px;
+    padding:0 5px; 
+}
+.tree_step .label{
+    display: inline-block;
+    height: 108px; width:100px;
+    border-right: 1px solid #ccc;
+    vertical-align: top;
+    text-align:center;
+}
+.tree_step .label span,
+.tree_step .label em {
+    display:block; 
+    font-style:normal;
+}
+.tree_step .label span{
+    margin-top:30px;
+}
+.tree_step .label em{
+    font-size:85%;
+}
+.tree_step .actions .label {
+    height:50px;
+}
+.tree_step .actions .label span{
+    margin-top:10px;
+}
+.tree_step .actions {
+    border-top:1px solid #ccc;
+}
+
+
+
+.tree_step .actions .inputs{
+    display:inline-block;
+    text-align:center; 
+    margin:10px 0 0 10px;
+}
+.tree_step .actions .inputs label{
+    font-size:88%;
+    margin:0 5px 0 0; 
+}
+.tree_step .actions .inputs select{
+    border:1px solid #ccc;
+    font-size:88%;
+    border-radius:3px; 
+}
+
+.tree_step .drugs p {
+    display:inline-block;
+    margin:30px 20px;
+    font-size:100%;
+    font-style:italic;
+}
+.step_drugs {
+    display:inline-block;
+    list-style:none;
+    margin:5px auto;
+    padding:0;
+    position:relative;
+    width:480px;
+}
+.step_drugs li{
+    padding-left:23px;
+    text-align:left;
+}
+
+
+.branch{
+    position:relative;
+    width:940px; 
+    margin:-60px auto 60px;
+    overflow:hidden;
+    padding:0 1px 1px 1px;
+}
+.branch .tree_step{
+    width:450px; 
+    margin-top:60px;
+    margin-bottom:0;
+}
+.branch .tree_step.preview h4{
+    text-align:left; 
+    padding-left:10px;
+}
+.branch .tree_step.preview .drugs .step_drugs{
+    width:340px;
+}
+.branch  .tree_step .change_condition{
+    width: 450px;
+}
+.branch .branch_col:nth-child(odd){
+    float:left;
+}
+.branch .branch_col:nth-child(even){
+    float:right; 
+}
+
+
+#recommendation{
+    position:fixed; 
+    z-index:10;
+    width:490px; 
+    top:calc(50% - 245px);
+    left:calc(50% - 245px);
+    background:#EAF0F2;
+    border-radius:10px;
+    padding:20px;
+    box-shadow:0 0 10px 0px #333;
+}
+#recommendation + div{
+    content:"";
+    position:fixed;
+    top:0;
+    width:100vw;
+    height:100vh;
+    background:#000;
+    opacity:.4;
+}
+#recommendation h3, #recommendation h4{
+    font-family:inherit;
+    margin:0; padding:0; 
+    font-size:115%;
+    font-weight:bold;
+}
+#recommendation h4{
+    color:#834D38;
+}
+#recommendation .natural_text{
+    background:#fff;
+    border-radius:10px;
+    margin:20px 0 ;
+    padding:20px;
+    color:#834D38;
+    font-size:85%;
+}
+#recommendation .continue{
+    text-align:right;
+}
