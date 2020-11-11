@@ -2,10 +2,11 @@
 namespace Stanford\HTNapi;
 /** @var \Stanford\HTNapi\HTNapi $module */
 
-//This might need to be whitelisted with OMRON dev.  Might need to shift this to "redirect.php" which is already the postback for AUTH/token getting
-//you will need to implement a web service endpoint in your system to accept an HTTP POST request containing the user id and timestamp of the latest update.
+// This needs to be whitelisted with OMRON dev, currently manual process. 
 if(!empty($_POST)){
-    //id, ts
+    $module->emDebug("Ping to New Data Hook", $_POST);
+
+    //id, timestamp
     $omron_client_id = $_POST["id"] ?? null;
     $new_data_ts     = $_POST["timestamp"] ?? null;  //not as granular so should be ok
 
