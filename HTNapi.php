@@ -51,6 +51,12 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		return $this->dashboard->getAllPatients();
 	}
 
+	//Get All Patients
+	public function getPatientDetails($record_id){
+		$this->loadEM();
+		
+		return $this->dashboard->getPatientDetails($record_id);
+	}
 
 
 
@@ -75,7 +81,31 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	/*
 		BELOW HERE IS ALL THE OMRON AUTHORIZATION WORK FLOW STUFF
 	*/
-	
+	//get oauthURL to presetn to Patient
+	public function emailOmronAuthRequest($patient){
+		$result = false;
+		if( !empty($patient) && isset($patient["record_id"]) && (isset($patient["patient_email"]) || isset($patient["patient_email"])) ){
+			$auth_link 		= $this->getOAUTHurl($patient["record_id"]);
+
+			$msg_arr        = array();
+            $msg_arr[]      = "<p>Dear " . $patient["patient_fname"] . "</p>";
+            $msg_arr[]	    = "<p>In order to participate in this study, we need access to your Blood Pressure Cuff data.</p>";
+            $msg_arr[]      = "<p>Please click this <a href='".$this->getURL("pages/oauth.php", true, true)."&state=".$patient["record_id"]."'>link</a> to start the process of authorizing us to retrieve your data from Omron.<p>";
+			$msg_arr[]      = "<p>Thank You! <br> Stanford HypertensionStudy Team</p>";
+			
+			$message 	= implode("\r\n", $msg_arr);
+			$to 		= $patient["patient_email"];
+			$from 		= "no-reply@stanford.edu";
+			$subject 	= "HTN Study Needs Your Authorization";
+			$fromName	= "Stanford Hypertension Study Team";
+
+			
+			$result = \REDCap::email($to, $from, $subject, $message);
+			$this->emDebug("did it fucking send?", $result);
+		}
+		return $result;
+	}
+
 	//get oauthURL to presetn to Patient
 	public function getOAUTHurl($record_id = null){
 		$oauth_url = null;
@@ -455,15 +485,41 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		return;
 	}
 
+	// cron to pull data daily in case the notification ping fails?
+	public function dailyOmronDataPull(){
+		//GET ALL PATIENTS (REGARDLESS OF PROVIDER) WHO HAVE ACCESS TOKENS 
+		//PULL ALL DATA FOR TODAY
+
+		$data = array();
+		$patients_with_tokens   = $this->getPatientsWithTokens();
+
+		foreach($patients_with_tokens as $patient){
+			$omron_client_id 	= $patient["omron_client_id"];
+			$record_id 			= $patient["record_id"];
+			$since_today 		= date("Y-m-d");
+			$success 			= $this->recurseSaveOmronApiData($omron_client_id, $since_today);
+			if($success){
+				$this->emDebug("BP data for $since_today was succesfully downloaded for record_id $record_id");
+			}
+		}
+		return;
+	}
+
 	// cron to refresh omron access tokens expiring within 48 hours
 	public function htnAPICron(){
 		$projects 	= $this->framework->getProjectsWithModuleEnabled();
-		$url 		= $this->getUrl('pages/refresh_omron_tokens.php', true); //has to be page
+		$urls 		= array(
+						$this->getUrl('pages/refresh_omron_tokens.php', true)
+						,$this->getUrl('pages/daily_omron_data_pull.php', true)
+					); //has to be page
 		foreach($projects as $index => $project_id){
-			$thisUrl 	= $url . "&pid=$project_id"; //project specific
-			$client 	= new \GuzzleHttp\Client();
-			$response 	= $client->request('GET', $thisUrl, array(\GuzzleHttp\RequestOptions::SYNCHRONOUS => true));
-			$this->emDebug("running cron for refreshOmronAccessTokens() on project $project_id");
+			foreach($urls as $url){
+				$thisUrl 	= $url . "&pid=$project_id"; //project specific
+				$client 	= new \GuzzleHttp\Client();
+				$response 	= $client->request('GET', $thisUrl, array(\GuzzleHttp\RequestOptions::SYNCHRONOUS => true));
+				$this->emDebug("running cron for $url on project $project_id");
+			}
+			
 		}
 	}
 }

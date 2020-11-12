@@ -11,11 +11,23 @@ function dashboard(urls){
     this.filter_txn     = {"rx_change" : "Prescription Change Needed", "results_needed" : "Lab Results Needed" , "data_needed" : "Data Needed", "all_patients" : "All Patients"};
     this.filter_nav     = [];
     
+    //some UI/UX 
+    $("#overview").on("click","h1", function(e){
+        e.preventDefault();
+        if($(this).parent().next().is(":visible")){
+            $(this).parent().next().slideUp("fast");
+        }else{
+            $(this).parent().next().slideDown("medium");
+        }
+    });
+
     this.refreshData();
     var _this = this;
     setInterval(function(){
         _this.refreshData();
     },300000);  // get new data every 5 min
+
+    this.displayPatientDetail();
 }
 dashboard.prototype.refreshData = function(){
     var _this = this;
@@ -148,6 +160,7 @@ dashboard.prototype.updateFilters = function(el){
     }
 
     this.buildNav();
+    this.displayPatientDetail();
     return false;
 }
 dashboard.prototype.buildNav = function(){
@@ -169,6 +182,7 @@ dashboard.prototype.buildNav = function(){
 
     var intf            = this.intf;
     var patients        = intf["patients"];
+    var _this           = this;
 
     var displayed       = 0;
     for(var i in patients){
@@ -187,23 +201,25 @@ dashboard.prototype.buildNav = function(){
         newnav.find("b").text(patient["patient_name"]);
         newnav.find("i").text(patient["age"] + ", " + patient["sex"]);
         newnav.find("img").attr("src", patient["patient_photo"]);
-
         newnav.click(function(e){
             e.preventDefault();
+
+            var record_id = $(this).data("record_id");
+            $("#patient_list .patient_tab").removeClass("active");
+            var _el = $(this);
             $.ajax({
-                url : this["ajax_endpoint"],
+                url : _this["ajax_endpoint"],
                 method: 'POST',
-                data: { "action" : "patient_details", "record_id" :patient["record_id"] },
+                data: { "action" : "patient_details", "record_id" : record_id },
                 dataType: 'json'
             }).done(function (result) {
-                this.patient_detail[patient["record_id"]] = result;
-                console.log("patient_details", result);
-                
-            }).fail(function () {
-                console.log("something failed");
+                _el.addClass("active");
+                _this.patient_detail[record_id] = result;
+                _this.displayPatientDetail(record_id);
+            }).fail(function (e) {
+                console.log(e,"something failed");
             });
         });
-
         $("#patient_list").append(newnav);
     }
 
@@ -213,4 +229,80 @@ dashboard.prototype.buildNav = function(){
         $("#patient_list").append(newnav);
     }
     
+}
+dashboard.prototype.displayPatientDetail = function(record_id){
+    $("#patient_details").removeClass().addClass("col-md-8");
+    $("#patient_details").empty();
+
+    if(record_id){
+        console.log(record_id, this.patient_detail[record_id]);
+
+        var patient = this.patient_detail[record_id];
+        var tpl     = $(patient_details);
+        var _this   = this;
+        tpl.find(".dob").text(patient["patient_birthday"]);
+        tpl.find(".age").text(patient["patient_age"]);
+        tpl.find(".sex").text(patient["sex"]);
+        tpl.find(".weight").text(patient["weight"]);
+        tpl.find(".height").text(patient["height"]);
+        tpl.find(".bmi").text(patient["bmi"]);
+        tpl.find(".demographic").text(patient["patient_group"]);
+        tpl.find(".comorbidity").text(patient["comorbidity"]);
+        
+        var cuff_type = "Omron Hema 9200";
+        if(patient["omron_client_id"] == ""){
+            var emaillink = $("<i>").text("Request Data Authorization");
+            emaillink.addClass("email");
+            emaillink.click(function(e){
+                e.preventDefault();
+                var _el = $(this);
+                $.ajax({
+                    url : _this["ajax_endpoint"],
+                    method: 'POST',
+                    data: { "action" : "sendAuth", "patient" : patient},
+                    dataType: 'json'
+                }).done(function (result) {
+                    if(result){
+                        _el.addClass("sent");
+                        _el.text("Authorization Request Sent");
+                    }else{
+                        _el.text("Error - Try Clicking Again");
+                    }
+                }).fail(function () {
+                    console.log("something failed");
+                });
+            });          
+            
+            cuff_type = emaillink;
+        }
+        tpl.find(".bp_cuff_type").html(cuff_type);
+
+        tpl.find(".planning_pregnancy").text(patient["planning_pregnancy"]);
+        tpl.find(".pharmacy_info").text(patient["pharmacy_info"]);
+
+        tpl.find(".pulse_goal span").text(patient["patient_bp_target_pulse"]);
+        tpl.find(".systolic_goal span").text(patient["patient_bp_target_systolic"]);
+        tpl.find(".diastolic_goal span").text(patient["patient_bp_target_diastolic"]);
+
+        tpl.find(".patient_status span").text("high");
+        tpl.find(".patient_profile img").attr("src",this.anon_profile_src);
+        tpl.find(".patient_profile figcaption").text(patient["patient_fname"] + " " + patient["patient_mname"] + " " + patient["patient_lname"]);
+        
+        tpl.find(".nav-link").click(function(e){
+            e.preventDefault();
+            var tab = $(this).data("tab");
+            $("#patient_details .nav-link").removeClass("active");
+            $(this).addClass("active");
+            
+            $(".panels").hide();
+            $("."+tab).show();
+    
+            return false;
+        });
+    }else{
+        $("#patient_details").addClass("none_selected").addClass("bg-light").addClass("rounded");
+        var tpl = $("<h1>No Patient Selected</h1>");
+    }
+    $("#patient_details").append(tpl);
+    $(".recommendation").hide();
 }

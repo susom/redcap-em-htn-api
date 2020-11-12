@@ -32,8 +32,8 @@ $home_active    = "active";
             <div class="row patient_body">
                 <div id="patient_list" class="col-md-4">
                 </div>
-                <div id="patient_details" class="col-md-8 none_selected bg-light rounded">
-                    <h1>No Patient Selected</h1>
+                <div id="patient_details" class="col-md-8">
+                    
                 </div>
             </div>
         </div>
@@ -72,19 +72,11 @@ $(document).ready(function(){
         return;
     });
 
-    //some UI/UX 
-    $("#overview").on("click","h1", function(e){
-        e.preventDefault();
-        if($(this).parent().next().is(":visible")){
-            $(this).parent().next().slideUp("fast");
-        }else{
-            $(this).parent().next().slideDown("medium");
-        }
-    });
-
     //make initial call to dashboard to grab data and draw out pertinent UI
     var urls = {
-        "ajax_endpoint" : '<?=$module->getURL("pages/ajax_handler.php");?>'
+         "ajax_endpoint" : '<?=$module->getURL("pages/ajax_handler.php", true, true);?>'
+        ,"anon_profile_src" : '<?=$module->getUrl('assets/images/icon_anon.gif')?>'
+        
     };
     var dash = new dashboard(urls);
 });

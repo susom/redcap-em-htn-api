@@ -1,6 +1,6 @@
-<div class="patient_details col-md-8">
+<div id="patient_details" class="col-md-8">
     <ul class="nav nav-tabs border-0">
-        <li class="nav-item  rounded-top">
+        <li class="nav-item rounded-top">
             <a class="nav-link active" href="#" data-tab="profile">Profile</a>
         </li>
         <li class="nav-item rounded-right">
@@ -9,7 +9,7 @@
     </ul>
     <div class="bg-light rounded-right rounded-bottom rounded-left p-3 profile panels row">
         <div class="patient_detail col-md-12">
-            <div class="patient_name mb-4 pt-5">
+            <div class="patient_name mb-5 pt-5">
                 <div class="patient_status float-left">Urgency: <b>High</b></div>
                 <fig class="patient_profile d-block text-center mx-auto">
                     <figure><img src='<?=$module->getUrl('assets/images/icon_anon.gif')?>' class="rounded-circle"/></figure>
@@ -18,55 +18,54 @@
                 <a href="#" class="add_notes float-right">Add Notes</a>
             </div>
 
-            <div class="patient_details row ">
+            <div class="patient_details row mb-5">
                 <div class="col-md-5 offset-md-1">
                     <dl class="mb-2">
                     <dt class="d-inline-block">DOB</dt>
-                    <dd class="d-inline-block"><?=$patient["patient_birthday"]?></dd>
+                    <dd class="d-inline-block dob"></dd>
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">AGE</dt>
-                    <dd class="d-inline-block"><?=$patient["patient_age"]?></dd>
+                    <dd class="d-inline-block age"></dd>
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">SEX</dt>
-                    <dd class="d-inline-block"><?=$patient["sex"]?></dd>
+                    <dd class="d-inline-block sex"></dd>
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">WEIGHT</dt>
-                    <dd class="d-inline-block"><?=$patient["weight"]?></dd>
+                    <dd class="d-inline-block weight"></dd>
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">HEIGHT</dt>
-                    <dd class="d-inline-block"><?=$patient["height"]?></dd>
+                    <dd class="d-inline-block height"></dd>
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">BMI</dt>
-                    <dd class="d-inline-block"><?=$patient["bmi"]?></dd>
+                    <dd class="d-inline-block bmi"></dd>
                     </dl>
                 </div>
                 <div class="col-md-6">
                     <dl class="mb-2">
                     <dt class="d-inline-block">Demographic</dt>
-                    <dd class="d-inline-block"><?=$patient["patient_group"]?></dd>
+                    <dd class="d-inline-block demographic"><?=$patient["patient_group"]?></dd>
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">Comorbidity</dt>
-                    <dd class="d-inline-block"><?=$patient["comorbidity"]?></dd>
+                    <dd class="d-inline-block comorbidity"><?=$patient["comorbidity"]?></dd>
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">BP Cuff Type</dt>
-                    <dd class="d-inline-block">Omron</dd>
+                    <dd class="d-inline-block bp_cuff_type">Omron</dd>
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">Planning Pregnancy</dt>
-                    <dd class="d-inline-block"><?=$patient["planning_pregnancy"]?></dd>
+                    <dd class="d-inline-block planning_pregnancy"><?=$patient["planning_pregnancy"]?></dd>
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">Pharmacy Info</dt>
-                    <dd class="d-inline-block">CVS</dd>
+                    <dd class="d-inline-block pharmacy_info">CVS</dd>
                     </dl>
-                    
                 </div>
             </div>
         </div>
@@ -92,22 +91,21 @@
                     <dl class="col-md-5 offset-md-1">
                         
                         <dt>BP Goal</dt>
-                        <dd class="font-weight-light mb-0">Systolic : 130</dd>
-                        <dd class="font-weight-light mb-0">Diastolic : 80</dd>
+                        <dd class="font-weight-light mb-0 systolic_goal">Systolic : <span>130</span></dd>
+                        <dd class="font-weight-light mb-0 diastolic_goal">Diastolic : <span>80</span></dd>
 
                         <dt class="mt-3">Measurement Frequency</dt>
-                        <dd class="font-weight-light mb-0">Frequency : 2/week</dd>
-                        <dd class="font-weight-light mb-0">Total Duration : 2 weeks</dd>
+                        <dd class="font-weight-light mb-0 frequency">Frequency : <span>2/week</span></dd>
+                        <dd class="font-weight-light mb-0 total_duration">Total Duration : <span>2 weeks</span></dd>
                     </dl>
                     
                     <dl class="col-md-5 offset-md-1">
                         <dt>Pulse Goal</dt>
-                        <dd class="font-weight-light mb-0">Pulse : < 50</dd>
-                        <dd class="font-weight-light mb-0">Diastolic : 80</dd>
+                        <dd class="font-weight-light mb-0 pulse">Pulse : <span>< 50</span></dd>
 
                         <dt class="mt-3"><br></dt>
-                        <dd class="font-weight-light mb-0">Average Data : <select><option selected>Daily</option><option >Weekly</option><option >AM</option><option >PM</option></select></dd>
-                        <dd class="font-weight-light mb-0">Define Uncontrolled : 60%</dd>
+                        <dd class="font-weight-light mb-0">Average Data : <select class="avg_data_range"><option selected>Daily</option><option >Weekly</option><option >AM</option><option >PM</option></select></dd>
+                        <dd class="font-weight-light mb-0 define_controlled">Define Uncontrolled : <span>60%</span></dd>
                     </dl>
                 </div>
             </section>
@@ -135,44 +133,44 @@
             <div class="pl-3 mb-5">
                 <dl class="mb-0 row">
                 <dt class="d-inline-block col-md-6">DOB</dt>
-                <dd class="d-inline-block col-md-6"><?=$patient["patient_birthday"]?></dd>
+                <dd class="d-inline-block col-md-6 dob"><?=$patient["patient_birthday"]?></dd>
                 </dl>
                 <dl class="mb-0 row">
                 <dt class="d-inline-block col-md-6">AGE</dt>
-                <dd class="d-inline-block col-md-6"><?=$patient["patient_age"]?></dd>
+                <dd class="d-inline-block col-md-6 age"><?=$patient["patient_age"]?></dd>
                 </dl>
                 <dl class="mb-0 row">
                 <dt class="d-inline-block col-md-6">SEX</dt>
-                <dd class="d-inline-block col-md-6"><?=$patient["sex"]?></dd>
+                <dd class="d-inline-block col-md-6 sex"><?=$patient["sex"]?></dd>
                 </dl>
                 <dl class="mb-0 row">
                 <dt class="d-inline-block col-md-6">WEIGHT</dt>
-                <dd class="d-inline-block col-md-6"><?=$patient["weight"]?></dd>
+                <dd class="d-inline-block col-md-6 weight"><?=$patient["weight"]?></dd>
                 </dl>
                 <dl class="mb-0 row">
                 <dt class="d-inline-block col-md-6">HEIGHT</dt>
-                <dd class="d-inline-block col-md-6"><?=$patient["height"]?></dd>
+                <dd class="d-inline-block col-md-6 height"><?=$patient["height"]?></dd>
                 </dl>
                 <dl class="mb-0 row">
                 <dt class="d-inline-block col-md-6">BMI</dt>
-                <dd class="d-inline-block col-md-6"><?=$patient["bmi"]?></dd>
+                <dd class="d-inline-block col-md-6 bmi"><?=$patient["bmi"]?></dd>
                 </dl>
 
                 <dl class="mb-0 row">
                 <dt class="d-inline-block col-md-6">Demographic</dt>
-                <dd class="d-inline-block col-md-6"><?=$patient["patient_group"]?></dd>
+                <dd class="d-inline-block col-md-6 demographic"><?=$patient["patient_group"]?></dd>
                 </dl>
                 <dl class="mb-0 row">
                 <dt class="d-inline-block col-md-6">BP Cuff Type</dt>
-                <dd class="d-inline-block col-md-6">Omron</dd>
+                <dd class="d-inline-block col-md-6 bp_cuff_type">Omron</dd>
                 </dl>
                 <dl class="mb-0 row">
                 <dt class="d-inline-block col-md-6">Planning Pregnancy</dt>
-                <dd class="d-inline-block col-md-6"><?=$patient["planning_pregnancy"]?></dd>
+                <dd class="d-inline-block col-md-6 planning_pregnancy"><?=$patient["planning_pregnancy"]?></dd>
                 </dl>
                 <dl class="mb-0">
                 <dt class="d-inline-block">Pharmacy Info</dt>
-                <dd class="d-inline-block">CVS</dd>
+                <dd class="d-inline-block pharmacy_info">CVS</dd>
                 </dl>
             </div>
 

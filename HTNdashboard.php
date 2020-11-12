@@ -136,22 +136,50 @@ class HTNdashboard {
         return $ui_intf;
     }
 
-    public function getPatientDetail($id){
-        $params     = array(
-            "records"       => $id,
-            'return_format' => 'json'
+    public function getPatientDetails($record_id){
+        $fields = array("record_id"
+                        ,"patient_fname"
+                        ,"patient_mname"
+                        ,"patient_lname"
+                        ,"patient_photo"
+                        ,"patient_birthday"
+                        ,"patient_group"
+                        ,"patient_bp_target_pulse"
+                        ,"patient_bp_target_systolic"
+                        ,"patient_bp_target_diastolic"
+                        ,"patient_physician_id"
+                        ,"current_treatment_plan_id"
+                        ,"patient_treatment_status"
+                        ,"sex"
+                        ,"weight"
+                        ,"height"
+                        ,"bmi"
+                        ,"planning_pregnancy"
+                        ,"ckd"
+                        ,"comorbidity"
+                        ,"pharmacy_info"
+                        ,"filter"
+                        ,"patient_email"
+                        ,"omron_client_id"
+
+                       );
+        $params = array(
+            "records"       => $record_id,
+            "fields"        => $fields,
+            "return_format" => 'json'
         );
         $raw    = \REDCap::getData($params);
         $result = json_decode($raw,1);
-        $result = current($result);
+        if(!empty($result)){
+            $result = current($result);
+            $date2  = Date("Y-m-d");
 
-        $date2  = Date("Y-m-d");
-        $diff   = abs(strtotime($date2)-strtotime($result["patient_birthday"]));
-        $years  = floor($diff / (365*60*60*24));
-    
-        $result["patient_age"]          = "$years yrs old";
-        $result["planning_pregnancy"]   = $result["planning_pregnancy"] == "1" ? "Yes" : "No";
-
+            $diff   = abs(strtotime($date2)-strtotime($result["patient_birthday"]));
+            $years  = floor($diff / (365*60*60*24));
+        
+            $result["patient_age"]          = "$years yrs old";
+            $result["planning_pregnancy"]   = $result["planning_pregnancy"] == "1" ? "Yes" : "No";
+        }
         return $result;
     }
 

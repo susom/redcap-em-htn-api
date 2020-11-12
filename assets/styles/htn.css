@@ -281,7 +281,7 @@ label + em{
     cursor:pointer;
 }
 .patient_tab.active{
-    background:#b30004;
+    background:#2f5f73 !important;
     color:#FFF;
 }
 .patient_tab.active::after{
@@ -292,7 +292,7 @@ label + em{
     margin-top: -20px;
     width: 20px;
     height: 20px;
-    border: 15px solid #b30004;
+    border: 15px solid #2f5f73;
     border-top: 15px solid transparent !important;
     border-bottom: 15px solid transparent !important;
     border-right: 15px solid transparent !important;
@@ -303,17 +303,17 @@ label + em{
 
 
 
-.patient_tab.rx_change,
-.patient_tab.rx_change.active::after { border-color:#D46A20; }
-.patient_tab.rx_change.active{ background-color:#D46A20; }
+#patient_list .patient_tab.rx_change,
+#patient_list .patient_tab.rx_change.active::after { border-color:#D46A20; }
+#patient_list .patient_tab.rx_change.active{ background:#D46A20  !important; }
 
-.patient_tab.results_needed,
-.patient_tab.results_needed.active::after { border-color:#D9B12B; }
-.patient_tab.results_needed.active{ background-color:#D9B12B; }
+#patient_list .patient_tab.results_needed,
+#patient_list .patient_tab.results_needed.active::after { border-color:#D9B12B; }
+#patient_list .patient_tab.results_needed.active{ background:#D9B12B  !important; }
 
-.patient_tab.data_needed,
-.patient_tab.data_needed.active::after { border-color:#4374DD; }
-.patient_tab.data_needed.active{ background-color:#4374DD; }
+#patient_list .patient_tab.data_needed,
+#patient_list .patient_tab.data_needed.active::after { border-color:#4374DD ; }
+#patient_list .patient_tab.data_needed.active{ background:#4374DD !important; }
 
 
 .patient_name img{
@@ -349,7 +349,8 @@ label + em{
     border-top-right-radius: .25rem;
 }
 
-#patient_details .nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active{
+#patient_details .nav-tabs .nav-item.show .nav-link, 
+#patient_details .nav-tabs .nav-link.active{
     border:none;
     border-bottom: 1px solid #F8F9FA;
     background:#F8F9FA;
@@ -468,3 +469,7 @@ section h3{
     color:red;
 }
 
+
+i.email.sent{
+    color:#999;
+}

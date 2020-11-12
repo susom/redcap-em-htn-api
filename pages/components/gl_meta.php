@@ -21,7 +21,17 @@
         background-size:contain; 
     }
     .navbar-brand {
-        background:url(<?php echo $module->getUrl('assets/images/logo_heartex.gif') ?>) 0 0 no-repeat;
+        background:url(<?= $module->getUrl('assets/images/logo_heartex.gif') ?>) 0 0 no-repeat;
         background-size: contain;
+    }
+    i.email {
+        display:inline-block;
+        font-size:100%;
+        font-style:normal;
+        background:url(<?= $module->getUrl('assets/images/icon_email.png') ?>) no-repeat;
+        background-size:20px 20px;
+        line-height:130%;
+        cursor:pointer;
+        padding-left:25px;
     }
 </style>
