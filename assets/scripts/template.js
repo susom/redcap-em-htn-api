@@ -297,3 +297,37 @@ var rec_modal = `
     </div>
     <div class="underlay"></div>
 `;
+
+
+var overview_filter = `
+    <div class="d-inline-block text-center stat-group">
+        <a href="#" class="stat d-inline-block">
+            <p class='h1 mt-4 mb-0 p-0'></p>
+            <i class="d-block"></i>
+        </a>
+
+        <div class="stat-body mt-3">
+            <b class="stat-title d-block"></b>
+            <i class="stat-text d-block"></i>
+        </div>
+    </div>
+`;
+
+var alerts_row = `
+    <tr>
+        <td class="check" data-label="select"><input name="delete_alert" type="checkbox"></td>
+        <td class="patient" data-label="subject"><a href="#" class="text-infolink">RE: Patient <span></span></a></td>
+        <td class="subject" data-label="message"><a href="#" class="text-infolink"><span></span></a></td>
+        <td class="date" data-label="date"><a href="#" class="text-infolink"><span></span></a></td>
+    </tr>
+`;  
+
+var patient_nav = `
+    <dl class="patient_tab rounded bg-light">
+        <dt class='d-inline-block pt-2 pb-2 pl-2 text-center'><img class="rounded-circle"/></dt>
+        <dd class='d-inline-block align-middle'>
+            <b></b>
+            <i class="d-block"></i>
+        </dd>
+    </dl>
+`;

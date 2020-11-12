@@ -13,6 +13,8 @@
 <script src="<?php echo $module->getUrl('assets/scripts/jquery.min.js') ?>" crossorigin="anonymous"></script>
 <script src="<?php echo $module->getUrl('assets/scripts/bootstrap.bundle.min.js') ?>" crossorigin="anonymous"></script>
 
+<script src="<?php echo $module->getUrl('assets/scripts/dashboard.js') ?>" crossorigin="anonymous"></script>
+<script src="<?php echo $module->getUrl('assets/scripts/template.js') ?>" crossorigin="anonymous"></script>
 <style>
     nav .dropdown-toggle::after{
         background:url(<?php echo $module->getUrl('assets/images/icon_anon.gif') ?>) 0 0 no-repeat;

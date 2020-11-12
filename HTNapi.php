@@ -45,7 +45,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	}
 
 	//Get All Patients
-	public function getAllPatients(){
+	public function dashBoardInterface(){
 		$this->loadEM();
 		
 		return $this->dashboard->getAllPatients();
@@ -373,7 +373,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$result = curl_exec($ch);
         curl_close($ch);
 
-		$this->emDebug("revokeToken", $result, $data);
+		//NEEDE TO REMOVE FROM RC, PUT HERE FOR NOW BUT MAYBE MOVE IT OUT AT SOME POINT
 
 
 

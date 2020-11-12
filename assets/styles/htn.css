@@ -185,22 +185,12 @@ label + em{
 
     border-color: transparent;
 }
-
-.overview_stats {
-   
-}
-/* #overview .picked .stat { 
-    border-color: initial;
-} */
-
-
 .stat-group{
     max-width:180px;
 }
 .stat i{ font-style:normal;  }
 .stat .h1{
     font-size:500%;
-    line-height:100%; 
 }
 .stat-title{
     line-height:100%;
@@ -244,8 +234,9 @@ label + em{
     right:initial;
     left:-40px;
 }
-.alerts .stat p{
-    line-height: 400%;
+.alerts .stat .h1{
+    font-size:300%;
+    line-height: 250%;
 }
 .alerts .stat i{
     background: #920806;
@@ -260,6 +251,8 @@ label + em{
     position: absolute;
     z-index: 100;
 }
+
+
 .results_needed .stat,
 .rx_change .stat,
 .data_needed .stat { position:relative; }
@@ -276,10 +269,7 @@ label + em{
 .data_needed .h1 {color:#4374DD; border-left-color:#4374DD;}
 
 
-.patient_list,
-.patient_details{
-    min-height:200px;
-}
+#patient_list,
 .profile .patient_detail{
     height:100%; 
 }
@@ -350,7 +340,7 @@ label + em{
     border:1px dashed #ccc; 
 }
 
-.patient_details .nav-tabs .nav-link {
+#patient_details .nav-tabs .nav-link {
     border:none;
     border-bottom: 1px solid  #F8F9FA;
     background:#E9ECEF;
@@ -359,12 +349,17 @@ label + em{
     border-top-right-radius: .25rem;
 }
 
-.patient_details .nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active{
+#patient_details .nav-tabs .nav-item.show .nav-link, .nav-tabs .nav-link.active{
     border:none;
     border-bottom: 1px solid #F8F9FA;
     background:#F8F9FA;
     font-weight:bold; 
 }
+#patient_details{
+    min-height:200px;
+}
+#patient_details dl dt { min-width:140px; }
+#patient_details dl dd { color:#a65c43; font-weight:bold; white-space: nowrap; }
 
 
 .none_selected h1{
@@ -390,16 +385,9 @@ section {
 
 
 
-
-section.information{
-
-}
-
 section h3{
     font-family:inherit;
 }
-.patient_details dl dt { min-width:140px; }
-.patient_details dl dd { color:#a65c43; font-weight:bold; white-space: nowrap; }
 
 .text-infolink{
     color:#007C92;
@@ -437,7 +425,7 @@ section h3{
     font-weight:normal;
     border-bottom:1px solid #435F72;
 }
-
+#filters.hide,
 .hide{
     display:none;
 }
@@ -480,7 +468,3 @@ section h3{
     color:red;
 }
 
-.patient_summary{
-
-
-}

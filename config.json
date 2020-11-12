@@ -49,12 +49,6 @@
 		        "show-header-and-footer": false
 			},
 			{
-		        "name": "HTN - Omeron Oauth Sample View",
-		        "icon": "gear",
-		        "url" : "pages/oauth.php",
-		        "show-header-and-footer": false
-			},
-			{
 		        "name": "HTN - Provider Dashboard",
 		        "icon": "gear",
 		        "url" : "pages/dashboard.php",
@@ -71,6 +65,7 @@
 		"pages/newdata_hook",
 		"pages/oauth",
 
+		"pages/ajax_handler",
 		"pages/dashboard",
 		"pages/login",
 		"pages/registration",

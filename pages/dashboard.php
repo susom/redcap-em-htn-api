@@ -2,14 +2,8 @@
 namespace Stanford\HTNapi;
 /** @var \Stanford\HTNapi\HTNapi $module */
 
-$UI_INTF        = $module->getAllPatients();
-$all_patients   = $UI_INTF["patients"];
-$rx_change      = $UI_INTF["rx_change"];
-$results_needed = $UI_INTF["results_needed"];
-$data_needed    = $UI_INTF["data_needed"]; 
-$alerts         = $UI_INTF["messages"];
-
-$page = "dashboard";
+$page           = "dashboard";
+$home_active    = "active";
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-100">
@@ -36,8 +30,9 @@ $page = "dashboard";
             </div>
 
             <div class="row patient_body">
-                <?php include("components/nav_patients.php") ?>
-                <div class="patient_details col-md-8 none_selected bg-light rounded">
+                <div id="patient_list" class="col-md-4">
+                </div>
+                <div id="patient_details" class="col-md-8 none_selected bg-light rounded">
                     <h1>No Patient Selected</h1>
                 </div>
             </div>
@@ -49,20 +44,9 @@ $page = "dashboard";
 </html>
 <script>
 $(document).ready(function(){
-    var new_tree        = {};
-    var patient_list    = {};
-    var treatment_trees = {};
-    
     if(typeof(Storage) !== "undefined"){
         if(localStorage.getItem("patient_list")){
             patient_list    = JSON.parse(localStorage.getItem("patient_list"));
-
-            $("#patient_list").empty();
-            for(var patient_name in patient_list){
-                var newa    = $("<a>").attr("href","#").text(patient_name);
-                var newli   = $("<li>").append(newa);
-                $("#patient_list").append(newli);
-            }
         }
 
         if(localStorage.getItem("treatment_trees")){
@@ -80,30 +64,69 @@ $(document).ready(function(){
         // localStorage.removeItem("key");
         // localStorage.clear();
     }else{
-        alert("no local storage support");
+        console.log("no local storage support");
     }
 
-    $(".navbar-brand").click(function(){
-        console.log(patient_list);
-        console.log(treatment_trees);
-        return false;
-    });
-
-    $("#patient_list").on("click","a",function(e){
-        loadPatient(patient_list, $(this).text())
-        e.preventDefault();
-    });
-
     $("#clear_storage").click(function(){
-        $("#clear_patient").click();
-        $("#patient_list").empty().append($("<li>No saved patients.</li>"));
-        newTree();
-        patient_list = {};
-        treatment_trees = {};
         localStorage.clear();
         return;
     });
+
+    //some UI/UX 
+    $("#overview").on("click","h1", function(e){
+        e.preventDefault();
+        if($(this).parent().next().is(":visible")){
+            $(this).parent().next().slideUp("fast");
+        }else{
+            $(this).parent().next().slideDown("medium");
+        }
+    });
+
+    //make initial call to dashboard to grab data and draw out pertinent UI
+    var urls = {
+        "ajax_endpoint" : '<?=$module->getURL("pages/ajax_handler.php");?>'
+    };
+    var dash = new dashboard(urls);
 });
+function removeA(arr) {
+    var what, a = arguments, L = a.length, ax;
+    while (L > 1 && arr.length) {
+        what = a[--L];
+        while ((ax= arr.indexOf(what)) !== -1) {
+            arr.splice(ax, 1);
+        }
+    }
+    return arr;
+}
+function clear_elements(element, exception_classes) {
+  $(".hide").removeClass("hide");
+  $(".delete_this").remove();
 
-
+  element.find(':input').each(function() {
+    for(var i in exception_classes){
+        if($(this).attr("class") == exception_classes[i]){
+            return;
+        }
+    }
+    
+    switch(this.type) {
+        case 'password':
+        case 'text':
+        case 'textarea':
+        case 'file':
+        case 'select-one':
+        case 'select-multiple':
+        case 'date':
+        case 'number':
+        case 'tel':
+        case 'email':
+            $(this).val('');
+            break;
+        case 'checkbox':
+        case 'radio':
+            this.checked = false;
+            break;
+    }
+  });
+}
 </script>

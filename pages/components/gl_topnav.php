@@ -1,3 +1,8 @@
+<style>
+.nav-link.active{
+    color:#CDB03B;
+}
+</style>
 <header>
     <!-- Fixed navbar -->
     <nav class="navbar navbar-expand-md navbar-dark fixed-top">
@@ -7,9 +12,9 @@
             if(!in_array($page, array("login_reg","help","password_reset"))){
                 ?>
                 <ul class="nav justify-content-center align-baseline">
-                    <li class="nav-item"><a class="nav-link active" href="<?=$module->getUrl('pages/dashboard.php')?>">Home</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?=$module->getUrl('pages/tree_view.php')?>">Prescription Trees</a></li>
-                    <li class="nav-item"><a class="nav-link" href="<?=$module->getUrl('pages/help.php')?>">Support</a></li>
+                    <li class="nav-item"><a class="nav-link <?= $home_active ?>" href="<?=$module->getUrl('pages/dashboard.php')?>">Home</a></li>
+                    <li class="nav-item"><a class="nav-link <?= $tree_active ?>" href="<?=$module->getUrl('pages/tree_view.php')?>">Prescription Trees</a></li>
+                    <li class="nav-item"><a class="nav-link <?= $help_active ?>" href="<?=$module->getUrl('pages/help.php')?>">Support</a></li>
                 </ul>
                 <?php
                     $provider_full_name = $_SESSION["logged_in_user"]["provider_fname"] . " " . $_SESSION["logged_in_user"]["provider_mname"] . " " . $_SESSION["logged_in_user"]["provider_lname"];

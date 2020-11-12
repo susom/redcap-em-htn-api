@@ -104,13 +104,13 @@ class HTNdashboard {
             $patients[$result["record_id"]] = $result;
 
             if($result["filter"] == "rx_change"){
-                $rx_change[] = $i;
+                $rx_change[] = $result["record_id"];
             }
             if($result["filter"] == "results_needed"){
-                $results_needed[] = $i;
+                $results_needed[] = $result["record_id"];
             }
             if($result["filter"] == "data_needed"){
-                $data_needed[] = $i;
+                $data_needed[] = $result["record_id"];
             }
         }
 
