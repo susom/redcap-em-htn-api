@@ -16,6 +16,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	private $dashboard
 			,$tree;
 
+	public  $enabledProjects;
+
     public function __construct() {
 		parent::__construct();
 		// Other code to run when object is instantiated
@@ -38,6 +40,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	
 	//Load the pertinent EM stuff, as well as the broken off Classes for Dashboard and Tree
 	public function loadEM(){
+		$this->getEnabledProjects();
+
 		$this->dashboard 	= new \Stanford\HTNapi\HTNdashboard($this);
 		$this->tree			= new \Stanford\HTNapi\HTNtree($this);
 
@@ -58,15 +62,56 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		return $this->dashboard->getPatientDetails($record_id);
 	}
 
+	//Login Provider
+	public function loginProvider($login_email, $login_pw){
+		$this->loadEM();
 
+		return $this->dashboard->loginProvider($login_email, $login_pw);
+	}
 
+	//REgister PRovider
+	public function registerProvider($post){
+		$this->loadEM();
 
+		$this->dashboard->registerProvider($post);
+	}
 
+	/**
+     * Load all enabled projects with this EM
+     */
+    public function getEnabledProjects() {
+        $enabledProjects    = array();
+		$projects           = \ExternalModules\ExternalModules::getEnabledProjects($this->PREFIX);
+		
+        while($project = db_fetch_assoc($projects)){
+            $pid  = $project['project_id'];
+            $name = $project['name'];
+            $url  = APP_PATH_WEBROOT . 'ProjectSetup/index.php?pid=' . $project['project_id'];
+            $mode = $this->getProjectSetting("em-mode", $pid);
+            
+            $enabledProjects[$mode] = array(
+                'pid'   => $pid,
+                'name'  => $name,
+                'url'   => $url,
+                'mode'  => $mode
+            );
+            
+        }
 
+        $this->enabledProjects = $enabledProjects;
+        // $this->emDebug($this->enabledProjects, "Enabled Projects");
+    }
 
+	//show enabled projects
+	public function showEnabledProjects(){
+		return $this->enabledProjects;
+	}
 
+	public function addPatient($post){
+		$this->loadEM();
 
-
+		$this->dashboard->addPatient($post);
+	}
 
 
 
@@ -99,9 +144,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$subject 	= "HTN Study Needs Your Authorization";
 			$fromName	= "Stanford Hypertension Study Team";
 
-			
 			$result = \REDCap::email($to, $from, $subject, $message);
-			$this->emDebug("did it fucking send?", $result);
 		}
 		return $result;
 	}
@@ -319,6 +362,14 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 					);
 					$next_instance_id++;
 					$data[] = $temp;
+
+					//Im trying to save lives DAMNIT!
+					//If the reading timestamp is TODAY, then urgency is HIGH, email and text patient to Call 911
+					$bp_reading_today  	= date("Y-m-d", strtotime($reading["dateTime"]));
+					$todate 			= date("Y-m-d");
+					if($bp_reading_today == $todate && $bp_systolic > 180){
+						$this->contactPatient($record_id, "Warning : Abnormal Blood Pressure Reading Detected", "<p>We received your blood pressure cuff data from Omron.</p><p>The reading is at a dangerously high level : $bp_systolic/$bp_diastolic.</p><p>Please call 911 or Go to Urgent Care.</p>");
+					}
 				}
 			
 				$r = \REDCap::saveData('json', json_encode($data) );
@@ -329,6 +380,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 						//last bp_reading_ts from the foreach will be the paginating ts
 						$this->recurseSaveOmronApiData($omron_client_id, $bp_reading_ts, $token_details);
 					}else{
+						$this->emDebug("recurseSaveOmronApiData done, now evaluate the last 2 weeks data to see if need rx change");
+						$this->evaluateOmronBPavg($record_id);
 						return true;
 					}
 				}else{
@@ -337,6 +390,118 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				}
         	}
 		}
+	}
+
+	// When new data comes in. How should we evaluated if the patient needs a tree change recommendation?
+	public function evaluateOmronBPavg($record_id){
+		$control_condition = 1.6; //60%
+		
+		$params	= array(
+			'records' 		=> array($record_id),
+			'return_format' => 'json',
+			'fields'        => array("record_id", "patient_bp_target_systolic", "patient_bp_target_diastolic", "patient_bp_target_pulse","current_treatment_plan_id", "patient_treatment_status", "last_update_ts"),
+			'filterLogic' 	=> $filter
+		);
+		$q 			= \REDCap::getData($params);
+		$records	= json_decode($q, true);
+		$patient 	= current($records);
+
+		$target_pulse 		= $patient["patient_bp_target_pulse"];
+		$target_systolic 	= $patient["patient_bp_target_systolic"];
+		$target_diastolic 	= $patient["patient_bp_target_diastolic"];
+		$current_tree 		= $patient["current_treatment_plan_id"];
+		$current_step 		= $patient["patient_treatment_status"];
+
+		if(!empty($target_systolic) && !empty($target_diastolic) && !empty($target_pulse) ){
+			$filter = "[bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-1 weeks')) . "'";
+			$params	= array(
+				'records' 		=> array($record_id),
+				'return_format' => 'json',
+				'fields'        => array("record_id", "patient_bp_target_systolic", "patient_bp_target_diastolic", "patient_bp_target_pulse", "bp_reading_ts",  "omron_bp_id", "bp_systolic", "bp_diastolic", "bp_pulse"),
+				'filterLogic' 	=> $filter
+			);
+			$q 			= \REDCap::getData($params);
+			$records	= json_decode($q, true);
+
+			$systolic 	= array();
+			$diastolic 	= array();
+			$pulse 		= array();
+
+			foreach($records as $record){
+				if($record["redcap_repeat_instrument"] == "bp_readings_log"){
+					array_push($systolic, $record["bp_systolic"]);
+					array_push($diastolic, $record["bp_diastolic"]);
+					array_push($pulse, $record["bp_pulse"]);
+				}
+			}
+
+			$systolic_mean 	= round(array_sum($systolic)/count($systolic));
+			$diastolic_mean = round(array_sum($diastolic)/count($diastolic));
+			$pulse_mean 	= round(array_sum($pulse)/count($pulse));
+
+			$sys_uncontrolled = $systolic_mean > $target_systolic*$control_condition ? true : false;
+			$dia_uncontrolled = $diastolic_mean > $target_diastolic*$control_condition ? true : false;
+			$pls_uncontrolled = $pulse_mean > $target_pulse*$control_condition ? true : false;	
+			
+			if( ($sys_uncontrolled && $dia_uncontrolled && $pls_uncontrolled) || true ){
+				$this->emDebug("hahah rx change recommendation", $target_systolic*$control_condition, $target_diastolic*$control_condition, $target_pulse*$control_condition );
+				//TODO PULL IN TREE INFO AND SEE WHAT NEXT STEP IS FOR "uncontrolled"
+				$current_update_ts	= date("Y-m-d H:i:s");
+				$next_step_idx 		= 2;
+				$data = array(
+					"record_id"             	=> $record_id,
+					"patient_treatment_status" 	=> $next_step_idx,
+					"last_update_ts"			=> $current_update_ts,
+					"filter"      				=> "rx_change"
+				);
+				$r = \REDCap::saveData('json', json_encode(array($data)) );
+
+				$data = array(
+					"record_id"             	=> $record_id,
+					"redcap_repeat_instance" 	=> $next_step_idx,
+					"redcap_repeat_instrument" 	=> "treatment_status_log",
+
+					"treatment_status" 			=> $next_step_idx,
+					"treatment_status_ts"		=> $current_update_ts
+				);
+				$r = \REDCap::saveData('json', json_encode(array($data)) );
+			}
+		}
+	}
+
+	// contact patient by email / text if available
+	public function contactPatient($record_id, $subject, $msg){
+		$result = false;
+
+		$params	= array(
+			'records' 		=> array($record_id),
+			'return_format' => 'json',
+			'fields'        => array("patient_email", "patient_phone", "patient_fname")
+		);
+		$q 			= \REDCap::getData($params);
+		$records	= json_decode($q, true);
+		$patient    = current($records);
+
+		if(!empty($patient["patient_phone"])){
+			//TODO  SEND TWILIO SMS TO PATIENT PHONEWITH $msg only
+
+		}
+
+		if( !empty($patient["patient_email"]) ){
+			$msg_arr        = array();
+            $msg_arr[]      = "<p>Dear " . $patient["patient_fname"] . "</p>";
+            $msg_arr[]	    = $msg;
+			$msg_arr[]      = "<p>Stanford Hypertension Team</p>";
+			
+			$message 	= implode("\r\n", $msg_arr);
+			$to 		= $patient["patient_email"];
+			$from 		= "no-reply@stanford.edu";
+			$fromName	= "Stanford Hypertension Team";
+
+			$result = \REDCap::email($to, $from, $subject, $message);
+		}
+
+		return $result;
 	}
 
 	// get the next instance id (repeating) in bp_readings_log
@@ -367,6 +532,44 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		return array("used_bp_id" => $used_bp_id, "next_instance_id" => $last_instance_id);
 	}
 
+	// get the next instance id (repeating) in bp_readings_log
+	public function getNextInstanceId($record_id, $instrument, $fields){
+		$params	= array(
+			'return_format' => 'json',
+			'record_id'		=> $record_id,
+			'fields'        => $fields,
+            'filterLogic'   => $filter 
+		);
+
+        $q 					= \REDCap::getData($params);
+		$records 			= json_decode($q, true);
+		$last_instance_id 	= count($records);
+		$last_instance_id++;
+
+		return $last_instance_id;
+	}
+
+
+	/**
+     * GET Next available RecordId in a project
+     * @return bool
+     */
+    public function getNextAvailableRecordId($pid=PROJECT_ID){
+        $pro                = new \Project($pid);
+        $primary_record_var = $pro->table_pk;
+
+        $q          = \REDCap::getData($pid, 'json', null, $primary_record_var );
+        $results    = json_decode($q,true);
+        if(empty($results)){
+            $next_id = 1;
+        }else{
+            $last_entry = array_pop($results);
+            $next_id    = $last_entry[$primary_record_var] + 1;
+        }
+
+        return $next_id;
+	}
+	
 	// revoke omron access or refresh (why?) token, no return only 200 no matter what
 	public function revokeToken($token_to_revoke, $refresh=false){
 		$client_id      	= $this->getProjectSetting("omron-client-id");
@@ -509,8 +712,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	public function htnAPICron(){
 		$projects 	= $this->framework->getProjectsWithModuleEnabled();
 		$urls 		= array(
-						$this->getUrl('pages/refresh_omron_tokens.php', true)
-						,$this->getUrl('pages/daily_omron_data_pull.php', true)
+						$this->getUrl('cron/refresh_omron_tokens.php', true)
+						,$this->getUrl('cron/daily_omron_data_pull.php', true)
 					); //has to be page
 		foreach($projects as $index => $project_id){
 			foreach($urls as $url){

@@ -2,6 +2,8 @@
 namespace Stanford\HTNapi;
 /** @var \Stanford\HTNapi\HTNapi $module */
 
+include("components/gl_checklogin.php");
+
 $page           = "dashboard";
 $home_active    = "active";
 ?>

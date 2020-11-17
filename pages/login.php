@@ -1,17 +1,16 @@
 <?php
-namespace Stanford\HTNtree;
-/** @var \Stanford\HTNtree\HTNtree $module */
+namespace Stanford\HTNapi;
+/** @var \Stanford\HTNapi\HTNapi $module */
 
-$_SESSION["testing_session"] = "entered login";
-$module->emDebug("testing session", $_SESSION["testing_session"]);
 if(isset($_POST["action"])){
     $action = $_POST["action"];
 
     switch($action){
         case "login_provider":
             $login_email    = strtolower(trim(filter_var($_POST["login_email"], FILTER_SANITIZE_STRING)));
-            $login_pw       = strtolower(trim(filter_var($_POST["login_pw"], FILTER_SANITIZE_STRING)));  
+            $login_pw       = strtolower(trim(filter_var($_POST["login_pw"], FILTER_SANITIZE_STRING)));
             $verify         = $module->loginProvider($login_email, $login_pw);
+            $module->emDebug($login_email, $login_pw);
             if($verify){
                 header("Location: " . $module->getUrl("pages/dashboard.php"));
                 exit;

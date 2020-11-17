@@ -1,13 +1,13 @@
 <?php
-namespace Stanford\HTNtree;
-/** @var \Stanford\HTNtree\HTNtree $module */
+namespace Stanford\HTNapi;
+/** @var \Stanford\HTNapi\HTNapi $module */
+
 if(isset($_POST["action"])){
     $action = $_POST["action"];
 
     switch($action){
         case "register_provider": 
-            //TODO THIS IS JUST A PROTOTYPE, WILL NEED CLEANING UP
-            $account_created = $module->registerProvider();
+            $account_created = $module->registerProvider($_POST);
             if(empty($account_created["errors"])){
                 header("Location: " . $module->getUrl("pages/dashboard.php"));
                 exit;
@@ -174,17 +174,16 @@ $page = "login_reg";
                             <div class="form-group">
                                 <label for="exampleInputEmail1 d-block ">Email Address</label>
                                 <div class='row'>
-                                    <input type="text" class="form-control col-md-8 ml-3" id="exampleInputEmail1" > <button class='btn btn-info btn-sm col-md-2 ml-3'>Add +</button>
+                                    <input type="text" class="form-control col-md-8 ml-3" id="exampleInputEmail1" > <button id="add_people" class='btn btn-info btn-sm col-md-2 ml-3'>Add +</button>
                                 </div>
                             </div>
 
-                            <div class="form-group ">
+                            <div class="form-group" >
                                 <label for="exampleInputEmail1">Selected Personnel<span>*</span></label>
-                                <!-- <input type="text" class="form-control" disabled> -->
                             </div>
-                            <!-- <div class="form-group ">
-                                <input type="text" class="form-control" disabled>
-                            </div> -->
+                            <div class="delegates">
+                                
+                            </div>
                         </aside>
 
                         <div class="btns pt-4 pb-4">
@@ -201,85 +200,22 @@ $page = "login_reg";
 </body>
 </html>
 <script>
-$(document).ready(function(){
-    var new_tree        = {};
-    var patient_list    = {};
-    var treatment_trees = {};
-    
-    if(typeof(Storage) !== "undefined"){
-        if(localStorage.getItem("patient_list")){
-            patient_list    = JSON.parse(localStorage.getItem("patient_list"));
+$(document).ready(function(e){
+    $("#add_people").click(function(e){
+        e.preventDefault();
+        var new_email = $("#exampleInputEmail1").val();
 
-            $("#patient_list").empty();
-            for(var patient_name in patient_list){
-                var newa    = $("<a>").attr("href","#").text(patient_name);
-                var newli   = $("<li>").append(newa);
-                $("#patient_list").append(newli);
-            }
+        if(new_email != ""){
+            $("#exampleInputEmail1").val("");
+            var new_delegate = $(delegate);
+            new_delegate.find("input").val(new_email);
+            $(".delegates").append(new_delegate);
         }
-
-        if(localStorage.getItem("treatment_trees")){
-            treatment_trees = JSON.parse(localStorage.getItem("treatment_trees"));
-
-            $("#view_tree option:not(:first-child),#patient_tree option:not(:first-child)").remove();
-            for(var treatment_name in treatment_trees){
-                var newopt  = $("<option>").val(treatment_name).text(treatment_name);
-                $("#view_tree").append(newopt);
-                $("#patient_tree").append(newopt.clone());
-            }
-        }
-        
-        // localStorage.setItem("key",JSON.stringify(OB));
-        // localStorage.removeItem("key");
-        // localStorage.clear();
-    }else{
-        alert("no local storage support");
-    }
-
-    $("#clear_storage").click(function(){
-        $("#clear_patient").click();
-        $("#patient_list").empty().append($("<li>No saved patients.</li>"));
-        newTree();
-        patient_list = {};
-        treatment_trees = {};
-        localStorage.clear();
-        return;
     });
-    
-    $(":input").change(function(){
-        console.log($(this).attr("name"));
-    })
+
+    $(".delegates").on("click",".remove_delegate", function(e){
+        e.preventDefault();
+        $(this).closest(".form-group").fadeOut("medium");
+    });
 });
-
-function clear_elements(element, exception_classes) {
-  $(".hide").removeClass("hide");
-  $(".delete_this").remove();
-
-  element.find(':input').each(function() {
-    for(var i in exception_classes){
-        if($(this).attr("class") == exception_classes[i]){
-            return;
-        }
-    }
-    
-    switch(this.type) {
-        case 'password':
-        case 'text':
-        case 'textarea':
-        case 'file':
-        case 'select-one':
-        case 'select-multiple':
-        case 'date':
-        case 'number':
-        case 'tel':
-        case 'email':
-            $(this).val('');
-            break;
-        case 'checkbox':
-        case 'radio':
-            this.checked = false;
-            break;
-    }
-  });
-}
 </script>

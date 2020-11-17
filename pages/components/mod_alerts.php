@@ -47,11 +47,14 @@ $(document).ready(function(){
             dataType: 'json'
         }).done(function (result) {
             if(!result.errors.length){
+                var current_alerts_count = $("#filters .alerts .stat i").text();
+                $("#filters .alerts .stat i").text(current_alerts_count - $("#alerts_tbody input:checked").length) ; 
+
                 $("#alerts_tbody input:checked").each(function(){
                     $(this).parents("tr").slideUp("slow", function(){
                         $(this).remove();
                     });
-                })
+                });
             }else{
                 alert("error, could not mark as read");
             }

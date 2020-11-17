@@ -249,6 +249,13 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         tpl.find(".demographic").text(patient["patient_group"]);
         tpl.find(".comorbidity").text(patient["comorbidity"]);
         
+        // TODO ADD this to return results
+        // tpl.find(".ckd").text(patient["ckd"]);
+        // tpl.find(".cr").text(patient["cr"]);
+        // tpl.find(".k").text(patient["k"]);
+        // tpl.find(".egfr").text(patient["egfr"]);
+
+
         var cuff_type = "Omron Hema 9200";
         if(patient["omron_client_id"] == ""){
             var emaillink = $("<i>").text("Request Data Authorization");
@@ -275,7 +282,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             
             cuff_type = emaillink;
         }
-        tpl.find(".bp_cuff_type").html(cuff_type);
+        tpl.find(".patient_status").html(cuff_type);
 
         tpl.find(".planning_pregnancy").text(patient["planning_pregnancy"]);
         tpl.find(".pharmacy_info").text(patient["pharmacy_info"]);
@@ -284,7 +291,6 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         tpl.find(".systolic_goal span").text(patient["patient_bp_target_systolic"]);
         tpl.find(".diastolic_goal span").text(patient["patient_bp_target_diastolic"]);
 
-        tpl.find(".patient_status span").text("high");
         tpl.find(".patient_profile img").attr("src",this.anon_profile_src);
         tpl.find(".patient_profile figcaption").text(patient["patient_fname"] + " " + patient["patient_mname"] + " " + patient["patient_lname"]);
         
@@ -298,6 +304,13 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             $("."+tab).show();
     
             return false;
+        });
+
+        tpl.find(".edit_patient").click(function(e){
+            e.preventDefault();
+
+            console.log("change out flip all of displayPaientDetail to ... editPatientDetail... same as patient detail without the recommendation tab");
+
         });
     }else{
         $("#patient_details").addClass("none_selected").addClass("bg-light").addClass("rounded");

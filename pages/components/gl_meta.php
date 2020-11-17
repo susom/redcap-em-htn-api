@@ -34,4 +34,8 @@
         cursor:pointer;
         padding-left:25px;
     }
+    .edit_patient{
+        background:url(<?= $module->getUrl('assets/images/icon_edit.png') ?>) no-repeat;
+        background-size:20px 20px;
+    }
 </style>

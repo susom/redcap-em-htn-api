@@ -19,9 +19,9 @@ class HTNdashboard {
         $this->module = $module;
 
         // Fill some class vars
-        $this->pepper = $module->getProjectSetting(self::PEPPER);
-        $this->getEnabledProjects();
-        foreach($this->enabledProjects as $project){
+        $this->pepper       = $this->module->getProjectSetting(self::PEPPER);
+        $enabledProjects    = $this->module->showEnabledProjects();
+        foreach($enabledProjects as $project){
             $pid            = $project["pid"];
             $project_mode   = $project["mode"];
             switch($project_mode){
@@ -44,25 +44,7 @@ class HTNdashboard {
         }
     }
 
-    public function getEnabledProjects(){
-        $enabledProjects    = array();
-        $projects           = \ExternalModules\ExternalModules::getEnabledProjects($this->PREFIX);
-        while($project = db_fetch_assoc($projects)){
-            $pid  = $project['project_id'];
-            $name = $project['name'];
-            $url  = APP_PATH_WEBROOT . 'ProjectSetup/index.php?pid=' . $project['project_id'];
-            $mode = $this->module->getProjectSetting(self::EM_MODE, $pid);
-            
-            $enabledProjects[$mode] = array(
-                'pid'   => $pid,
-                'name'  => $name,
-                'url'   => $url,
-                'mode'  => $mode
-            );
-            
-        }
-        $this->enabledProjects = $enabledProjects;
-    }
+   
 
     public function getAllPatients(){
         $params     = array(
@@ -179,6 +161,15 @@ class HTNdashboard {
         
             $result["patient_age"]          = "$years yrs old";
             $result["planning_pregnancy"]   = $result["planning_pregnancy"] == "1" ? "Yes" : "No";
+            
+            // $params = array(
+            //     "records"       => $record_id,
+            //     "fields"        => array("omron_bp_id", "bp_reading_ts", "bp_systolic", "bp_diastolic", "bp_units", "bp_pulse", "bp_pulse_units", "bp_device_type"),
+            //     "return_format" => 'json'
+            // );
+            // $raw        = \REDCap::getData($params);
+            // $bp_results = json_decode($raw,1);
+            // $this->emDebug("bp_results", $bp_results);
         }
         return $result;
     }
@@ -232,7 +223,7 @@ class HTNdashboard {
 
             if($this->pwVerify($input, $db_pw_hash)){
                 $_SESSION["logged_in_user"] = $result;
-                $this->module->emDebug("logged in", $result);
+                $this->module->emDebug("wait what the fuck logged in", $result);
                 return true;
             }else{
                 return false;
@@ -242,9 +233,10 @@ class HTNdashboard {
         }
     }
 
-    public function registerProvider(){
-        $this->module->emDebug("post", $_POST);
+    public function registerProvider($post){
+        // $this->module->emDebug("post", $post);
 
+        $_POST          = $post;
         $dict           = $this->getProjectDictionary($this->providers_project);
         $dict_keys      = array_keys($dict);
 
@@ -308,33 +300,61 @@ class HTNdashboard {
                     $data[$key] = $post_val;
                 }
             }
-            $data["record_id"]  = $this->getNextAvailableRecordId($this->providers_project);
-            $this->module->emDebug("register", $data);
+            $record_id          = $this->module->getNextAvailableRecordId($this->providers_project);
+            $data["record_id"]  = $record_id;
+
+            $instance_data      = array();
+            $next_instance_id   = $this->module->getNextInstanceId($record_id, "provider_delegates", array("provider_delegate"));
+            if(!empty($post["delegates"])){
+                foreach($post["delegates"] as $delegate){
+                    $temp                               = array();
+                    $temp["redcap_repeat_instance"]     = $next_instance_id;
+                    $temp["redcap_repeat_instrument"]   = "provider_delegates";
+                    $temp["provider_delegate"]          = $delegate;
+                    $temp["record_id"]                  = $record_id;
+                    
+                    
+                    $next_instance_id++;
+                    $instance_data[] = $temp;
+                }
+            }
 
             $r  = \REDCap::saveData($this->providers_project, 'json', json_encode(array($data)) );
+            $i  = \REDCap::saveData($this->providers_project, 'json', json_encode($instance_data) );
+            if(empty($r["errors"])){
+                $this->loginProvider($provider_email, $provider_pw);
+            }   
             return $r;
         }
     }
 
-    /**
-     * GET Next available RecordId in a project
-     * @return bool
-     */
-    public function getNextAvailableRecordId($pid=PROJECT_ID){
-        $pro                = new \Project($pid);
-        $primary_record_var = $pro->table_pk;
-
-        $q          = \REDCap::getData($pid, 'json', null, $primary_record_var );
-        $results    = json_decode($q,true);
-        if(empty($results)){
-            $next_id = 1;
-        }else{
-            $last_entry = array_pop($results);
-            $next_id    = $last_entry[$primary_record_var] + 1;
+    public function addPatient($post){
+        $script_fieldnames = \REDCap::getFieldNames("patient_baseline");
+        $data = array();
+        foreach($post as $rc_var => $rc_val){
+            if( !in_array($rc_var, $script_fieldnames) ){
+                continue;
+            }
+            if($rc_var == "patient_birthday"){
+                $rc_val = Date("Y-m-d", strtotime($rc_val));
+            }
+            $data[$rc_var] = $rc_val;
         }
+        $data["patient_physician_id"]       = $_SESSION["logged_in_user"]["record_id"];
+        $data["patient_treatment_status"]   = 1;
 
-        return $next_id;
+        $next_id            = $this->module->getNextAvailableRecordId($this->patients_project);
+        $data["record_id"]  = $next_id;
+
+        $r    = \REDCap::saveData('json', json_encode(array($data)) );
+        $this->module->emDebug("ahha", $data);
+        return $r;
     }
+
+
+
+
+
 
     private function pwHash($pw_input, $cost=12){
         $pw_hash = password_hash($pw_input, PASSWORD_BCRYPT, array('cost'=>$cost));

@@ -345,12 +345,12 @@ var patient_details = `
     <div class="bg-light rounded-right rounded-bottom rounded-left p-3 profile panels row">
         <div class="patient_detail col-md-12">
             <div class="patient_name mb-5 pt-5">
-                <div class="patient_status float-left">Urgency: <b>High</b></div>
+                <div class="patient_status float-left"></div>
                 <fig class="patient_profile d-block text-center mx-auto">
                     <figure><img src='' class="rounded-circle"/></figure>
                     <figcaption class='h1'></figcaption>
                 </fig>
-                <a href="#" class="add_notes float-right">Add Notes</a>
+                <a href="#" class="edit_patient float-right">Edit</a>
             </div>
 
             <div class="patient_details row mb-5">
@@ -379,6 +379,10 @@ var patient_details = `
                     <dt class="d-inline-block">BMI</dt>
                     <dd class="d-inline-block bmi"></dd>
                     </dl>
+                    <dl class="mb-2">
+                    <dt class="d-inline-block">CKD</dt>
+                    <dd class="d-inline-block ckd"></dd>
+                    </dl>
                 </div>
                 <div class="col-md-7">
                     <dl class="mb-2">
@@ -390,8 +394,16 @@ var patient_details = `
                     <dd class="d-inline-block comorbidity"><?=$patient["comorbidity"]?></dd>
                     </dl>
                     <dl class="mb-2">
-                    <dt class="d-inline-block">BP Cuff Type</dt>
-                    <dd class="d-inline-block bp_cuff_type">Omron</dd>
+                    <dt class="d-inline-block">CR <i>mg/dl</i></dt>
+                    <dd class="d-inline-block cr">.15 <i>last updated 02/02/2020</i></dd>
+                    </dl>
+                    <dl class="mb-2">
+                    <dt class="d-inline-block">K <i>mmo/l</i></dt>
+                    <dd class="d-inline-block k">4.0 <i>last updated 02/02/2020</i></dd>
+                    </dl>
+                    <dl class="mb-2">
+                    <dt class="d-inline-block">Calculated EGFR</dt>
+                    <dd class="d-inline-block egfr">108</dd>
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">Planning Pregnancy</dt>
@@ -455,7 +467,6 @@ var patient_details = `
     <div class="bg-light rounded-right rounded-bottom rounded-left p-3 recommendation panels row">
         <div class="patient_detail mb-5 col-md-3">
             <div class="patient_name mb-4 pt-5">
-                <div class="patient_status float-left">Urgency: <b>High</b></div>
                 <fig class="patient_profile d-block text-center mx-auto">
                     <figure><img src='' class="rounded-circle"/></figure>
                     <figcaption class='h1'></figcaption>
@@ -494,53 +505,64 @@ var patient_details = `
                 <dt class="d-inline-block col-md-6">Demographic</dt>
                 <dd class="d-inline-block col-md-6 demographic"></dd>
                 </dl>
-                <dl class="mb-0 row">
-                <dt class="d-inline-block col-md-6">BP Cuff Type</dt>
-                <dd class="d-inline-block col-md-6 bp_cuff_type"></dd>
-                </dl>
+
                 <dl class="mb-0 row">
                 <dt class="d-inline-block col-md-6">Planning Pregnancy</dt>
                 <dd class="d-inline-block col-md-6 planning_pregnancy"></dd>
                 </dl>
-                <dl class="mb-0">
-                <dt class="d-inline-block">Pharmacy Info</dt>
-                <dd class="d-inline-block pharmacy_info"></dd>
+                <dl class="mb-0 row">
+                <dt class="d-inline-block col-md-6">Pharmacy Info</dt>
+                <dd class="d-inline-block col-md-6 pharmacy_info"></dd>
                 </dl>
             </div>
 
             <h4 class="pl-3">Recommendations</h4>
-            <div class="p-3 patient_data">
-                <section class="bp_threshold">
-                    <div class="row">
-                        <div class="change col-md-6">
-                            <h5>Recommended Change</h5>
-                            <h6>Lisinopril 20mg - HCTZ 25mg</h6>
-                        </div>
-                        <div class="accept col-md-6">
-                            <form>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="" checked id="defaultCheck1">
-                                    <label class="form-check-label" for="defaultCheck1">Accept</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
-                                    <label class="form-check-label" for="defaultCheck1">No Change</label>
-                                </div>
-                                <div class="btns pt-1 pb-3">
-                                    <a href='<?=$module->getURL("pages/view_tree.php")?>' class="btn btn-info btn-sm">View/Edit Prescription Tree</a>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="content bg-light p-3 rounded">
-                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. </p><p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-                    </div>
-                    <div class="btns pt-4 pb-2">
-                        <b class="mb-2">* NOTE: check lab test before proceeding</b>
-                        <button class="btn btn-info">Send to Pharmacist</button>
-                    </div>
-                </section>
+            <div id="recommendations">
+                <p class="p-3"><i>No current recommendations</i></p>
             </div>
+        </div>
+    </div>
+`;
+
+var recommendation = `
+    <div class="p-3 patient_data">
+    <section class="bp_threshold">
+        <div class="row">
+            <div class="change col-md-6">
+                <h5>Recommended Change</h5>
+                <h6>Lisinopril 20mg - HCTZ 25mg</h6>
+            </div>
+            <div class="accept col-md-6">
+                <form>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" checked id="defaultCheck1">
+                        <label class="form-check-label" for="defaultCheck1">Accept</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
+                        <label class="form-check-label" for="defaultCheck1">No Change</label>
+                    </div>
+                    <div class="btns pt-1 pb-3">
+                        <a href='<?=$module->getURL("pages/view_tree.php")?>' class="btn btn-info btn-sm">View/Edit Prescription Tree</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="content bg-light p-3 rounded">
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. </p><p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        </div>
+        <div class="btns pt-4 pb-2">
+            <b class="mb-2">* NOTE: check lab test before proceeding</b>
+            <button class="btn btn-info">Send to Pharmacist</button>
+        </div>
+    </section>
+    </div>
+`;
+
+var delegate = `
+    <div class="form-group ">
+        <div class="row">
+            <input type="text" class="form-control col-md-8 ml-3" name='delegates[]'> <button class='btn btn-info btn-sm col-md-2 ml-3 remove_delegate'>delete</button>
         </div>
     </div>
 `;

@@ -12,6 +12,7 @@ if(!empty($_POST)){
         break; 
 
         case "sendAuth":
+            //email patient a authorization request and link
             $patient  = $_POST["patient"] ?? null;
             $result = $module->emailOmronAuthRequest($patient);
         break;
