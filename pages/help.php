@@ -2,8 +2,12 @@
 namespace Stanford\HTNtree;
 /** @var \Stanford\HTNtree\HTNtree $module */
 
+include("components/gl_checklogin.php");
+
 $page       = "help";
 $showhide   = $page !== "dashboard" ? "hide" : "";
+
+$help_active    = "active";
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-100">

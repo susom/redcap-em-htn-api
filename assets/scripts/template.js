@@ -459,7 +459,7 @@ var patient_details = `
             <section class="data">
                 <h3 class="text-center p-3">Data</h3>
                 <div class="content rounded-bottom bg-light mh-10 mx-1">
-                    TBD
+                    <span></span>
                 </div>
             </section>
         </div>
@@ -543,7 +543,7 @@ var recommendation = `
                         <label class="form-check-label" for="defaultCheck1">No Change</label>
                     </div>
                     <div class="btns pt-1 pb-3">
-                        <a href='<?=$module->getURL("pages/view_tree.php")?>' class="btn btn-info btn-sm">View/Edit Prescription Tree</a>
+                        <a href='' class="btn btn-info btn-sm view_edit_tree">View/Edit Prescription Tree</a>
                     </div>
                 </form>
             </div>

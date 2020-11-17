@@ -64,15 +64,18 @@
 		"pages/redirect",
 		"pages/newdata_hook",
 		"pages/oauth",
+		"cron/daily_omron_data_pull",
+		
 
 		"pages/ajax_handler",
 		"pages/dashboard",
+		"pages/provider",
 		"pages/login",
 		"pages/registration",
 		"pages/help",
 		"pages/reset_password",
 		"pages/templates_select",
-		"pages/tree_view2",
+		"pages/tree_view",
 		"pages/treatment_plans",
 		"pages/refresh_session"
 

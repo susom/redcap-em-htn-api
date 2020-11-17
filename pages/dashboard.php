@@ -78,9 +78,11 @@ $(document).ready(function(){
     var urls = {
          "ajax_endpoint" : '<?=$module->getURL("pages/ajax_handler.php", true, true);?>'
         ,"anon_profile_src" : '<?=$module->getUrl('assets/images/icon_anon.gif')?>'
+        ,"ptree_url" : '<?=$module->getUrl('pages/tree_view.php', true, true)?>'
         
     };
-    var dash = new dashboard(urls);
+
+    var dash = new dashboard(<?=$_SESSION["logged_in_user"]["record_id"]?>,urls);
 });
 function removeA(arr) {
     var what, a = arguments, L = a.length, ax;

@@ -2,6 +2,11 @@
 namespace Stanford\HTNapi;
 /** @var \Stanford\HTNapi\HTNapi $module */
 
+if(!empty($_GET["logout"])){
+    session_start();
+    unset($_SESSION["logged_in_user"]);
+}
+
 if(isset($_POST["action"])){
     $action = $_POST["action"];
 
@@ -21,6 +26,8 @@ if(isset($_POST["action"])){
         break;
     }
 }
+
+
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-100">

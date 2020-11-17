@@ -46,10 +46,12 @@ class HTNdashboard {
 
    
 
-    public function getAllPatients(){
+    public function getAllPatients($provider_id){
+        $filter     = "[patient_physician_id] = '$provider_id'";
         $params     = array(
             "fields"        => array("record_id", "patient_fname", "patient_lname" , "patient_birthday", "sex", "patient_photo", "filter", "patient_message", "message_ts", "message_read"),
-            'return_format' => 'json'
+            'return_format' => 'json',
+            'filterLogic'   => $filter
         );
         $raw            = \REDCap::getData($params);
         $results        = json_decode($raw,1);
@@ -82,6 +84,18 @@ class HTNdashboard {
                 $messages[$message_ts][] = array("record_id" => $result["record_id"], "redcap_repeat_instance" => $result["redcap_repeat_instance"], "subject" => $result["patient_message"], "date" => date("M j", $message_ts) );
                 continue;
             }
+
+
+            $bp_filter  = "[omron_bp_id] != '' AND [bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-1 weeks')) . "'";
+            $bp_params  = array(
+                "records"       => array($result["record_id"]),
+                "fields"        => array("record_id", "omron_bp_id", "bp_reading_ts" , "bp_systolic", "bp_diastolic", "bp_pulse", "bp_device_type", "bp_units", "bp_pulse_units"),
+                'return_format' => 'json',
+                'filterLogic'   => $bp_filter
+            );
+            $bp_raw         = \REDCap::getData($bp_params);
+            $bp_results     = json_decode($bp_raw,1);
+            $result["bp_readings"] = $bp_results;
 
             $patients[$result["record_id"]] = $result;
 
@@ -162,14 +176,17 @@ class HTNdashboard {
             $result["patient_age"]          = "$years yrs old";
             $result["planning_pregnancy"]   = $result["planning_pregnancy"] == "1" ? "Yes" : "No";
             
-            // $params = array(
-            //     "records"       => $record_id,
-            //     "fields"        => array("omron_bp_id", "bp_reading_ts", "bp_systolic", "bp_diastolic", "bp_units", "bp_pulse", "bp_pulse_units", "bp_device_type"),
-            //     "return_format" => 'json'
-            // );
-            // $raw        = \REDCap::getData($params);
-            // $bp_results = json_decode($raw,1);
-            // $this->emDebug("bp_results", $bp_results);
+
+            $bp_filter  = "[omron_bp_id] != '' AND [bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-1 weeks')) . "'";
+            $bp_params  = array(
+                "records"       => array($result["record_id"]),
+                "fields"        => array("record_id", "omron_bp_id", "bp_reading_ts" , "bp_systolic", "bp_diastolic", "bp_pulse", "bp_device_type", "bp_units", "bp_pulse_units"),
+                'return_format' => 'json',
+                'filterLogic'   => $bp_filter
+            );
+            $bp_raw         = \REDCap::getData($bp_params);
+            $bp_results     = json_decode($bp_raw,1);
+            $result["bp_readings"] = $bp_results;
         }
         return $result;
     }

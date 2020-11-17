@@ -9,12 +9,12 @@
         <div class="container pt-3 pb-3">
             <a class="navbar-brand p-0 m-0" href="<?=$module->getUrl('pages/dashboard.php')?>" title="HeartEx">HeartEx®</a>
             <?php
-            if(!in_array($page, array("login_reg","help","password_reset"))){
+            if(!empty($_SESSION["logged_in_user"])){
                 ?>
                 <ul class="nav justify-content-center align-baseline">
-                    <li class="nav-item"><a class="nav-link <?= $home_active ?>" href="<?=$module->getUrl('pages/dashboard.php')?>">Home</a></li>
-                    <li class="nav-item"><a class="nav-link <?= $tree_active ?>" href="<?=$module->getUrl('pages/tree_view.php')?>">Prescription Trees</a></li>
-                    <li class="nav-item"><a class="nav-link <?= $help_active ?>" href="<?=$module->getUrl('pages/help.php')?>">Support</a></li>
+                    <li class="nav-item"><a class="nav-link <?= $home_active ?> home" href="<?=$module->getUrl('pages/dashboard.php')?>">Home</a></li>
+                    <li class="nav-item"><a class="nav-link <?= $tree_active ?> ptree" href="<?=$module->getUrl('pages/tree_view.php')?>">Prescription Trees</a></li>
+                    <li class="nav-item"><a class="nav-link <?= $help_active ?> help" href="<?=$module->getUrl('pages/help.php')?>">Support</a></li>
                 </ul>
                 <?php
                     $provider_full_name = $_SESSION["logged_in_user"]["provider_fname"] . " " . $_SESSION["logged_in_user"]["provider_mname"] . " " . $_SESSION["logged_in_user"]["provider_lname"];
@@ -22,7 +22,8 @@
                 <div class="dropdown align-baseline">
                     <button class="btn btn-secondary dropdown-toggle border-0" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><?=$provider_full_name?></button>
                     <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                        <a class="dropdown-item" href="<?=$module->getUrl('pages/login.php')?>">Logout</a>
+                        <a class="dropdown-item" href="<?=$module->getUrl('pages/provider.php',true,true)?>">Profile</a>
+                        <a class="dropdown-item" href="<?=$module->getUrl('pages/login.php',true,true)?>&logout=1">Logout</a>
                     </div>
                 </div>
                 <?php

@@ -65,8 +65,10 @@ if(!empty($_POST)){
         break;
 
         default:
+            $provider_id    = $_POST["record_id"];
+            
             //refresh dashboard INTF
-            $result = $module->dashBoardInterface();
+            $result         = $module->dashBoardInterface($provider_id );
         break;
     }
 

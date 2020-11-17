@@ -1,8 +1,9 @@
-function dashboard(urls){
+function dashboard(record_id,urls){
     for(var i in urls){
         this[i] = urls[i];
     }
 
+    this.provider       = record_id;
     this.patient_detail = {};
     this.state          = null;
     this.nav            = null;
@@ -30,12 +31,13 @@ function dashboard(urls){
     this.displayPatientDetail();
 }
 dashboard.prototype.refreshData = function(){
-    var _this = this;
+    var _this       = this;
+    var record_id   = this.provider;
     console.log("refresh session , pull new data from dashboard INTF");
     $.ajax({
         url : this["ajax_endpoint"],
         method: 'POST',
-        data: { "action" : "refresh" },
+        data: { "action" : "refresh" , "record_id" : record_id},
         dataType: 'json'
     }).done(function (result) {
         _this.intf = result;
@@ -308,10 +310,25 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
         tpl.find(".edit_patient").click(function(e){
             e.preventDefault();
-
             console.log("change out flip all of displayPaientDetail to ... editPatientDetail... same as patient detail without the recommendation tab");
-
         });
+
+ 
+        if(patient["bp_readings"].length){
+            var json_bp_readings = JSON.stringify(patient["bp_readings"]);
+            tpl.find("section.data span").text(json_bp_readings);
+        }
+
+        if(patient["filter"] == "rx_change"){
+            var rec = $(recommendation);
+            rec.on("click", ".view_edit_tree", function(e){
+                e.preventDefault();
+                location.href = _this["ptree_url"];
+            });
+            
+            tpl.find("#recommendations").empty();
+            tpl.find("#recommendations").append(rec);
+        }
     }else{
         $("#patient_details").addClass("none_selected").addClass("bg-light").addClass("rounded");
         var tpl = $("<h1>No Patient Selected</h1>");

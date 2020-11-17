@@ -49,10 +49,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	}
 
 	//Get All Patients
-	public function dashBoardInterface(){
+	public function dashBoardInterface($provider_id){
 		$this->loadEM();
 		
-		return $this->dashboard->getAllPatients();
+		return $this->dashboard->getAllPatients($provider_id);
 	}
 
 	//Get All Patients
@@ -111,6 +111,18 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$this->loadEM();
 
 		$this->dashboard->addPatient($post);
+	}
+
+	public function treeLogic($provider_id){
+		$this->loadEM();
+
+		return $this->tree->treeLogic($provider_id);
+	}
+
+	public function saveTemplate($provider_id, $post){
+		$this->loadEM();
+
+		$this->tree->saveTemplate($provider_id, $post);
 	}
 
 
@@ -445,6 +457,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			
 			if( ($sys_uncontrolled && $dia_uncontrolled && $pls_uncontrolled) || true ){
 				$this->emDebug("hahah rx change recommendation", $target_systolic*$control_condition, $target_diastolic*$control_condition, $target_pulse*$control_condition );
+				
 				//TODO PULL IN TREE INFO AND SEE WHAT NEXT STEP IS FOR "uncontrolled"
 				$current_update_ts	= date("Y-m-d H:i:s");
 				$next_step_idx 		= 2;

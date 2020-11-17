@@ -1,5 +1,7 @@
 function treeLogic(rawJson){
-    this.raw            = rawJson;
+    console.log(rawJson);
+    this.raw            = rawJson["logicTree"];
+    this.tplname        = rawJson["template_name"];
     this.steps          = {};
     this.step_order     = [0]; //gets set on init? only update when "makeCurrent()"
     this.display_order  = [0]; //gets set on init. update when "makeCurrent" with up to 3 previews. 
@@ -21,7 +23,16 @@ treeLogic.prototype.prepSteps = function(){
     return;
 }
 treeLogic.prototype.startAttachTree = function(){
+    if(!this.raw.length){
+        return;
+    }
+    console.log(this.tplname);
+    if(this.tplname != ""){
+        $(".template_name").text(this.tplname);
+    }
+
     //First display all the previous steps up to the current step.
+    $("#"+this.containerid).empty();
     var first_step  = true;
     var prev_step   = null;
     for(var i in this.step_order){
