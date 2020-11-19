@@ -1,9 +1,9 @@
 <?php
 namespace Stanford\HTNapi;
 
-include_once "emLoggerTrait.php";
-include_once 'HTNdashboard.php';
-include_once 'HTNtree.php';
+require_once( "emLoggerTrait.php" );
+require_once( 'HTNdashboard.php' );
+require_once( 'HTNtree.php' );
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);

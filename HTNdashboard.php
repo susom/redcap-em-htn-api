@@ -233,7 +233,7 @@ class HTNdashboard {
         if(!empty($results)){
             $result         = current($results);
             $db_pw_hash     = $result["provider_pw"];
-            $this->module->emDebug("verify pw",$pepper,  $input, $pw_hash, $db_pw_hash);
+            $this->module->emDebug("verify pw",  $input, $pw_hash, $db_pw_hash);
 
             if($this->pwVerify($input, $db_pw_hash)){
                 $_SESSION["logged_in_user"] = $result;

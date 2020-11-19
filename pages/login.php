@@ -16,6 +16,7 @@ if(isset($_POST["action"])){
             $login_pw       = strtolower(trim(filter_var($_POST["login_pw"], FILTER_SANITIZE_STRING)));
             $verify         = $module->loginProvider($login_email, $login_pw);
             if($verify){
+                $module->emDebug("yay i am logged in?");
                 header("Location: " . $module->getUrl("pages/dashboard.php", true, true));
                 exit;
             }else{
