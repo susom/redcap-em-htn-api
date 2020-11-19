@@ -3,7 +3,7 @@ namespace Stanford\HTNapi;
 
 include_once "emLoggerTrait.php";
 include_once 'HTNdashboard.php';
-include_once 'HTNTree.php';
+include_once 'HTNtree.php';
 
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
@@ -43,7 +43,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$this->getEnabledProjects();
 
 		$this->dashboard 	= new \Stanford\HTNapi\HTNdashboard($this);
-		$this->tree			= new \Stanford\HTNapi\HTNtree($this);
+		// $this->tree			= new \Stanford\HTNapi\HTNtree($this);
 
 		// what else?  API stuff?
 	}

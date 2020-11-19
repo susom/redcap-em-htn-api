@@ -44,8 +44,6 @@ class HTNdashboard {
         }
     }
 
-   
-
     public function getAllPatients($provider_id){
         $filter     = "[patient_physician_id] = '$provider_id'";
         $params     = array(
@@ -384,3 +382,4 @@ class HTNdashboard {
         }
     }
 }
+?>

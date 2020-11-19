@@ -227,9 +227,6 @@ class HTNtree  {
         return $response;
     }
 
-
-
-
     public function saveTemplate($provider_id, $post){
         $next_id    = !empty($post["record_id"]) ? $post["record_id"] : $this->module->getNextAvailableRecordId($this->tree_templates_project);
         $data       = array(
@@ -1587,5 +1584,7 @@ class HTNtree  {
 
         return array( "template_name" => $provider_tree["template_name"] , "logicTree" => $logicTree);
     }
-    
 }
+
+
+?>
