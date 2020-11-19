@@ -15,9 +15,8 @@ if(isset($_POST["action"])){
             $login_email    = strtolower(trim(filter_var($_POST["login_email"], FILTER_SANITIZE_STRING)));
             $login_pw       = strtolower(trim(filter_var($_POST["login_pw"], FILTER_SANITIZE_STRING)));
             $verify         = $module->loginProvider($login_email, $login_pw);
-            $module->emDebug($login_email, $login_pw);
             if($verify){
-                header("Location: " . $module->getUrl("pages/dashboard.php"));
+                header("Location: " . $module->getUrl("pages/dashboard.php", true, true));
                 exit;
             }else{
                 $module->emDebug("not verified!");
