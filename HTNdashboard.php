@@ -42,8 +42,6 @@ class HTNdashboard {
                 break;
             }
         }
-
-        $this->module->emDebug("so this works but not htntree?", $enabledProjects, $this->providers_project);
     }
 
    
@@ -233,7 +231,6 @@ class HTNdashboard {
         $raw        = \REDCap::getData($params);
         $results    = json_decode($raw,1);
 
-        $this->module->emDebug("what the hell manchecking email", $params, $salt, $input, $pw_hash, $raw);
         $errors     = array();
         if(!empty($results)){
             $result         = current($results);
