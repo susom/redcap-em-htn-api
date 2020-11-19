@@ -43,7 +43,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$this->getEnabledProjects();
 
 		$this->dashboard 	= new \Stanford\HTNapi\HTNdashboard($this);
-		$this->tree			= new \Stanford\HTNapi\HTNtree($this);
+		// $this->tree			= new \Stanford\HTNapi\HTNtree($this);
 
 		// what else?  API stuff?
 	}
