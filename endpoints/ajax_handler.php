@@ -65,7 +65,9 @@ if(!empty($_POST)){
         break;
 
         default:
-            $provider_id    = $_POST["record_id"];
+            $module->emDebug("refreshing session?", $_SESSION);
+            $_SESSION['logged_in_user'] = $_SESSION['logged_in_user'];
+            $provider_id                = $_POST["record_id"];
             
             //refresh dashboard INTF
             $result         = $module->dashBoardInterface($provider_id );

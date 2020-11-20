@@ -141,7 +141,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	//get oauthURL to presetn to Patient
 	public function emailOmronAuthRequest($patient){
 		$result = false;
-		if( !empty($patient) && isset($patient["record_id"]) && (isset($patient["patient_email"]) || isset($patient["patient_email"])) ){
+		if( !empty($patient) && isset($patient["record_id"]) && isset($patient["patient_email"]) ){
 			$auth_link 		= $this->getOAUTHurl($patient["record_id"]);
 
 			$msg_arr        = array();

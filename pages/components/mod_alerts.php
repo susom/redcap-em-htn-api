@@ -38,7 +38,7 @@ $(document).ready(function(){
         });
 
         $.ajax({
-            url: '<?=$module->getURL("pages/ajax_handler.php");?>',
+            url: '<?=$module->getURL("endpoints/ajax_handler.php");?>',
             method: 'POST',
             data: {
                     "action"    : "markAlertRead",

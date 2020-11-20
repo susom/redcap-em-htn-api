@@ -61,24 +61,23 @@
 	},
 
 	"no-auth-pages": [
-		"pages/redirect",
-		"pages/newdata_hook",
-		"pages/oauth",
-		"cron/daily_omron_data_pull",
-		
+		"endpoints/ajax_handler",
+		"endpoints/newdata_hook",
+		"endpoints/oauth_postback",
 
-		"pages/ajax_handler",
+		"cron/daily_omron_data_pull",
+		"cron/refresh_omron_tokens",
+
+		"pages/oauth",
 		"pages/dashboard",
-		"pages/provider",
 		"pages/login",
 		"pages/registration",
 		"pages/help",
-		"pages/reset_password",
 		"pages/templates_select",
 		"pages/tree_view",
-		"pages/treatment_plans",
-		"pages/refresh_session"
-
+		"pages/provider",
+		"pages/reset_password",
+		"pages/treatment_plans"
 	],
 
 	"project-settings": [

@@ -76,7 +76,7 @@ $(document).ready(function(){
 
     //make initial call to dashboard to grab data and draw out pertinent UI
     var urls = {
-         "ajax_endpoint" : '<?=$module->getURL("pages/ajax_handler.php", true, true);?>'
+         "ajax_endpoint" : '<?=$module->getURL("endpoints/ajax_handler.php", true, true);?>'
         ,"anon_profile_src" : '<?=$module->getUrl('assets/images/icon_anon.gif')?>'
         ,"ptree_url" : '<?=$module->getUrl('pages/tree_view.php', true, true)?>'
         

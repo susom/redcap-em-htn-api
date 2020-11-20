@@ -271,6 +271,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                     data: { "action" : "sendAuth", "patient" : patient},
                     dataType: 'json'
                 }).done(function (result) {
+                    console.log("whats wrong now?", result);
                     if(result){
                         _el.addClass("sent");
                         _el.text("Authorization Request Sent");
