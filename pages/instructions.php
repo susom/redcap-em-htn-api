@@ -25,3 +25,6 @@ require_once APP_PATH_DOCROOT . 'ProjectGeneral/header.php';
 <pre style="width:80%;">
 <?= $module->getUrl("endpoints/newdata_hook.php",true, true) ?>
 </pre>
+
+
+<h3>Supporting REDCap projects</h3>
