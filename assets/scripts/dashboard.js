@@ -79,7 +79,7 @@ dashboard.prototype.updateOverview = function(){
             $("#alerts").slideDown("medium");
         }
     });
-    $("#filters").append(tpl);
+    // $("#filters").append(tpl);
 
     //rx_change
     var tpl = $(overview_filter);

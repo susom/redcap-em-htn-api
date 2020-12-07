@@ -405,6 +405,13 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	}
 
 	// When new data comes in. How should we evaluated if the patient needs a tree change recommendation?
+	// TODO 12/1/2020 only evaluate minimum 2 weeks after a prescription change or start of treatment
+	// NEED TO PROMPT FOR CR & K readings FROM PROVIDER  BEFORE MAKING RX CHANGE ASSESTMENT if not within last 2 weeks.
+
+	/*
+	
+
+	*/
 	public function evaluateOmronBPavg($record_id){
 		$control_condition = 1.6; //60%
 		
@@ -425,7 +432,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$current_step 		= $patient["patient_treatment_status"];
 
 		if(!empty($target_systolic) && !empty($target_diastolic) && !empty($target_pulse) ){
-			$filter = "[bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-1 weeks')) . "'";
+			$filter = "[bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-2 weeks')) . "'";
 			$params	= array(
 				'records' 		=> array($record_id),
 				'return_format' => 'json',
@@ -439,21 +446,22 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$diastolic 	= array();
 			$pulse 		= array();
 
-			foreach($records as $record){
-				if($record["redcap_repeat_instrument"] == "bp_readings_log"){
-					array_push($systolic, $record["bp_systolic"]);
-					array_push($diastolic, $record["bp_diastolic"]);
-					array_push($pulse, $record["bp_pulse"]);
-				}
+		//TODO 12/1/2020 : rEDO eval logic against target COMPARE individual readings in the last 2 weeks vs goals 
+		foreach($records as $record){
+			if($record["redcap_repeat_instrument"] == "bp_readings_log"){
+				array_push($systolic, $record["bp_systolic"]);
+				array_push($diastolic, $record["bp_diastolic"]);
+				array_push($pulse, $record["bp_pulse"]);
 			}
+		}
 
-			$systolic_mean 	= round(array_sum($systolic)/count($systolic));
-			$diastolic_mean = round(array_sum($diastolic)/count($diastolic));
-			$pulse_mean 	= round(array_sum($pulse)/count($pulse));
+		$systolic_mean 	= round(array_sum($systolic)/count($systolic));
+		$diastolic_mean = round(array_sum($diastolic)/count($diastolic));
+		$pulse_mean 	= round(array_sum($pulse)/count($pulse));
 
-			$sys_uncontrolled = $systolic_mean > $target_systolic*$control_condition ? true : false;
-			$dia_uncontrolled = $diastolic_mean > $target_diastolic*$control_condition ? true : false;
-			$pls_uncontrolled = $pulse_mean > $target_pulse*$control_condition ? true : false;	
+		$sys_uncontrolled = $systolic_mean > $target_systolic*$control_condition ? true : false;
+		$dia_uncontrolled = $diastolic_mean > $target_diastolic*$control_condition ? true : false;
+		$pls_uncontrolled = $pulse_mean > $target_pulse*$control_condition ? true : false;	
 			
 			if( ($sys_uncontrolled && $dia_uncontrolled && $pls_uncontrolled) || true ){
 				$this->emDebug("hahah rx change recommendation", $target_systolic*$control_condition, $target_diastolic*$control_condition, $target_pulse*$control_condition );
