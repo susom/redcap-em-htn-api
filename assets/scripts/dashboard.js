@@ -322,6 +322,12 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
         if(patient["filter"] == "rx_change"){
             var rec = $(recommendation);
+
+            var patient_id          = record_id;  
+            var rec_tree_step_idx   = parseInt(this.patient_detail[patient_id]["patient_treatment_status"]) - 1;
+            var rec_drugs           = this.intf.ptree["logicTree"][rec_tree_step_idx]["drugs"].join(", ");
+            rec.find("h6").text(rec_drugs);
+
             rec.on("click", ".view_edit_tree", function(e){
                 e.preventDefault();
                 location.href = _this["ptree_url"];

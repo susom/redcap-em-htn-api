@@ -4,6 +4,10 @@ namespace Stanford\HTNapi;
 
 include("components/gl_checklogin.php");
 
+// $record_id = 1;
+// $module->evaluateOmronBPavg($record_id);
+// exit;
+
 $page           = "dashboard";
 $home_active    = "active";
 ?>

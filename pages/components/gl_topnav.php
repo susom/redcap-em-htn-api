@@ -13,7 +13,7 @@
                 ?>
                 <ul class="nav justify-content-center align-baseline">
                     <li class="nav-item"><a class="nav-link <?= $home_active ?> home" href="<?=$module->getUrl('pages/dashboard.php')?>">Home</a></li>
-                    <li class="nav-item"><a class="nav-link <?= $tree_active ?> ptree" href="<?=$module->getUrl('pages/tree_view.php')?>">Prescription Trees</a></li>
+                    <li class="nav-item"><a class="nav-link <?= $tree_active ?> ptree" href="<?=$module->getUrl('pages/tree_view.php')?>">Tree Templates</a></li>
                     <li class="nav-item"><a class="nav-link <?= $help_active ?> help" href="<?=$module->getUrl('pages/help.php')?>">Support</a></li>
                 </ul>
                 <?php

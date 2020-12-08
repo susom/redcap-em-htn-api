@@ -355,6 +355,9 @@ class HTNdashboard {
         }
         $data["patient_physician_id"]       = $_SESSION["logged_in_user"]["record_id"];
         $data["patient_treatment_status"]   = 1;
+        
+        //TODO how to pick template?
+        $data["current_treatment_plan_id"]  = 1;
 
         $next_id            = $this->module->getNextAvailableRecordId($this->patients_project);
         $data["record_id"]  = $next_id;

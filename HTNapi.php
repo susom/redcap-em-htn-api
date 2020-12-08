@@ -51,8 +51,12 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	//Get All Patients
 	public function dashBoardInterface($provider_id){
 		$this->loadEM();
+
+		$intf = $this->dashboard->getAllPatients($provider_id);
 		
-		return $this->dashboard->getAllPatients($provider_id);
+		//TODO ADD TREE ITSELF TO the INTF
+		$intf["ptree"] = $this->tree->treeLogic(1);
+		return $intf;
 	}
 
 	//Get All Patients
@@ -419,7 +423,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$params	= array(
 			'records' 		=> array($record_id),
 			'return_format' => 'json',
-			'fields'        => array("record_id", "patient_bp_target_systolic", "patient_bp_target_diastolic", "patient_bp_target_pulse","current_treatment_plan_id", "patient_treatment_status", "last_update_ts"),
+			'fields'        => array("record_id", "filter", "patient_bp_target_systolic", "patient_bp_target_diastolic", "patient_bp_target_pulse","current_treatment_plan_id", "patient_treatment_status", "last_update_ts"),
 			'filterLogic' 	=> $filter
 		);
 		$q 			= \REDCap::getData($params);
@@ -431,9 +435,13 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$target_diastolic 	= $patient["patient_bp_target_diastolic"];
 		$current_tree 		= $patient["current_treatment_plan_id"];
 		$current_step 		= $patient["patient_treatment_status"];
+		$dash_filter 		= json_decode($patient["filter"],1);
 
 		if(!empty($target_systolic) && !empty($target_diastolic) && !empty($target_pulse) ){
-			$filter = "[bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-2 weeks')) . "'";
+			$this->emDebug("target stats for sistolic, diastolic, pulse" ,$dash_filter,  $target_systolic, $target_diastolic, $target_pulse);
+
+			//TODO FIX THE FILTER!?
+			$filter = "[bp_reading_ts] > '" . date("n/j/y H:i", strtotime('-2 weeks')) . "'";
 			$params	= array(
 				'records' 		=> array($record_id),
 				'return_format' => 'json',
@@ -447,31 +455,36 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$diastolic 	= array();
 			$pulse 		= array();
 
-		//TODO 12/1/2020 : rEDO eval logic against target COMPARE individual readings in the last 2 weeks vs goals 
-		foreach($records as $record){
-			if($record["redcap_repeat_instrument"] == "bp_readings_log"){
-				array_push($systolic, $record["bp_systolic"]);
-				array_push($diastolic, $record["bp_diastolic"]);
-				array_push($pulse, $record["bp_pulse"]);
+			//TODO 12/1/2020 : rEDO eval logic against target COMPARE individual readings in the last 2 weeks vs goals 
+			foreach($records as $record){
+				if($record["redcap_repeat_instrument"] == "bp_readings_log"){
+					array_push($systolic, $record["bp_systolic"]);
+					array_push($diastolic, $record["bp_diastolic"]);
+					array_push($pulse, $record["bp_pulse"]);
+				}
 			}
-		}
 
-		$systolic_mean 	= round(array_sum($systolic)/count($systolic));
-		$diastolic_mean = round(array_sum($diastolic)/count($diastolic));
-		$pulse_mean 	= round(array_sum($pulse)/count($pulse));
+			$systolic_mean 	= round(array_sum($systolic)/count($systolic));
+			$diastolic_mean = round(array_sum($diastolic)/count($diastolic));
+			$pulse_mean 	= round(array_sum($pulse)/count($pulse));
 
-		$sys_uncontrolled = $systolic_mean > $target_systolic*$control_condition ? true : false;
-		$dia_uncontrolled = $diastolic_mean > $target_diastolic*$control_condition ? true : false;
-		$pls_uncontrolled = $pulse_mean > $target_pulse*$control_condition ? true : false;	
+			$this->emDebug("individual stats + mean for sis,dia,pulse" , $systolic, $systolic_mean, $diastolic, $diastolic_mean,  $pulse, $pulse_mean);
+
+			$sys_uncontrolled = $systolic_mean > $target_systolic ? true : false;
+			$dia_uncontrolled = $diastolic_mean > $target_diastolic ? true : false;
+			$pls_uncontrolled = $pulse_mean > $target_pulse ? true : false;	
 			
-			if($sys_uncontrolled){
-				$this->emDebug("hahah rx change recommendation", $target_systolic*$control_condition, $target_diastolic*$control_condition, $target_pulse*$control_condition );
+			$this->emDebug("sys_uncontrolled uncontrolled?" , $systolic_mean,  $target_systolic, $sys_uncontrolled);
+
+			if(!empty($systolic) && $sys_uncontrolled){
+				$this->emDebug("hahah rx change recommendation");
 				
 				//TODO PULL IN TREE INFO AND SEE WHAT NEXT STEP IS FOR "uncontrolled"
 				$current_update_ts	= date("Y-m-d H:i:s");
 				
+				// Recommended RX change
 				$next_step_idx 		= 2;
-				
+				$this->emDebug("current dash filter" , $dash_filter);
 				$data = array(
 					"record_id"             	=> $record_id,
 					"patient_treatment_status" 	=> $next_step_idx,
@@ -480,15 +493,15 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				);
 				$r = \REDCap::saveData('json', json_encode(array($data)) );
 
-				$data = array(
-					"record_id"             	=> $record_id,
-					"redcap_repeat_instance" 	=> $next_step_idx,
-					"redcap_repeat_instrument" 	=> "treatment_status_log",
-
-					"treatment_status" 			=> $next_step_idx,
-					"treatment_status_ts"		=> $current_update_ts
-				);
-				$r = \REDCap::saveData('json', json_encode(array($data)) );
+				// ONLY UPDATE THIS WHEN IT RXCHANGE ACTUALLY ACCEPTED
+				// $data = array(
+				// 	"record_id"             	=> $record_id,
+				// 	"redcap_repeat_instance" 	=> $next_step_idx,
+				// 	"redcap_repeat_instrument" 	=> "treatment_status_log",
+				// 	"treatment_status" 			=> $next_step_idx,
+				// 	"treatment_status_ts"		=> $current_update_ts
+				// );
+				// $r = \REDCap::saveData('json', json_encode(array($data)) );
 			}
 		}
 	}
