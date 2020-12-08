@@ -2,9 +2,6 @@
 namespace Stanford\HTNapi;
 /** @var \Stanford\HTNapi\HTNapi $module */
 
-$_POST["id"] ="af2fc6f3-3c34-4bb0-ae1d-be3270e1793c";
-$_POST["timestamp"] ="2020-11-13T10:29:46";
-
 // This needs to be whitelisted with OMRON dev, currently manual process. 
 if(!empty($_POST)){
     $module->emDebug("Ping to New Data Hook", $_POST);

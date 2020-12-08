@@ -306,6 +306,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$this->emDebug("Omron getTokenDetail() : Could not find Patient with omron_client_id = $omron_client_id");
 			return false;
 		}
+		$this->emDebug("found token details", $records);
 		return current($records);
 	}
 	
@@ -463,12 +464,14 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$dia_uncontrolled = $diastolic_mean > $target_diastolic*$control_condition ? true : false;
 		$pls_uncontrolled = $pulse_mean > $target_pulse*$control_condition ? true : false;	
 			
-			if( ($sys_uncontrolled && $dia_uncontrolled && $pls_uncontrolled) || true ){
+			if($sys_uncontrolled){
 				$this->emDebug("hahah rx change recommendation", $target_systolic*$control_condition, $target_diastolic*$control_condition, $target_pulse*$control_condition );
 				
 				//TODO PULL IN TREE INFO AND SEE WHAT NEXT STEP IS FOR "uncontrolled"
 				$current_update_ts	= date("Y-m-d H:i:s");
+				
 				$next_step_idx 		= 2;
+				
 				$data = array(
 					"record_id"             	=> $record_id,
 					"patient_treatment_status" 	=> $next_step_idx,
