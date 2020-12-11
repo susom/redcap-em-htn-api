@@ -11,7 +11,7 @@ $json = file_get_contents('php://input') ?? array();
 $data = json_decode($json, true);
 
 if(!empty($data)){
-    $module->emDebug("ah ha it came in raw");
+    // $module->emDebug("ah ha it came in raw");
     $_POST = $data;
 }
 
