@@ -426,7 +426,7 @@ var patient_details = `
             </section>
 
             <section class="presription_tree">
-                <h3 class="text-center p-3">Prescription Tree</h3>
+                <h3 class="text-center p-3">Prescription Log</h3>
                 <div class="content bg-light mh-10 mx-1">
                 TBD 
                 </div>
