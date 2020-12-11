@@ -332,7 +332,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		if(!empty($since_ts) || $first_pass){
 			//USING THE TOKEN , HIT OMRON API TO GET LATEST READINGS SINCE (hook timestamp?)
 			$adjusted_since_ts 	= date("Y-m-d", strtotime($since_ts .' -1 day'));
-			$this->emDebug("Since the newdata hook gets posted with THEIR server ts, but for some stupid reason, searches the data by LOCAL ts, to be safe I will adjust the ts - 1 day", $adjusted_since_ts);
+			// $this->emDebug("Since the newdata hook gets posted with THEIR server ts, but for some stupid reason, searches the data by LOCAL ts, to be safe I will adjust the ts - 1 day", $adjusted_since_ts);
 
 			$result             = $this->getOmronAPIData($omron_access_token, $omron_token_type, $adjusted_since_ts);
 			$api_data           = json_decode($result, true); 
@@ -340,9 +340,9 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$status             = $api_data["status"];
 			$truncated          = $api_data["result"]["truncated"];
 			$bp_readings        = $api_data["result"]["bloodPressure"];
-			$measuremnetCount   = $api_data["result"]["measurementCount"];
+			$measurementCount   = $api_data["result"]["measurementCount"];
 
-			$this->emDebug("in recurseSaveOmronApiData() here is API data since $since_ts", $api_data);
+			// $this->emDebug("in recurseSaveOmronApiData() here is API data since $since_ts", $api_data);
 			if($status == 0){
 				$bp_instance_data = $this->getBPInstanceData($record_id);
 				$next_instance_id = $bp_instance_data["next_instance_id"];
@@ -394,7 +394,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			
 				$r = \REDCap::saveData('json', json_encode($data) );
 				if(empty($r["errors"])){
-					$this->emDebug("Saved $measurementCount Omron BP readings for RC $record_id");
+					$readings_saved = count($r["ids"]);
+					$this->emDebug("Saved $readings_saved Omron BP readings for RC $record_id");
 					
 					if($truncated){
 						//last bp_reading_ts from the foreach will be the paginating ts
@@ -405,7 +406,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 						return true;
 					}
 				}else{
-					$this->emDebug("ERROR trying to save $measurementCount Omron BP readings for RC $record_id", $r["errrors"], $data);
+					$this->emDebug("ERROR trying to save $readings_saved Omron BP readings for RC $record_id", $r["errrors"], $data);
 					return false;
 				}
         	}
@@ -415,14 +416,13 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	// When new data comes in. How should we evaluated if the patient needs a tree change recommendation?
 	// TODO 12/1/2020 only evaluate minimum 2 weeks after a prescription change or start of treatment
 	// NEED TO PROMPT FOR CR & K readings FROM PROVIDER  BEFORE MAKING RX CHANGE ASSESTMENT if not within last 2 weeks.
-
-	/*
-	
-
-	*/
 	public function evaluateOmronBPavg($record_id){
+		$this->loadEM();
+
+		//TODO how to do this?
 		$control_condition = 1.6; //60%
 		
+		// GET patient BP data, current filter status, and 
 		$params	= array(
 			'records' 		=> array($record_id),
 			'return_format' => 'json',
@@ -436,11 +436,12 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$target_pulse 		= $patient["patient_bp_target_pulse"];
 		$target_systolic 	= $patient["patient_bp_target_systolic"];
 		$target_diastolic 	= $patient["patient_bp_target_diastolic"];
+		
 		$current_tree 		= $patient["current_treatment_plan_id"];
-		$current_step 		= $patient["patient_treatment_status"];
+		$current_step 		= $patient["patient_treatment_status"]; //current RECOMMENDED STEP
 		$dash_filter 		= json_decode($patient["filter"],1);
 
-		if(!empty($target_systolic) && !empty($target_diastolic) && !empty($target_pulse) ){
+		if(!empty($target_systolic)){
 			// $this->emDebug("target stats for sistolic, diastolic, pulse" ,$dash_filter,  $target_systolic, $target_diastolic, $target_pulse);
 
 			//TODO FIX THE FILTER!?
@@ -459,7 +460,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$pulse 		= array();
 
 			$this->emDebug("TODO will need to make sure not to eval if less than 2 weeks data?");
-			//TODO 12/1/2020 : rEDO eval logic against target COMPARE individual readings in the last 2 weeks vs goals 
+			//TODO 12/1/2020 : rEDO eval logic against target COMPARE individual readings in the last 2 weeks vs goals as long at 60% of them... wtf
+
 			foreach($records as $record){
 				if($record["redcap_repeat_instrument"] == "bp_readings_log"){
 					array_push($systolic, $record["bp_systolic"]);
@@ -474,25 +476,27 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 			// $this->emDebug("individual stats + mean for sis,dia,pulse" , $systolic, $systolic_mean, $diastolic, $diastolic_mean,  $pulse, $pulse_mean);
 
+			//TODO 
+			$this->emDebug("TODO, need a more granular evaluation for _uncontrolled");
 			$sys_uncontrolled = $systolic_mean > $target_systolic ? true : false;
 			$dia_uncontrolled = $diastolic_mean > $target_diastolic ? true : false;
 			$pls_uncontrolled = $pulse_mean > $target_pulse ? true : false;	
 			
-			$this->emDebug("sys_uncontrolled uncontrolled?" , $systolic_mean,  $target_systolic, $sys_uncontrolled);
-
+			$this->emDebug("systolic_mean / target_systolic / sys_uncontrolled / current step" ,$systolic, $systolic_mean,  $target_systolic, $sys_uncontrolled, $current_step);
+			$this->emDebug("current dash filter" , $dash_filter);
 			if(!empty($systolic) && $sys_uncontrolled){
-				$this->emDebug("hahah rx change recommendation");
+				$treelogic 				= $this->tree->treeLogic(1);
+				$current_tree_step 		= $treelogic["logicTree"][$current_step];
+				$uncontrolled_next_step = $current_tree_step["bp_status"]["Uncontrolled"];
+				$this->emDebug("rx change recommendation, Use current tree, find the uncontrolled next step", $current_tree_step, $treelogic["logicTree"][$uncontrolled_next_step]);
 				
 				//TODO PULL IN TREE INFO AND SEE WHAT NEXT STEP IS FOR "uncontrolled"
 				$current_update_ts	= date("Y-m-d H:i:s");
 				
 				// Recommended RX change
-				$next_step_idx 		= 2;
-				$this->emDebug("current dash filter" , $dash_filter);
-
 				$data = array(
 					"record_id"             	=> $record_id,
-					"patient_treatment_status" 	=> $next_step_idx,
+					"patient_rec_tree_step" 	=> $uncontrolled_next_step,
 					"last_update_ts"			=> $current_update_ts,
 					"filter"      				=> "rx_change"
 				);

@@ -258,7 +258,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         // tpl.find(".egfr").text(patient["egfr"]);
 
 
-        var cuff_type = "Omron Hema 9200";
+        var cuff_type = patient["bp_readings"].length ? "<b>" + patient["bp_readings"][0]["bp_device_type"] + "</b>" : "N/A";
         if(patient["omron_client_id"] == ""){
             var emaillink = $("<i>").text("Request Data Authorization");
             emaillink.addClass("email");
@@ -282,7 +282,6 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                     console.log("something failed");
                 });
             });          
-            
             cuff_type = emaillink;
         }
         tpl.find(".patient_status").html(cuff_type);
@@ -324,7 +323,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             var rec = $(recommendation);
 
             var patient_id          = record_id;  
-            var rec_tree_step_idx   = parseInt(this.patient_detail[patient_id]["patient_treatment_status"]) - 1;
+            var rec_tree_step_idx   = parseInt(this.patient_detail[patient_id]["patient_rec_tree_step"]);
             var rec_drugs           = this.intf.ptree["logicTree"][rec_tree_step_idx]["drugs"].join(", ");
             rec.find("h6").text(rec_drugs);
 

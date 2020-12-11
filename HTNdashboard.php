@@ -144,6 +144,7 @@ class HTNdashboard {
                         ,"patient_physician_id"
                         ,"current_treatment_plan_id"
                         ,"patient_treatment_status"
+                        ,"patient_rec_tree_step"
                         ,"sex"
                         ,"weight"
                         ,"height"
@@ -354,7 +355,7 @@ class HTNdashboard {
             $data[$rc_var] = $rc_val;
         }
         $data["patient_physician_id"]       = $_SESSION["logged_in_user"]["record_id"];
-        $data["patient_treatment_status"]   = 1;
+        $data["patient_treatment_status"]   = 0; //always start with the first step of whatever tree
         
         //TODO how to pick template?
         $data["current_treatment_plan_id"]  = 1;

@@ -38,4 +38,12 @@
         background:url(<?= $module->getUrl('assets/images/icon_edit.png') ?>) no-repeat;
         background-size:20px 20px;
     }
+
+    .patient_status b{
+        display:inline-block;
+        background:url(<?= $module->getUrl('assets/images/icon_bp_cuff_color.png') ?>) no-repeat;
+        background-size:20px 20px;
+        line-height:130%;
+        padding-left:25px;
+    }
 </style>

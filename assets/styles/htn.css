@@ -327,7 +327,6 @@ label + em{
 
 .patient_status{
     position:absolute;
-    left:15px;
     top:0;
 }
 .edit_patient{
@@ -467,6 +466,9 @@ section h3{
     font-weight:bold; 
 }
 .patient_status b{
+    color:#435F72;
+}
+.patient_status i{
     color:red;
 }
 
