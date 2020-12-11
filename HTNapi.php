@@ -267,7 +267,6 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$hook_timestamp = date("Y")."-".date("m")."-01";
 		}
 		$data["since"] 	= $hook_timestamp;
-
 		$api_url 		= $omron_url;
 		$ch 			= curl_init($api_url);
 
@@ -310,7 +309,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$this->emDebug("Omron getTokenDetail() : Could not find Patient with omron_client_id = $omron_client_id");
 			return false;
 		}
-		$this->emDebug("found token details", $records);
+		$this->emDebug("found token details");
 		return current($records);
 	}
 	
@@ -332,7 +331,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 		if(!empty($since_ts) || $first_pass){
 			//USING THE TOKEN , HIT OMRON API TO GET LATEST READINGS SINCE (hook timestamp?)
-			$result             = $this->getOmronAPIData($omron_access_token, $omron_token_type, $since_ts);
+			$adjusted_since_ts 	= date("Y-m-d", strtotime($since_ts .' -1 day'));
+			$this->emDebug("Since the newdata hook gets posted with THEIR server ts, but for some stupid reason, searches the data by LOCAL ts, to be safe I will adjust the ts - 1 day", $adjusted_since_ts);
+
+			$result             = $this->getOmronAPIData($omron_access_token, $omron_token_type, $adjusted_since_ts);
 			$api_data           = json_decode($result, true); 
 
 			$status             = $api_data["status"];
@@ -340,6 +342,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$bp_readings        = $api_data["result"]["bloodPressure"];
 			$measuremnetCount   = $api_data["result"]["measurementCount"];
 
+			$this->emDebug("in recurseSaveOmronApiData() here is API data since $since_ts", $api_data);
 			if($status == 0){
 				$bp_instance_data = $this->getBPInstanceData($record_id);
 				$next_instance_id = $bp_instance_data["next_instance_id"];
@@ -438,7 +441,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$dash_filter 		= json_decode($patient["filter"],1);
 
 		if(!empty($target_systolic) && !empty($target_diastolic) && !empty($target_pulse) ){
-			$this->emDebug("target stats for sistolic, diastolic, pulse" ,$dash_filter,  $target_systolic, $target_diastolic, $target_pulse);
+			// $this->emDebug("target stats for sistolic, diastolic, pulse" ,$dash_filter,  $target_systolic, $target_diastolic, $target_pulse);
 
 			//TODO FIX THE FILTER!?
 			$filter = "[bp_reading_ts] > '" . date("n/j/y H:i", strtotime('-2 weeks')) . "'";
@@ -455,6 +458,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$diastolic 	= array();
 			$pulse 		= array();
 
+			$this->emDebug("TODO will need to make sure not to eval if less than 2 weeks data?");
 			//TODO 12/1/2020 : rEDO eval logic against target COMPARE individual readings in the last 2 weeks vs goals 
 			foreach($records as $record){
 				if($record["redcap_repeat_instrument"] == "bp_readings_log"){
@@ -468,7 +472,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$diastolic_mean = round(array_sum($diastolic)/count($diastolic));
 			$pulse_mean 	= round(array_sum($pulse)/count($pulse));
 
-			$this->emDebug("individual stats + mean for sis,dia,pulse" , $systolic, $systolic_mean, $diastolic, $diastolic_mean,  $pulse, $pulse_mean);
+			// $this->emDebug("individual stats + mean for sis,dia,pulse" , $systolic, $systolic_mean, $diastolic, $diastolic_mean,  $pulse, $pulse_mean);
 
 			$sys_uncontrolled = $systolic_mean > $target_systolic ? true : false;
 			$dia_uncontrolled = $diastolic_mean > $target_diastolic ? true : false;
@@ -485,6 +489,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				// Recommended RX change
 				$next_step_idx 		= 2;
 				$this->emDebug("current dash filter" , $dash_filter);
+
 				$data = array(
 					"record_id"             	=> $record_id,
 					"patient_treatment_status" 	=> $next_step_idx,
