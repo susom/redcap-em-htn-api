@@ -131,6 +131,7 @@ class HTNdashboard {
     }
 
     public function getPatientDetails($record_id){
+        //GET PATIENT BASELINE DATA
         $fields = array("record_id"
                         ,"patient_fname"
                         ,"patient_mname"
@@ -175,8 +176,8 @@ class HTNdashboard {
             $result["patient_age"]          = "$years yrs old";
             $result["planning_pregnancy"]   = $result["planning_pregnancy"] == "1" ? "Yes" : "No";
             
-
-            $bp_filter  = "[omron_bp_id] != '' AND [bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-1 weeks')) . "'";
+            //GET PATIENT BP READINGS DATA OVER LAST 2 WEEKS
+            $bp_filter  = "[omron_bp_id] != '' AND [bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-2 weeks')) . "'";
             $bp_params  = array(
                 "records"       => array($result["record_id"]),
                 "fields"        => array("record_id", "omron_bp_id", "bp_reading_ts" , "bp_systolic", "bp_diastolic", "bp_pulse", "bp_device_type", "bp_units", "bp_pulse_units"),
@@ -186,6 +187,19 @@ class HTNdashboard {
             $bp_raw         = \REDCap::getData($bp_params);
             $bp_results     = json_decode($bp_raw,1);
             $result["bp_readings"] = $bp_results;
+
+            //GET PATIENT CRK MEASUREMENTS AND LAST UPDATED
+            $crk_filter  = "[creatinine] != '' AND [potassium] != '' AND [cr_ts] > '" . date("Y-m-d H:i:s", strtotime('-6 months')) . "'";
+            $crk_params  = array(
+                "records"       => array($result["record_id"]),
+                "fields"        => array("record_id", "creatinine", "potassium" , "cr_ts", "k_ts"),
+                'return_format' => 'json',
+                'filterLogic'   => $crk_filter
+            );
+            $crk_raw         = \REDCap::getData($crk_params);
+            $crk_results     = json_decode($crk_raw,1);
+            // $this->module->emDebug($crk_results);
+            $result["crk_readings"] = $crk_results;
         }
         return $result;
     }

@@ -237,8 +237,6 @@ dashboard.prototype.displayPatientDetail = function(record_id){
     $("#patient_details").empty();
 
     if(record_id){
-        console.log(record_id, this.patient_detail[record_id]);
-
         var patient = this.patient_detail[record_id];
         var tpl     = $(patient_details);
         var _this   = this;
@@ -251,14 +249,17 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         tpl.find(".demographic").text(patient["patient_group"]);
         tpl.find(".comorbidity").text(patient["comorbidity"]);
         
-        // TODO ADD this to return results
-        // tpl.find(".ckd").text(patient["ckd"]);
-        // tpl.find(".cr").text(patient["cr"]);
-        // tpl.find(".k").text(patient["k"]);
-        // tpl.find(".egfr").text(patient["egfr"]);
+        var need_CRK    = patient["crk_readings"].length ? false : true;
+        if(!need_CRK){
+            var last_crk = patient["crk_readings"].pop();
+            tpl.find(".cr > span").text(last_crk["creatinine"]);
+            tpl.find(".k > span").text(last_crk["potassium"]);
 
+            tpl.find(".cr i span").text(last_crk["cr_ts"]);
+            tpl.find(".k i span").text(last_crk["k_ts"]);
+        }
 
-        var cuff_type = patient["bp_readings"].length ? "<b>" + patient["bp_readings"][0]["bp_device_type"] + "</b>" : "N/A";
+        var cuff_type   = patient["bp_readings"].length ? "<b>" + patient["bp_readings"][0]["bp_device_type"] + "</b>" : "N/A";
         if(patient["omron_client_id"] == ""){
             var emaillink = $("<i>").text("Request Data Authorization");
             emaillink.addClass("email");
@@ -321,17 +322,40 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
         if(patient["filter"] == "rx_change"){
             var rec = $(recommendation);
-
+            console.log("patient info", patient);
             var patient_id          = record_id;  
-            var rec_tree_step_idx   = parseInt(this.patient_detail[patient_id]["patient_rec_tree_step"]);
+            var cur_tree_step_idx   = parseInt(patient["patient_treatment_status"]);
+            var cur_drugs           = this.intf.ptree["logicTree"][cur_tree_step_idx]["drugs"].join(", ");
+
+            var rec_tree_step_idx   = parseInt(patient["patient_rec_tree_step"]);
             var rec_drugs           = this.intf.ptree["logicTree"][rec_tree_step_idx]["drugs"].join(", ");
             rec.find("h6").text(rec_drugs);
+            
+            var sum_bps = 0;
+            for(var i in patient["bp_readings"]){
+                var bp_units = patient["bp_readings"][i]["bp_units"];
+                sum_bps += parseInt(patient["bp_readings"][i]["bp_systolic"]);
+            }
+            var mean_systolic   = Math.round(sum_bps/patient["bp_readings"].length);
+            var target_systolic = patient["patient_bp_target_systolic"];
+            var diff_systolic   = Math.abs(target_systolic - mean_systolic);
+            
+            var rec_p = $("<p>").addClass("summary").html(patient["patient_fname"]+"'s mean systolic reading over the last 2 weeks was <b>"+mean_systolic+bp_units+"</b>. " + diff_systolic + bp_units + " over their goal of <b>" + target_systolic + bp_units + "</b>.");
+            rec.find(".summaries").append(rec_p);
+            var rec_p = $("<p>").addClass("summary").html(patient["patient_fname"] + " is currently taking <b>" +cur_drugs + "</b>.  It is recommended that they move on to next step and use the new course of medications : <b>"+rec_drugs+"</b>");
+            rec.find(".summaries").append(rec_p);
+
+            if(need_CRK){
+                rec.find(".send_to_pharmacy").prepend($("<b class='mb-2'>* NOTE: check lab test before proceeding</b>"));
+                var pharmacy = patient["pharmacy_info"] ?? "Pharmacy";
+                rec.find(".send_to_pharmacy span").text(pharmacy);
+            }
 
             rec.on("click", ".view_edit_tree", function(e){
                 e.preventDefault();
-                location.href = _this["ptree_url"];
+                //THIS SHOULD BE A POST OR AT LEAST SOMETHING THAT CHECKS PROVIDER AND patient ID
+                location.href = _this["ptree_url"]+"&patient="+record_id;
             });
-            
             tpl.find("#recommendations").empty();
             tpl.find("#recommendations").append(rec);
         }

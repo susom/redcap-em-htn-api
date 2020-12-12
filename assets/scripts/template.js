@@ -395,11 +395,11 @@ var patient_details = `
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">CR <i>mg/dl</i></dt>
-                    <dd class="d-inline-block cr">.15 <i>last updated 02/02/2020</i></dd>
+                    <dd class="d-inline-block cr"><span></span> <i>last updated: <span>n/a</span></i></dd>
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">K <i>mmo/l</i></dt>
-                    <dd class="d-inline-block k">4.0 <i>last updated 02/02/2020</i></dd>
+                    <dd class="d-inline-block k"><span></span> <i>last updated: <span>n/a</span></i></dd>
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">Calculated EGFR</dt>
@@ -548,12 +548,12 @@ var recommendation = `
                 </form>
             </div>
         </div>
-        <div class="content bg-light p-3 rounded">
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. </p>
+        <div class="summaries content bg-light p-3 rounded">
+            
         </div>
-        <div class="btns pt-4 pb-2">
-            <b class="mb-2">* NOTE: check lab test before proceeding</b>
-            <button class="btn btn-info">Send to Pharmacist</button>
+        <div class="send_to_pharmacy btns pt-4 pb-2">
+            
+            <button class="btn btn-info">Send to <span>Pharmacist</span></button>
         </div>
     </section>
     </div>
