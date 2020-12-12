@@ -142,10 +142,14 @@ class HTNdashboard {
                         ,"patient_bp_target_pulse"
                         ,"patient_bp_target_systolic"
                         ,"patient_bp_target_diastolic"
+
                         ,"patient_physician_id"
                         ,"current_treatment_plan_id"
                         ,"patient_treatment_status"
                         ,"patient_rec_tree_step"
+                        ,"filter"
+                        ,"last_updatte_ts"
+
                         ,"sex"
                         ,"weight"
                         ,"height"
@@ -154,7 +158,6 @@ class HTNdashboard {
                         ,"ckd"
                         ,"comorbidity"
                         ,"pharmacy_info"
-                        ,"filter"
                         ,"patient_email"
                         ,"omron_client_id"
 
@@ -172,7 +175,6 @@ class HTNdashboard {
 
             $diff   = abs(strtotime($date2)-strtotime($result["patient_birthday"]));
             $years  = floor($diff / (365*60*60*24));
-        
             $result["patient_age"]          = "$years yrs old";
             $result["planning_pregnancy"]   = $result["planning_pregnancy"] == "1" ? "Yes" : "No";
             
@@ -188,7 +190,7 @@ class HTNdashboard {
             $bp_results     = json_decode($bp_raw,1);
             $result["bp_readings"] = $bp_results;
 
-            //GET PATIENT CRK MEASUREMENTS AND LAST UPDATED
+            //GET PATIENT CRK MEASUREMENTS AND LAST UPDATED OVER LAST 6 MONTHS
             $crk_filter  = "[creatinine] != '' AND [potassium] != '' AND [cr_ts] > '" . date("Y-m-d H:i:s", strtotime('-6 months')) . "'";
             $crk_params  = array(
                 "records"       => array($result["record_id"]),
@@ -200,6 +202,19 @@ class HTNdashboard {
             $crk_results     = json_decode($crk_raw,1);
             // $this->module->emDebug($crk_results);
             $result["crk_readings"] = $crk_results;
+
+            //GET PATIENT TREE CHANGE STEPS TAKEN (not including the first step 0)
+            $tree_filter  = "[ptree_log_ts] != ''";
+            $tree_params  = array(
+                "records"       => array($result["record_id"]),
+                "fields"        => array("record_id", "ptree_log_ts", "ptree_log_prev_step" , "ptree_log_current_step", "ptree_current_meds", "ptree_log_comment"),
+                'return_format' => 'json',
+                'filterLogic'   => $tree_filter
+            );
+            $tree_raw         = \REDCap::getData($tree_params);
+            $tree_results     = json_decode($tree_raw,1);
+            $this->module->emDebug("tree log", $tree_results);
+            $result["tree_log"] = $tree_results;
         }
         return $result;
     }
@@ -332,7 +347,7 @@ class HTNdashboard {
             $data["record_id"]  = $record_id;
 
             $instance_data      = array();
-            $next_instance_id   = $this->module->getNextInstanceId($record_id, "provider_delegates", array("provider_delegate"));
+            $next_instance_id   = $this->module->getNextInstanceId($record_id, "provider_delegates", "provider_delegate");
             if(!empty($post["delegates"])){
                 foreach($post["delegates"] as $delegate){
                     $temp                               = array();

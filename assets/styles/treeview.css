@@ -68,7 +68,6 @@
 .tree_step.preview {
     background:#ffffe6; 
 }
-
 .tree_step.end{
     background:#EFD6D9; 
 }
@@ -107,6 +106,14 @@
 .tree_step.preview h4 {
     background:#EFC030;
     position:relative;
+}
+
+.tree_step.rec_highlight{
+    box-shadow:0 0 10px 3px  darkseagreen; 
+    background:#fff;
+}
+.tree_step.rec_highlight h4 {
+    background:#2bae66;
 }
 
 .tree_step h4 .continue{

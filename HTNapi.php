@@ -129,6 +129,53 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$this->tree->saveTemplate($provider_id, $post);
 	}
 
+	public function acceptRecommendation($patient_details){
+		$next_instance_id = $this->getNextInstanceId($patient_details["record_id"], "treatment_status_log", "ptree_log_ts");
+
+		// ONLY UPDATE THIS WHEN IT RXCHANGE ACTUALLY ACCEPTED
+		// add log to treattment_status_log
+		$data_log = array(
+			"record_id"             	=> $patient_details["record_id"],
+			"redcap_repeat_instance" 	=> $next_instance_id,
+			"redcap_repeat_instrument" 	=> "treatment_status_log",
+			"ptree_log_prev_step" 		=> $patient_details["patient_treatment_status"],
+			"ptree_log_current_step" 	=> $patient_details["patient_rec_tree_step"],
+			"ptree_current_meds" 		=> $patient_details["current_drugs"],
+			"ptree_log_comment" 		=> $patient_details["provider_comments"],
+			"ptree_log_ts"				=> Date("Y-m-d H:i:s")
+		);
+		// $r = \REDCap::saveData('json', json_encode(array($data_log)) );
+
+		// update the shortcut data in patient baseline
+		$data = array(
+			"record_id"             	=> $patient_details["record_id"],
+			"patient_rec_tree_step" 	=> '',
+			"patient_treatment_status" 	=> $patient_details["patient_rec_tree_step"],
+			"filter" 					=> '',
+			"last_update_ts"			=> Date("Y-m-d H:i:s")
+		);
+		// $r = \REDCap::saveData('json', json_encode(array($data)), "overwrite" );
+		$this->emDebug("accepting rec rx change", $data_log);
+		return array("rec saved");
+	}
+
+	public function declineRecommendation($patient_details){
+		// update the shortcut data in patient baseline
+		$data = array(
+			"record_id"             	=> $patient_details["record_id"],
+			"patient_rec_tree_step" 	=> '',
+			"filter" 					=> '',
+			"last_update_ts"			=> Date("Y-m-d H:i:s")
+		);
+		$r = \REDCap::saveData('json', json_encode(array($data)), "overwrite" );
+		$this->emDebug("declining rec rx change", $data);
+		return array("rec declined");
+	}
+	public function sendToPharmacy($patient){
+		//TODO, FIGURE OUT PHARMACY API
+		$this->emDebug("SEND TO PHARMACY FOR patient", $patient);
+		return;
+	}
 
 
 
@@ -429,22 +476,36 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			'fields'        => array("record_id", "filter", "patient_bp_target_systolic", "patient_bp_target_diastolic", "patient_bp_target_pulse","current_treatment_plan_id", "patient_treatment_status", "last_update_ts"),
 			'filterLogic' 	=> $filter
 		);
-		$q 			= \REDCap::getData($params);
-		$records	= json_decode($q, true);
-		$patient 	= current($records);
+		$q 					= \REDCap::getData($params);
+		$records			= json_decode($q, true);
+		$patient 			= current($records);
+
+		//GET PATIENT TREE CHANGE STEPS TAKEN (not including the first step 0)
+		// $tree_filter  		= "[ptree_log_ts] != ''";
+		// $tree_params  		= array(
+		// 	"records"       => array($record_id),
+		// 	"fields"        => array("record_id", "ptree_log_ts", "ptree_log_prev_step" , "ptree_log_current_step", "ptree_current_meds", "ptree_log_comment"),
+		// 	'return_format' => 'json',
+		// 	'filterLogic'   => $tree_filter
+		// );
+		// $tree_raw         	= \REDCap::getData($tree_params);
+		// $tree_results     	= json_decode($tree_raw,1);
 
 		$target_pulse 		= $patient["patient_bp_target_pulse"];
 		$target_systolic 	= $patient["patient_bp_target_systolic"];
 		$target_diastolic 	= $patient["patient_bp_target_diastolic"];
 		
 		$current_tree 		= $patient["current_treatment_plan_id"];
-		$current_step 		= $patient["patient_treatment_status"]; //current RECOMMENDED STEP
+		$current_step 		= $patient["patient_treatment_status"]; 
+		$rec_step 			= $patient["patient_rec_tree_step"];
+
 		$dash_filter 		= json_decode($patient["filter"],1);
 
+		//TODO
+		//if time since last_update_ts is >= 2 weeks
+		//more complex algo than mean for triggering rx change
 		if(!empty($target_systolic)){
-			// $this->emDebug("target stats for sistolic, diastolic, pulse" ,$dash_filter,  $target_systolic, $target_diastolic, $target_pulse);
-
-			//TODO FIX THE FILTER!?
+			//TODO FIX THE FILTER  one week? two weeks?!?
 			$filter = "[bp_reading_ts] > '" . date("n/j/y H:i", strtotime('-2 weeks')) . "'";
 			$params	= array(
 				'records' 		=> array($record_id),
@@ -474,8 +535,6 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$diastolic_mean = round(array_sum($diastolic)/count($diastolic));
 			$pulse_mean 	= round(array_sum($pulse)/count($pulse));
 
-			// $this->emDebug("individual stats + mean for sis,dia,pulse" , $systolic, $systolic_mean, $diastolic, $diastolic_mean,  $pulse, $pulse_mean);
-
 			//TODO 
 			$this->emDebug("TODO, need a more granular evaluation for _uncontrolled");
 			$sys_uncontrolled = $systolic_mean > $target_systolic ? true : false;
@@ -491,7 +550,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				$this->emDebug("rx change recommendation, Use current tree, find the uncontrolled next step", $current_tree_step, $treelogic["logicTree"][$uncontrolled_next_step]);
 				
 				//TODO PULL IN TREE INFO AND SEE WHAT NEXT STEP IS FOR "uncontrolled"
-				$current_update_ts	= date("Y-m-d H:i:s");
+				$current_update_ts		= date("Y-m-d H:i:s");
 				
 				// Recommended RX change
 				$data = array(
@@ -501,18 +560,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 					"filter"      				=> "rx_change"
 				);
 				$r = \REDCap::saveData('json', json_encode(array($data)) );
-
-				// ONLY UPDATE THIS WHEN IT RXCHANGE ACTUALLY ACCEPTED
-				// $data = array(
-				// 	"record_id"             	=> $record_id,
-				// 	"redcap_repeat_instance" 	=> $next_step_idx,
-				// 	"redcap_repeat_instrument" 	=> "treatment_status_log",
-				// 	"treatment_status" 			=> $next_step_idx,
-				// 	"treatment_status_ts"		=> $current_update_ts
-				// );
-				// $r = \REDCap::saveData('json', json_encode(array($data)) );
 			}
 		}
+
+		return;
 	}
 
 	// contact patient by email / text if available
@@ -579,12 +630,12 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	}
 
 	// get the next instance id (repeating) in bp_readings_log
-	public function getNextInstanceId($record_id, $instrument, $fields){
+	public function getNextInstanceId($record_id, $instrument, $field){
 		$params	= array(
 			'return_format' => 'json',
-			'record_id'		=> $record_id,
-			'fields'        => $fields,
-            'filterLogic'   => $filter 
+			'records'		=> $record_id,
+			'fields'        => $field,
+            'filterLogic'   => "[$field] != ''"
 		);
 
         $q 					= \REDCap::getData($params);

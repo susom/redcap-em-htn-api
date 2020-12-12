@@ -1,13 +1,28 @@
-function treeLogic(rawJson){
-    console.log(rawJson);
+function treeLogic(rawJson, patient, urls){
+    for(var i in urls){
+        this[i] = urls[i];
+    }
+
+    console.log(rawJson, patient);
     this.raw            = rawJson["logicTree"];
     this.tplname        = rawJson["template_name"];
+    this.patient        = patient;
+    
     this.steps          = {};
     this.step_order     = [0]; //gets set on init? only update when "makeCurrent()"
-    this.display_order  = [0]; //gets set on init. update when "makeCurrent" with up to 3 previews. 
+    // this.display_order  = [0]; //gets set on init. update when "makeCurrent" with up to 3 previews. 
     this.num_previews   = 3;
 
-    this.current_step   = 0;
+    this.rec_step       = patient["patient_rec_tree_step"];
+    if(patient["tree_log"].length){
+        for(var i in patient["tree_log"]){
+            // if patient has been in the tree for a while , they will have previous step history
+            console.log("patient has a history",patient["tree_log"][i]);
+            this.step_order.push(patient["tree_log"][i]["ptree_log_current_step"]);
+        }
+    }
+
+    this.current_step   = patient["patient_treatment_status"];
     this.total_steps    = 1;
 
     this.containerid    = "viewer";
@@ -26,9 +41,8 @@ treeLogic.prototype.startAttachTree = function(){
     if(!this.raw.length){
         return;
     }
-    console.log(this.tplname);
     if(this.tplname != ""){
-        $(".template_name").text(this.tplname);
+        $(".template_name").text(this.patient["patient_fname"]+ " " + this.patient["patient_mname"] + " " + this.patient["patient_lname"]);
     }
 
     //First display all the previous steps up to the current step.
@@ -36,14 +50,14 @@ treeLogic.prototype.startAttachTree = function(){
     var first_step  = true;
     var prev_step   = null;
     for(var i in this.step_order){
-        var step = this.steps[ this.step_order[i] ];
+        var step    = this.steps[ this.step_order[i] ];
         if(first_step){
             // first step, no previous 
             step.appendToDom(["noconnect"],null,null);
             first_step = false;
         }else{
-            var previous_action_text = "Uncontrolled";
-            var uncontrolled = prev_step.getUncontrolled();
+            var previous_action_text    = "Uncontrolled";
+            var uncontrolled            = prev_step.getUncontrolled();
             for(var i in uncontrolled){
                 var uc = uncontrolled[i];
                 if(step.step_id == uc.action_val){
@@ -52,6 +66,7 @@ treeLogic.prototype.startAttachTree = function(){
             }
             step.appendToDom([], prev_step , previous_action_text);
         }
+
         //if not the last in the steporder array then make previous
         if(step.step_id != this.step_order[this.step_order.length - 1]){
             step.makePrevious();
@@ -68,7 +83,13 @@ treeLogic.prototype.showPreview = function(calling_step, action_text, action_val
 
     if($.isNumeric(action_val)){
         // show next stap
-        this.steps[action_val].appendToDom(["preview"], calling_step, action_text, container_to_attach);
+        var step_class = ["preview"];
+        if(action_val == this.rec_step){
+            // console.log("this is recoommended step , highlight", action_val);
+            step_class.push("rec_highlight");
+        }
+
+        this.steps[action_val].appendToDom(step_class, calling_step, action_text, container_to_attach);
     }else{
         // is TEXT so need to parse and display
         var end = false;

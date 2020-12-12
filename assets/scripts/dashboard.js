@@ -345,10 +345,11 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             var rec_p = $("<p>").addClass("summary").html(patient["patient_fname"] + " is currently taking <b>" +cur_drugs + "</b>.  It is recommended that they move on to next step and use the new course of medications : <b>"+rec_drugs+"</b>");
             rec.find(".summaries").append(rec_p);
 
+            var pharmacy = patient["pharmacy_info"] ?? "Pharmacy";
+            rec.find(".send_to_pharmacy span").text(pharmacy);
+
             if(need_CRK){
                 rec.find(".send_to_pharmacy").prepend($("<b class='mb-2'>* NOTE: check lab test before proceeding</b>"));
-                var pharmacy = patient["pharmacy_info"] ?? "Pharmacy";
-                rec.find(".send_to_pharmacy span").text(pharmacy);
             }
 
             rec.on("click", ".view_edit_tree", function(e){
@@ -356,6 +357,48 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                 //THIS SHOULD BE A POST OR AT LEAST SOMETHING THAT CHECKS PROVIDER AND patient ID
                 location.href = _this["ptree_url"]+"&patient="+record_id;
             });
+
+            rec.on("click", ".send_and_accept", function(e){
+                e.preventDefault();
+                
+                patient["provider_comment"] = $("#provider_comment").val() ?? "accepted recommendation";
+                $.ajax({
+                    url : _this["ajax_endpoint"],
+                    method: 'POST',
+                    data: { "action" : "send_and_accept" , "record_id" : patient["record_id"], "patient" : patient },
+                    dataType: 'json'
+                }).done(function (result) {
+                    rec.slideUp("medium", function(){
+                        tpl.find("#recommendations").empty();
+                        tpl.find("#recommendations").append($('<p class="p-3"><i>No current recommendations</i></p>'));
+                    });
+                }).fail(function () {
+                    console.log("something failed");
+                });
+            });
+
+            rec.on("click", ".decline_rec", function(e){
+                e.preventDefault();
+                
+                $.ajax({
+                    url : _this["ajax_endpoint"],
+                    method: 'POST',
+                    data: { "action" : "decline_rec" , "record_id" : patient["record_id"], "patient" : patient},
+                    dataType: 'json'
+                }).done(function (result) {
+                    //remove recommendation from patient details
+                    _this.patient_detail["patient_rec_tree_step"] = null;
+                    _this.patient_detail["filter"] = null;
+
+                    rec.slideUp("medium", function(){
+                        tpl.find("#recommendations").empty();
+                        tpl.find("#recommendations").append($('<p class="p-3"><i>No current recommendations</i></p>'));
+                    });
+                }).fail(function () {
+                    console.log("something failed");
+                });
+            });
+
             tpl.find("#recommendations").empty();
             tpl.find("#recommendations").append(rec);
         }

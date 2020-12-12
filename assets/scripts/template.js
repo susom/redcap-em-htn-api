@@ -285,11 +285,12 @@ var branch_container = `
 var rec_modal = `
     <div id="recommendation">
         <div class="rec_change">
-            <h3>Recommended Change</h3>
+            <h3>Step Change</h3>
             <h4></h4>
         </div>
         <div class="natural_text">
         </div>
+        <textarea id="provider_comment" placeholder="Provider Comments"></textarea>
         <div class="continue">
             <button class="btn btn-primary btn-sm accept">Accept Step & Continue</button>
             <button class="btn btn-danger btn-sm reject">Close</button>
@@ -534,14 +535,6 @@ var recommendation = `
             </div>
             <div class="accept col-md-6">
                 <form>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" checked id="defaultCheck1">
-                        <label class="form-check-label" for="defaultCheck1">Accept</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
-                        <label class="form-check-label" for="defaultCheck1">No Change</label>
-                    </div>
                     <div class="btns pt-1 pb-3">
                         <a href='' class="btn btn-info btn-sm view_edit_tree">View/Edit Prescription Tree</a>
                     </div>
@@ -549,15 +542,26 @@ var recommendation = `
             </div>
         </div>
         <div class="summaries content bg-light p-3 rounded">
-            
         </div>
+        <textarea id="provider_comment" placeholder="Provider Comments"></textarea>
         <div class="send_to_pharmacy btns pt-4 pb-2">
-            
-            <button class="btn btn-info">Send to <span>Pharmacist</span></button>
+            <button class="btn btn-danger decline_rec">Decline Recommendation</button>
+            <button class="btn btn-info send_and_accept">Accept & Send to <span>Pharmacist</span></button>
         </div>
     </section>
     </div>
 `;
+/* 
+//this design makes no sesnse
+<div class="form-check">
+    <input class="form-check-input" type="checkbox" value="" checked id="defaultCheck1">
+    <label class="form-check-label" for="defaultCheck1">Accept</label>
+</div>
+<div class="form-check">
+    <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
+    <label class="form-check-label" for="defaultCheck1">No Change</label>
+</div>
+*/
 
 var delegate = `
     <div class="form-group ">

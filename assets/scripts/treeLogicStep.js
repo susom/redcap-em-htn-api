@@ -151,6 +151,9 @@ treeLogicStep.prototype.appendToDom = function(stepClass=[], calling_step=null, 
             this.jq.find("h4 i").text("Preview");
             this.checkDelta();
         }
+        if(stepClass.indexOf("rec_highlight") > -1) {
+            this.jq.find("h4 i").text("Recommended");
+        }
 
         for(var i in stepClass){
             var cls = stepClass[i];
@@ -194,7 +197,7 @@ treeLogicStep.prototype.makeCurrent = function(){
     this.parent.current_step   = this.step_id;
     this.parent.total_steps    = this.parent.step_order.length;
 
-    this.jq.removeClass("preview").removeClass("hide");
+    this.jq.removeClass("preview").removeClass("rec_highlight").removeClass("hide");
     this.jq.find("h4 i").text("Current");
 
     //READD current TO THE MAIN BRANCH
@@ -264,7 +267,7 @@ treeLogicStep.prototype.recursivePreviews = function(current_step, buffer_previe
     // steps already exist in the parent class this.steps
     // just need the "preview" jq and save them in buffer_previews
 
-    //TODO fix this logic
+    //TODO fix this logic .... fix how? 12/12/20
     if(uncontrolled_action.length == 1){
         var next_action = uncontrolled_action.pop();
         buffer_previews.push( {"prev_step_id" : current_step.step_id, "uc" : next_action, "branching" : false } );
@@ -329,14 +332,26 @@ treeLogicStep.prototype.showRecModal = function(){
     var tpl     = $(rec_modal);
     var _this   = this;
 
+    var patient = this.parent.patient;
+    patient["current_drugs"] = this.drugs.join(", ");
+
     // Add This Steps Drugs
     tpl.find("h4").text(this.drugs.join(", "));
 
-    var patient_baseline_summ = "Patient, Julie Smith, 37 years old Feale, BMI-22, Non-black, Diabetic, lab test (CR 07mg/dl), Calculated eGFR 108.  She is intolerant to Lisinopril/Cough.  Her BP Target is 130/80 and her measured BP is 140/85, 8 out of 10 readings in 2 weeks.";
-    var patient_change_rec    = "It is recommended to changer medications from <b>\""+this.parent.steps[this.parent.current_step].drugs.join(", ")+"\"</b> to <b><em>\""+this.drugs.join(", ")+"\"</em></b>.";
-
+    var patient_baseline_summ = "Patient, "+patient["patient_fname"]+ " " + patient["patient_mname"] + " " + patient["patient_lname"] + ", " + patient["patient_age"] + " " + patient["sex"] + 
+        ", BMI-"+ patient["bmi"]+", "+patient["patient_group"]+", \
+        lab test (CR 07mg/dl), Calculated eGFR 108.   \
+        She is intolerant to Lisinopril/Cough.  \
+        Her BP Target is "+patient["patient_bp_target_systolic"]+"/"+patient["patient_bp_target_diastolic"]+" and \
+        her measured BP is 140/85, 8 out of 10 readings in 2 weeks.";
     tpl.find(".natural_text").append($("<p>").text(patient_baseline_summ));
-    tpl.find(".natural_text").append($("<p>").html(patient_change_rec));
+    
+    
+    if(this.parent.rec_step == this.step_id){
+        tpl.find("h3").text("Recommended Step Change");
+        var patient_change_rec    = "It is recommended to change medications from <b>\""+this.parent.steps[this.parent.current_step].drugs.join(", ")+"\"</b> to <b><em>\""+this.drugs.join(", ")+"\"</em></b>.";
+        tpl.find(".natural_text").append($("<p>").html(patient_change_rec));
+    }
 
     //If Reject
     tpl.find(".reject").click(function(){
@@ -351,8 +366,20 @@ treeLogicStep.prototype.showRecModal = function(){
             $(this).remove();
         });
 
-        _this.makeCurrent();
-        _this.previous_step.makePrevious();
+        patient["provider_comment"] = $("#provider_comment").val() ?? "accepted recommendation";
+        $.ajax({
+            url : _this.parent["ajax_endpoint"],
+            method: 'POST',
+            data: { "action" : "accept_rec" , "record_id" : patient["record_id"], "patient" : patient },
+            dataType: 'json'
+        }).done(function (result) {
+            console.log(result);
+            //UPDATE UI
+            _this.makeCurrent();
+            _this.previous_step.makePrevious();
+        }).fail(function () {
+            console.log("something failed");
+        });
     });
 
     $("body").append(tpl);

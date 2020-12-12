@@ -4,7 +4,7 @@ namespace Stanford\HTNtree;
 
 
 if(!empty($_POST)){
-    $module->emDebug("refresh dashboard INTF", $_POST);
+    // $module->emDebug("refresh dashboard INTF", $_POST);
     $action = $_POST["action"];
     switch($action){
         case "addEditPatient":
@@ -62,6 +62,19 @@ if(!empty($_POST)){
 
                 $module->emDebug("i need to add the main record", $data);
             }
+        break;
+
+        case "send_and_accept":
+            $patient    = $_POST["patient"] ?? null;
+            $result     = $module->sendToPharmacy($patient);
+        case "accept_rec":
+            $patient    = $_POST["patient"] ?? null;
+            $result     = $module->acceptRecommendation($patient);
+        break;
+
+        case "decline_rec":
+            $patient    = $_POST["patient"] ?? null;
+            $result     = $module->declineRecommendation($patient);
         break;
 
         default:

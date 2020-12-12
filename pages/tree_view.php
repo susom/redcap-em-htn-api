@@ -5,6 +5,7 @@ namespace Stanford\HTNapi;
 include("components/gl_checklogin.php");
 
 $provider_id    = $_SESSION["logged_in_user"]["record_id"];
+
 if(isset($_POST["action"])){
     $action     = $_POST["action"];
 
@@ -15,11 +16,21 @@ if(isset($_POST["action"])){
     }
 }
 
-// $tpl_record_id  = 1;
+if(!empty($_GET["patient"])){
+    $patient_id = $_GET["patient"];
+    $patient    = $module->getPatientDetails($patient_id);
+
+    $patient_name       = $patient["patient_fname"] . " "  . $patient["patient_mname"] . " " . $patient["patient_lname"];
+    $tree_id            = $patient["current_treatment_plan_id"];
+    $current_step_idx   = $patient["patient_treatment_status"];
+    $rec_step_idx       = $patient["patient_rec_tree_step"];
+}
+
+$tpl_record_id  = $tree_id ?? 1;
 $tree_logic     = $module->treeLogic($provider_id);
 $name_na        = "None Selected";
 
-$tree_active    = "active";
+// $tree_active    = "active";
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-100">
@@ -55,7 +66,7 @@ $tree_active    = "active";
     <main role="main" class="flex-shrink-0">
         <div class="container mt-5">
             <div class="row">
-                <h1 class="mt-5 mb-4 mr-3 ml-3 d-inline-block align-middle">Interactive Tree View : <span class="template_name"><?= $name_na;?></span></h1>
+                <h1 class="mt-5 mb-4 mr-3 ml-3 d-inline-block align-middle">Interactive Tree View for : <span class="template_name"></span></h1>
             </div>
 
             <div id="prescription_tree" class="content bg-light mh-10 mx-1">
@@ -326,8 +337,18 @@ $(document).ready(function(){
         }
     });
     // BUILD TREE SHOULD HAVE EVERY PERMUTATION + NEXT STEP + SIDE-EFFECT BRANCHES
-    var raw_json   = <?= json_encode($tree_logic) ;?>;
-    var tree        = new treeLogic(raw_json);
+
+    //make initial call to dashboard to grab data and draw out pertinent UI
+    var urls = {
+         "ajax_endpoint" : '<?=$module->getURL("endpoints/ajax_handler.php", true, true);?>'
+        ,"anon_profile_src" : '<?=$module->getUrl('assets/images/icon_anon.gif')?>'
+        ,"ptree_url" : '<?=$module->getUrl('pages/tree_view.php', true, true)?>'
+        
+    };
+
+    var patient     = <?= json_encode($patient) ;?>;
+    var raw_json    = <?= json_encode($tree_logic) ;?>;
+    var tree        = new treeLogic(raw_json, patient, urls);
     tree.startAttachTree();
 });
 </script>

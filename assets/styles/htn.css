@@ -476,3 +476,16 @@ section h3{
 i.email.sent{
     color:#999;
 }
+
+#provider_comment{
+    width: 100%;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    margin-bottom: 15px;
+    padding: 10px;
+    font-size: 88%;
+}
+
+.summaries + #provider_comment{
+    margin:15px 0 0;
+}
