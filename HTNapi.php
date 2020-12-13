@@ -141,10 +141,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			"ptree_log_prev_step" 		=> $patient_details["patient_treatment_status"],
 			"ptree_log_current_step" 	=> $patient_details["patient_rec_tree_step"],
 			"ptree_current_meds" 		=> $patient_details["current_drugs"],
-			"ptree_log_comment" 		=> $patient_details["provider_comments"],
+			"ptree_log_comment" 		=> $patient_details["provider_comment"],
 			"ptree_log_ts"				=> Date("Y-m-d H:i:s")
 		);
-		// $r = \REDCap::saveData('json', json_encode(array($data_log)) );
+		$r = \REDCap::saveData('json', json_encode(array($data_log)) );
 
 		// update the shortcut data in patient baseline
 		$data = array(
@@ -154,7 +154,9 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			"filter" 					=> '',
 			"last_update_ts"			=> Date("Y-m-d H:i:s")
 		);
-		// $r = \REDCap::saveData('json', json_encode(array($data)), "overwrite" );
+		// TODO THIS timestamp IS WHEN THE LAST RECOMMENDATION WAS MADE or Accepted, DONT MAKE ANOTHER ONE FOR 2 WEEKS at LEAST 
+
+		$r = \REDCap::saveData('json', json_encode(array($data)), "overwrite" );
 		$this->emDebug("accepting rec rx change", $data_log);
 		return array("rec saved");
 	}
@@ -164,13 +166,12 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$data = array(
 			"record_id"             	=> $patient_details["record_id"],
 			"patient_rec_tree_step" 	=> '',
-			"filter" 					=> '',
-			"last_update_ts"			=> Date("Y-m-d H:i:s")
+			"filter" 					=> ''
 		);
 		$r = \REDCap::saveData('json', json_encode(array($data)), "overwrite" );
-		$this->emDebug("declining rec rx change", $data);
 		return array("rec declined");
 	}
+
 	public function sendToPharmacy($patient){
 		//TODO, FIGURE OUT PHARMACY API
 		$this->emDebug("SEND TO PHARMACY FOR patient", $patient);

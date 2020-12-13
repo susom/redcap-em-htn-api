@@ -545,7 +545,7 @@ var recommendation = `
         </div>
         <textarea id="provider_comment" placeholder="Provider Comments"></textarea>
         <div class="send_to_pharmacy btns pt-4 pb-2">
-            <button class="btn btn-danger decline_rec">Decline Recommendation</button>
+            <button class="btn btn-danger decline_rec">Decline</button>
             <button class="btn btn-info send_and_accept">Accept & Send to <span>Pharmacist</span></button>
         </div>
     </section>

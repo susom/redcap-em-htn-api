@@ -366,7 +366,9 @@ treeLogicStep.prototype.showRecModal = function(){
             $(this).remove();
         });
 
-        patient["provider_comment"] = $("#provider_comment").val() ?? "accepted recommendation";
+        //add adjust a few things in the patient object 
+        patient["provider_comment"]         = $("#provider_comment").val().trim() != "" ? $("#provider_comment").val() : "accepted recommendation";
+        patient["patient_rec_tree_step"]    = _this.step_id;
         $.ajax({
             url : _this.parent["ajax_endpoint"],
             method: 'POST',

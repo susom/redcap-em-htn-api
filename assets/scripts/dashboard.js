@@ -328,6 +328,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             var cur_drugs           = this.intf.ptree["logicTree"][cur_tree_step_idx]["drugs"].join(", ");
 
             var rec_tree_step_idx   = parseInt(patient["patient_rec_tree_step"]);
+            console.log("wtf undefined ", rec_tree_step_idx);
             var rec_drugs           = this.intf.ptree["logicTree"][rec_tree_step_idx]["drugs"].join(", ");
             rec.find("h6").text(rec_drugs);
             
@@ -361,7 +362,9 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             rec.on("click", ".send_and_accept", function(e){
                 e.preventDefault();
                 
-                patient["provider_comment"] = $("#provider_comment").val() ?? "accepted recommendation";
+                // ADD SOME DATA TO THE patient OBJ
+                patient["provider_comment"] = $("#provider_comment").val().trim() != "" ? $("#provider_comment").val() : "accepted recommendation";
+                patient["current_drugs"]    = $("#recommendations .change h6").text();
                 $.ajax({
                     url : _this["ajax_endpoint"],
                     method: 'POST',
@@ -371,6 +374,9 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                     rec.slideUp("medium", function(){
                         tpl.find("#recommendations").empty();
                         tpl.find("#recommendations").append($('<p class="p-3"><i>No current recommendations</i></p>'));
+
+                        //NEED TO IMMEDIELTY REFRESH DASHBOARD NOW!
+                        _this.refreshData();
                     });
                 }).fail(function () {
                     console.log("something failed");
@@ -388,11 +394,14 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                 }).done(function (result) {
                     //remove recommendation from patient details
                     _this.patient_detail["patient_rec_tree_step"] = null;
-                    _this.patient_detail["filter"] = null;
+                    _this.patient_detail["filter"] = null;                    
 
                     rec.slideUp("medium", function(){
                         tpl.find("#recommendations").empty();
                         tpl.find("#recommendations").append($('<p class="p-3"><i>No current recommendations</i></p>'));
+
+                        //NEED TO IMMEDIELTY REFRESH DASHBOARD NOW!
+                        _this.refreshData();
                     });
                 }).fail(function () {
                     console.log("something failed");
