@@ -342,6 +342,9 @@ var patient_details = `
         <li class="nav-item rounded-right">
             <a class="nav-link" href="#" data-tab="recommendation">Recommendations</a>
         </li>
+        <li class="nav-item clear_patient">
+            <a class="" href="#">Clear Patient Data</a>
+        </li>
     </ul>
     <div class="bg-light rounded-right rounded-bottom rounded-left p-3 profile panels row">
         <div class="patient_detail col-md-12">

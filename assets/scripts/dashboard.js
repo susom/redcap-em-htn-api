@@ -4,13 +4,15 @@ function dashboard(record_id,urls){
     }
 
     this.provider       = record_id;
-    this.patient_detail = {};
-    this.state          = null;
-    this.nav            = null;
+    this.patient_detail = {}; //buffer patient details to avoid a roundtrip if already called once in the sessions
+
+    //maintain state across refreshData()
+    this.cur_patient    = null;
+    this.filter_nav     = [];
+
     this.intf           = null;
     
-    this.filter_txn     = {"rx_change" : "Prescription Change Needed", "results_needed" : "Lab Results Needed" , "data_needed" : "Data Needed", "all_patients" : "All Patients"};
-    this.filter_nav     = [];
+    this.filter_txn     = {"rx_change" : "Prescription Change Needed", "labs_needed" : "Lab Results Needed" , "data_needed" : "Data Needed", "all_patients" : "All Patients", "clear_filters" : "Clear Filters"};
     
     //some UI/UX 
     $("#overview").on("click","h1", function(e){
@@ -26,14 +28,14 @@ function dashboard(record_id,urls){
     var _this = this;
     setInterval(function(){
         _this.refreshData();
-    },300000);  // get new data every 5 min
+    },30000);  // get new data every 5 min
 
     this.displayPatientDetail();
 }
 dashboard.prototype.refreshData = function(){
     var _this       = this;
     var record_id   = this.provider;
-    console.log("refresh session , pull new data from dashboard INTF");
+    console.log("refresh session , pull new data from dashboard INTF, need to maintain state!! and patient detail", this.filter_nav);
     $.ajax({
         url : this["ajax_endpoint"],
         method: 'POST',
@@ -51,7 +53,7 @@ dashboard.prototype.updateOverview = function(){
     var intf            = this.intf;
     var patients        = intf["patients"];
     var rx_change       = intf["rx_change"];
-    var results_needed  = intf["results_needed"]; 
+    var labs_needed  = intf["labs_needed"]; 
     var data_needed     = intf["data_needed"];
     var alerts          = intf["messages"];
     var _this           = this;
@@ -64,8 +66,8 @@ dashboard.prototype.updateOverview = function(){
         }
     }
     $("#filters").empty();
-
     //alerts
+    //TODO THIS NEEDS TO BE FIRGURED OUT
     var tpl = $(overview_filter);
     tpl.addClass("alerts");
     tpl.find(".stat p").text("Alerts");
@@ -92,20 +94,29 @@ dashboard.prototype.updateOverview = function(){
         e.preventDefault();
         _this.updateFilters($(this));
     });
+    if(this.filter_nav.includes("rx_change")){
+        //this will maintain state when the page data is refreshed
+        tpl.find(".stat").parent().addClass("picked");
+    }
     $("#filters").append(tpl);
+    
 
-    //results_needed
+    //labs_needed
     var tpl = $(overview_filter);
-    tpl.addClass("results_needed");
-    tpl.find(".stat").data("filter", "results_needed").data("idx", results_needed);
-    tpl.find(".stat p").text(results_needed.length);
+    tpl.addClass("labs_needed");
+    tpl.find(".stat").data("filter", "labs_needed").data("idx", labs_needed);
+    tpl.find(".stat p").text(labs_needed.length);
     tpl.find(".stat i").text("Patients");
     tpl.find(".stat-body .stat-title").text("Lab Results Needed");
     tpl.find(".stat").click(function(e){
         e.preventDefault();
         _this.updateFilters($(this));
     });
+    if(this.filter_nav.includes("labs_needed")){
+        tpl.find(".stat").parent().addClass("picked");
+    }
     $("#filters").append(tpl);
+    
 
     //data_needed
     var tpl = $(overview_filter);
@@ -118,7 +129,11 @@ dashboard.prototype.updateOverview = function(){
         e.preventDefault();
         _this.updateFilters($(this));
     });
+    if(this.filter_nav.includes("data_needed")){
+        tpl.find(".stat").parent().addClass("picked");
+    }
     $("#filters").append(tpl);
+    
 
     //all
     var tpl = $(overview_filter);
@@ -133,6 +148,7 @@ dashboard.prototype.updateOverview = function(){
     this.buildNav();
 }
 dashboard.prototype.updateAlerts = function(){
+    //TODO NOT FLESHED OUT YET
     var intf    = this.intf;
     var alerts  = intf["messages"];
     
@@ -160,7 +176,6 @@ dashboard.prototype.updateFilters = function(el){
         el.parent().addClass("picked");
         this.filter_nav.push(filter);
     }
-
     this.buildNav();
     this.displayPatientDetail();
     return false;
@@ -169,9 +184,15 @@ dashboard.prototype.buildNav = function(){
     $("#patient_list").empty();
     $("#patients .filter").empty();
 
+    var _this = this;
+    var intf            = this.intf;
+    var patients        = intf["patients"];
+
     var filters = this.filter_nav.slice();
     if(!filters.length){
         filters.push("all_patients");
+    }else{
+        filters.push("clear_filters");
     }
 
     for(var i in filters){
@@ -179,18 +200,21 @@ dashboard.prototype.buildNav = function(){
         var filter_tpl  = `<b class="uncontrolled_above filtered d-inline-block align-middle pl-3 mr-3 pt-3 pb-2"><span></span></b>`;
         var new_filter  = $(filter_tpl);
         new_filter.find('span').text(this.filter_txn[filter]);
+        if(filter == "clear_filters"){
+            new_filter.addClass("clear_filters");
+            new_filter.find('span').click(function(e){
+                e.preventDefault();
+                _this.filter_nav = [];
+                _this.updateOverview();
+            });
+        }
         $("#patients .filter").append(new_filter);
     }
-
-    var intf            = this.intf;
-    var patients        = intf["patients"];
-    var _this           = this;
 
     var displayed       = 0;
     for(var i in patients){
         var patient = patients[i];
         var filter  = patient["filter"];
-
         if(filters.length && !filters.includes(filter) && !filters.includes("all_patients")){
             continue;
         }
@@ -216,12 +240,19 @@ dashboard.prototype.buildNav = function(){
                 dataType: 'json'
             }).done(function (result) {
                 _el.addClass("active");
+                _this.cur_patient = _el.data("record_id");
                 _this.patient_detail[record_id] = result;
                 _this.displayPatientDetail(record_id);
             }).fail(function (e) {
                 console.log(e,"something failed");
             });
         });
+
+        if(_this.cur_patient == patient["record_id"]){
+            //preserving page state while page data refreshes
+            newnav.addClass("active");
+        }
+
         $("#patient_list").append(newnav);
     }
 
@@ -236,7 +267,9 @@ dashboard.prototype.displayPatientDetail = function(record_id){
     $("#patient_details").removeClass().addClass("col-md-8");
     $("#patient_details").empty();
 
-    if(record_id){
+    record_id = this.cur_patient ? this.cur_patient : record_id;
+
+    if(record_id || this.cur_patient){
         var patient = this.patient_detail[record_id];
         var tpl     = $(patient_details);
         var _this   = this;
@@ -309,6 +342,13 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             return false;
         });
 
+        tpl.find(".clear_patient a").click(function(e){
+            e.preventDefault();
+            _this.cur_patient = null;
+            _this.buildNav();
+            _this.displayPatientDetail();
+        });
+
         tpl.find(".edit_patient").click(function(e){
             e.preventDefault();
             console.log("change out flip all of displayPaientDetail to ... editPatientDetail... same as patient detail without the recommendation tab");
@@ -328,7 +368,6 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             var cur_drugs           = this.intf.ptree["logicTree"][cur_tree_step_idx]["drugs"].join(", ");
 
             var rec_tree_step_idx   = parseInt(patient["patient_rec_tree_step"]);
-            console.log("wtf undefined ", rec_tree_step_idx);
             var rec_drugs           = this.intf.ptree["logicTree"][rec_tree_step_idx]["drugs"].join(", ");
             rec.find("h6").text(rec_drugs);
             

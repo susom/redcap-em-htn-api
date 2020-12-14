@@ -204,7 +204,7 @@ label + em{
  .stat i {
     color:#2f5f73;
 }
-.results_needed,
+.labs_needed,
 .alerts{
     margin-right:80px;
 }
@@ -253,7 +253,7 @@ label + em{
 }
 
 
-.results_needed .stat,
+.labs_needed .stat,
 .rx_change .stat,
 .data_needed .stat { position:relative; }
 
@@ -261,9 +261,9 @@ label + em{
 .rx_change .h1,
 .rx_change.filtered {color:#D46A20; border-left-color:#D46A20;}
 
-#overview .picked.results_needed .stat{ border-color:#D9B12B; position:relative; }
-.results_needed .h1,
-.results_needed.filtered {color:#D9B12B; border-left-color:#D9B12B;}
+#overview .picked.labs_needed .stat{ border-color:#D9B12B; position:relative; }
+.labs_needed .h1,
+.labs_needed.filtered {color:#D9B12B; border-left-color:#D9B12B;}
 
 #overview .picked.data_needed .stat{ border-color:#4374DD; }
 .data_needed .h1 {color:#4374DD; border-left-color:#4374DD;}
@@ -307,9 +307,9 @@ label + em{
 #patient_list .patient_tab.rx_change.active::after { border-color:#D46A20; }
 #patient_list .patient_tab.rx_change.active{ background:#D46A20  !important; }
 
-#patient_list .patient_tab.results_needed,
-#patient_list .patient_tab.results_needed.active::after { border-color:#D9B12B; }
-#patient_list .patient_tab.results_needed.active{ background:#D9B12B  !important; }
+#patient_list .patient_tab.labs_needed,
+#patient_list .patient_tab.labs_needed.active::after { border-color:#D9B12B; }
+#patient_list .patient_tab.labs_needed.active{ background:#D9B12B  !important; }
 
 #patient_list .patient_tab.data_needed,
 #patient_list .patient_tab.data_needed.active::after { border-color:#4374DD ; }
@@ -428,7 +428,7 @@ section h3{
 }
 #filters.hide,
 .hide{
-    display:none;
+    /* display:none; */
 }
 
 .recommendation .accept .btn{
@@ -488,4 +488,18 @@ i.email.sent{
 
 .summaries + #provider_comment{
     margin:15px 0 0;
+}
+
+.clear_patient{
+    position:absolute; 
+    right:15px;
+    padding:.5rem 0;
+}
+.clear_patient a{
+    color:#2f5f73;
+}
+
+.clear_filters span{
+    cursor:pointer;
+    color:red;
 }

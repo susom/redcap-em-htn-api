@@ -56,7 +56,7 @@ class HTNdashboard {
         
         $patients       = array();
         $rx_change      = array();
-        $results_needed = array();
+        $labs_needed = array();
         $data_needed    = array();
         $messages       = array();
 
@@ -100,8 +100,8 @@ class HTNdashboard {
             if($result["filter"] == "rx_change"){
                 $rx_change[] = $result["record_id"];
             }
-            if($result["filter"] == "results_needed"){
-                $results_needed[] = $result["record_id"];
+            if($result["filter"] == "labs_needed"){
+                $labs_needed[] = $result["record_id"];
             }
             if($result["filter"] == "data_needed"){
                 $data_needed[] = $result["record_id"];
@@ -121,7 +121,7 @@ class HTNdashboard {
         $ui_intf = array(
             "patients"          => $patients,
             "rx_change"         => $rx_change,
-            "results_needed"    => $results_needed,
+            "labs_needed"    => $labs_needed,
             "data_needed"       => $data_needed,
             "messages"          => $messages
         );

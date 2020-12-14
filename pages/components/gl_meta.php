@@ -46,4 +46,10 @@
         line-height:130%;
         padding-left:25px;
     }
+
+    .clear_filters{
+        background:url(<?= $module->getUrl('assets/images/icon_clear_filters.png') ?>) 100% no-repeat;
+        background-size:19px 28px;
+        padding-right:23px;
+    }
 </style>
