@@ -52,4 +52,10 @@
         background-size:19px 28px;
         padding-right:23px;
     }
+    .loading_patient{
+        text-indent:-5000px;
+        background-image:url(<?= $module->getUrl('assets/images/loading_patient2.gif') ?>);
+        background-position:50%;
+        background-repeat:no-repeat;
+    }
 </style>

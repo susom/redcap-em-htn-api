@@ -28,7 +28,7 @@ function dashboard(record_id,urls){
     var _this = this;
     setInterval(function(){
         _this.refreshData();
-    },30000);  // get new data every 5 min
+    },180000);  // get new data every 3 min
 
     this.displayPatientDetail();
 }
@@ -233,6 +233,8 @@ dashboard.prototype.buildNav = function(){
             var record_id = $(this).data("record_id");
             $("#patient_list .patient_tab").removeClass("active");
             var _el = $(this);
+
+            // console.log("getting patient detail everytime? whatev if already in patient_detail");
             $.ajax({
                 url : _this["ajax_endpoint"],
                 method: 'POST',
@@ -242,10 +244,16 @@ dashboard.prototype.buildNav = function(){
                 _el.addClass("active");
                 _this.cur_patient = _el.data("record_id");
                 _this.patient_detail[record_id] = result;
-                _this.displayPatientDetail(record_id);
+
+                //artificial delay to draw the eye when theres a change 
+                $("#patient_details").removeClass().addClass("col-md-8 none_selected bg-light rounded").empty().addClass("loading_patient");
+                setTimeout(function(){
+                    _this.displayPatientDetail(record_id);
+                },1250);
             }).fail(function (e) {
                 console.log(e,"something failed");
             });
+
         });
 
         if(_this.cur_patient == patient["record_id"]){
@@ -268,11 +276,11 @@ dashboard.prototype.displayPatientDetail = function(record_id){
     $("#patient_details").empty();
 
     record_id = this.cur_patient ? this.cur_patient : record_id;
-
     if(record_id || this.cur_patient){
         var patient = this.patient_detail[record_id];
         var tpl     = $(patient_details);
         var _this   = this;
+        
         tpl.find(".dob").text(patient["patient_birthday"]);
         tpl.find(".age").text(patient["patient_age"]);
         tpl.find(".sex").text(patient["sex"]);
@@ -354,7 +362,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             console.log("change out flip all of displayPaientDetail to ... editPatientDetail... same as patient detail without the recommendation tab");
         });
 
- 
+
         if(patient["bp_readings"].length){
             var json_bp_readings = JSON.stringify(patient["bp_readings"]);
             tpl.find("section.data span").text(json_bp_readings);
@@ -365,10 +373,10 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             console.log("patient info", patient);
             var patient_id          = record_id;  
             var cur_tree_step_idx   = parseInt(patient["patient_treatment_status"]);
-            var cur_drugs           = this.intf.ptree["logicTree"][cur_tree_step_idx]["drugs"].join(", ");
+            var cur_drugs           = _this.intf.ptree["logicTree"][cur_tree_step_idx]["drugs"].join(", ");
 
             var rec_tree_step_idx   = parseInt(patient["patient_rec_tree_step"]);
-            var rec_drugs           = this.intf.ptree["logicTree"][rec_tree_step_idx]["drugs"].join(", ");
+            var rec_drugs           = _this.intf.ptree["logicTree"][rec_tree_step_idx]["drugs"].join(", ");
             rec.find("h6").text(rec_drugs);
             
             var sum_bps = 0;
@@ -450,6 +458,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             tpl.find("#recommendations").empty();
             tpl.find("#recommendations").append(rec);
         }
+
     }else{
         $("#patient_details").addClass("none_selected").addClass("bg-light").addClass("rounded");
         var tpl = $("<h1>No Patient Selected</h1>");

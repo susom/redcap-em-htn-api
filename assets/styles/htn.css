@@ -357,7 +357,7 @@ label + em{
     font-weight:bold; 
 }
 #patient_details{
-    min-height:200px;
+    min-height:400px;
 }
 #patient_details dl dt { min-width:155px; }
 #patient_details dl dd { color:#a65c43; font-weight:bold; white-space: nowrap; }
