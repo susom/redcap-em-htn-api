@@ -9,9 +9,28 @@ function dashboard(record_id,urls){
     //maintain state across refreshData()
     this.cur_patient    = null;
     this.filter_nav     = [];
+    //the two above will maintain state across refreshData()
+
+    if(typeof(Storage) !== "undefined"){
+        if(this.getSession("cur_patient")){
+            console.log("this was in session storage cur_patient", this.getSession("cur_patient") );
+            this.cur_patient = this.getSession("cur_patient");
+        }
+
+        if(this.getSession("filter_nav")){
+            console.log("this was in session storage filter_nav", this.getSession("filter_nav") );
+            this.filter_nav = this.getSession("filter_nav");
+        }
+
+        if(this.getSession("patient_detail")){
+            console.log("this was in session storage patient_detail", this.getSession("patient_detail") );
+            this.patient_detail = this.getSession("patient_detail");
+        }
+    }else{
+        console.log("no local storage support");
+    }
 
     this.intf           = null;
-    
     this.filter_txn     = {"rx_change" : "Prescription Change Needed", "labs_needed" : "Lab Results Needed" , "data_needed" : "Data Needed", "all_patients" : "All Patients", "clear_filters" : "Clear Filters"};
     
     //some UI/UX 
@@ -29,13 +48,11 @@ function dashboard(record_id,urls){
     setInterval(function(){
         _this.refreshData();
     },180000);  // get new data every 3 min
-
-    this.displayPatientDetail();
 }
 dashboard.prototype.refreshData = function(){
     var _this       = this;
     var record_id   = this.provider;
-    console.log("refresh session , pull new data from dashboard INTF, need to maintain state!! and patient detail", this.filter_nav);
+    // console.log("refresh session , pull new data from dashboard INTF, need to maintain state!! and patient detail", this.filter_nav);
     $.ajax({
         url : this["ajax_endpoint"],
         method: 'POST',
@@ -45,6 +62,7 @@ dashboard.prototype.refreshData = function(){
         _this.intf = result;
         _this.updateOverview();
         _this.updateAlerts();
+        _this.displayPatientDetail();
     }).fail(function () {
         console.log("something failed");
     });
@@ -176,6 +194,7 @@ dashboard.prototype.updateFilters = function(el){
         el.parent().addClass("picked");
         this.filter_nav.push(filter);
     }
+    this.setSession("filter_nav", this.filter_nav);
     this.buildNav();
     this.displayPatientDetail();
     return false;
@@ -205,6 +224,7 @@ dashboard.prototype.buildNav = function(){
             new_filter.find('span').click(function(e){
                 e.preventDefault();
                 _this.filter_nav = [];
+                this.deleteSession("filter_nav");
                 _this.updateOverview();
             });
         }
@@ -243,7 +263,9 @@ dashboard.prototype.buildNav = function(){
             }).done(function (result) {
                 _el.addClass("active");
                 _this.cur_patient = _el.data("record_id");
+                _this.setSession("cur_patient",_this.cur_patient);
                 _this.patient_detail[record_id] = result;
+                _this.setSession("patient_detail",_this.patient_detail);
 
                 //artificial delay to draw the eye when theres a change 
                 $("#patient_details").removeClass().addClass("col-md-8 none_selected bg-light rounded").empty().addClass("loading_patient");
@@ -346,13 +368,13 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             
             $(".panels").hide();
             $("."+tab).show();
-    
             return false;
         });
 
         tpl.find(".clear_patient a").click(function(e){
             e.preventDefault();
             _this.cur_patient = null;
+            _this.deleteSession("cur_patient");
             _this.buildNav();
             _this.displayPatientDetail();
         });
@@ -442,6 +464,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                     //remove recommendation from patient details
                     _this.patient_detail["patient_rec_tree_step"] = null;
                     _this.patient_detail["filter"] = null;                    
+                    _this.setSession("patient_detail",_this.patient_detail);
 
                     rec.slideUp("medium", function(){
                         tpl.find("#recommendations").empty();
@@ -458,11 +481,37 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             tpl.find("#recommendations").empty();
             tpl.find("#recommendations").append(rec);
         }
-
     }else{
         $("#patient_details").addClass("none_selected").addClass("bg-light").addClass("rounded");
         var tpl = $("<h1>No Patient Selected</h1>");
     }
     $("#patient_details").append(tpl);
-    $(".recommendation").hide();
+    
+    //open to recoommendation (must be after append) if it is an rxchangeoh
+    if(patient["filter"] == "rx_change"){
+        $(".recommendation_tab").trigger("click");
+    }else{
+        $(".profile_tab").trigger("click");
+    }
+}
+dashboard.prototype.setSession = function(key,val){
+    console.log("setting session var " + key, val);
+    val = JSON.stringify(val);
+    sessionStorage.setItem(key,val);
+}
+dashboard.prototype.getSession = function(key){
+    if(sessionStorage.getItem(key)){
+        console.log("getting session var "+ key);
+        var val = sessionStorage.getItem(key);
+        return JSON.parse(val);
+    }else{
+        return false;
+    }
+}
+dashboard.prototype.deleteSession = function(key){
+    if(key){
+        delete sessionStorage[key];
+    }else{
+        sessionStorage.clear();
+    }
 }

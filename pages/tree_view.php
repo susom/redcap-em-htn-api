@@ -66,7 +66,7 @@ $name_na        = "None Selected";
     <main role="main" class="flex-shrink-0">
         <div class="container mt-5">
             <div class="row">
-                <h1 class="mt-5 mb-4 mr-3 ml-3 d-inline-block align-middle">Interactive Tree View for : <span class="template_name"></span></h1>
+                <h1 class="col-sm-12 mt-5 mb-4 mx-3 align-middle tree_header">Interactive Tree View: <span class="template_name"></span></h1>
             </div>
 
             <div id="prescription_tree" class="content bg-light mh-10 mx-1">
@@ -343,7 +343,7 @@ $(document).ready(function(){
          "ajax_endpoint" : '<?=$module->getURL("endpoints/ajax_handler.php", true, true);?>'
         ,"anon_profile_src" : '<?=$module->getUrl('assets/images/icon_anon.gif')?>'
         ,"ptree_url" : '<?=$module->getUrl('pages/tree_view.php', true, true)?>'
-        
+        ,"patient_backlink" : '<?=$module->getUrl('pages/dashboard.php', true, true)?>'
     };
 
     var patient     = <?= json_encode($patient) ;?>;

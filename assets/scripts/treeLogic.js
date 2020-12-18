@@ -43,6 +43,9 @@ treeLogic.prototype.startAttachTree = function(){
     }
     if(this.tplname != ""){
         $(".template_name").text(this.patient["patient_fname"]+ " " + this.patient["patient_mname"] + " " + this.patient["patient_lname"]);
+
+        var backlink = $("<a>").addClass("backlink").attr("href",this.patient_backlink).html("&#171; Return to "+this.patient["patient_fname"]+"'s Dashboard");
+        $(".template_name").append(backlink);
     }
 
     //First display all the previous steps up to the current step.

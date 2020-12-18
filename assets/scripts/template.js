@@ -337,10 +337,10 @@ var patient_nav = `
 var patient_details = `
     <ul class="nav nav-tabs border-0">
         <li class="nav-item rounded-top">
-            <a class="nav-link active" href="#" data-tab="profile">Profile</a>
+            <a class="nav-link profile_tab" href="#" data-tab="profile">Profile</a>
         </li>
         <li class="nav-item rounded-right">
-            <a class="nav-link" href="#" data-tab="recommendation">Recommendations</a>
+            <a class="nav-link recommendation_tab" href="#" data-tab="recommendation">Recommendations</a>
         </li>
         <li class="nav-item clear_patient">
             <a class="" href="#">Clear Patient Data</a>
