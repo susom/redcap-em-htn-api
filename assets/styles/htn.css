@@ -529,7 +529,7 @@ i.email.sent{
     border-radius: 50px;
     background: #fff;
 }
-.step:last-child ul::before{
+.step:nth-last-child(-n+2) ul::before{
     border: 3px solid #4E7AF5;
 }
 .step li {
@@ -548,7 +548,7 @@ i.email.sent{
     color:#bbb;
     margin:0; padding:0; 
 }
-.step:last-child li h5, .step:last-child li h6{
+.step:nth-last-child(-n+2) li h5, .step:nth-last-child(-n+2) li h6{
     color:#333;
 }
 .step li.ts:after{
@@ -571,7 +571,7 @@ i.email.sent{
     font-size:85%;
     cursor:pointer;
 }
-.step:last-child li.note{
+.step:nth-last-child(-n+2) li.note{
     color:#4E7AF5;
 }
 .step .comment{

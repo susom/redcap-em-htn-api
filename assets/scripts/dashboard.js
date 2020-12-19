@@ -306,13 +306,14 @@ dashboard.prototype.buildNav = function(){
 dashboard.prototype.displayPatientDetail = function(record_id){
     $("#patient_details").removeClass().addClass("col-md-8");
     $("#patient_details").empty();
-
+    
     record_id = this.cur_patient ? this.cur_patient : record_id;
     if(record_id || this.cur_patient){
         var patient = this.patient_detail[record_id];
         var tpl     = $(patient_details);
         var _this   = this;
-        
+        console.log("patient info", patient);
+
         tpl.find(".dob").text(patient["patient_birthday"]);
         tpl.find(".age").text(patient["patient_age"]);
         tpl.find(".sex").text(patient["sex"]);
@@ -394,56 +395,61 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             console.log("change out flip all of displayPaientDetail to ... editPatientDetail... same as patient detail without the recommendation tab");
         });
 
-        if(patient["tree_log"].length){
-            var json_tree_logs = patient["tree_log"];
-            
-            //Always add the first free step
-            json_tree_logs.unshift({
-                "ptree_current_meds": this.intf["ptree"]["logicTree"][0]["drugs"].join(", "),
-                "ptree_log_ts": patient["patient_add_ts"]
-            });
-            
-            tpl.find(".presription_tree .content").empty();
-            for(var i in json_tree_logs){
-                var log = json_tree_logs[i];
-                var log_step = $(tree_log_step);
 
-                var ts_temp = log["ptree_log_ts"].split(" ");
-                log_step.find(".ts h5").html(ts_temp[0]);
-                log_step.find(".ts em").html(ts_temp[1]);
-                log_step.find(".meds h6").html(log["ptree_current_meds"]);
-                
-                if(log.hasOwnProperty("ptree_log_comment") && log["ptree_log_comment"].length){
-                    log_step.find(".comment span").html(log["ptree_log_comment"]);
-                    log_step.find(".comment").hide();
-                    log_step.find(".note").click(function(){
-                        if($(this).next(".comment").is(":visible")){
-                            $(this).next(".comment").slideUp("fast");
-                        }else{
-                            $(this).next(".comment").slideDown("medium");
-                        }
-                    });
-                }else{
-                    log_step.find(".note").remove();
-                    log_step.find(".comment").remove();
-                }
-                
-                tpl.find(".presription_tree .content").append(log_step);
+
+
+        // PTREE LOG
+        var json_tree_logs = patient["tree_log"];
+        //Always add the first free step
+        json_tree_logs.unshift({
+            "ptree_current_meds": this.intf["ptree"]["logicTree"][0]["drugs"].join(", "),
+            "ptree_log_ts": patient["patient_add_ts"]
+        });
+        tpl.find(".presription_tree .content").empty();
+        for(var i in json_tree_logs){
+            var log = json_tree_logs[i];
+            var log_step = $(tree_log_step);
+
+            var ts_temp = log["ptree_log_ts"].split(" ");
+            log_step.find(".ts h5").html(ts_temp[0]);
+            log_step.find(".ts em").html(ts_temp[1]);
+            log_step.find(".meds h6").html(log["ptree_current_meds"]);
+            
+            if(log.hasOwnProperty("ptree_log_comment") && log["ptree_log_comment"].length){
+                log_step.find(".comment span").html(log["ptree_log_comment"]);
+                log_step.find(".comment").hide();
+                log_step.find(".note").click(function(){
+                    if($(this).next(".comment").is(":visible")){
+                        $(this).next(".comment").slideUp("fast");
+                    }else{
+                        $(this).next(".comment").slideDown("medium");
+                    }
+                });
+            }else{
+                log_step.find(".note").remove();
+                log_step.find(".comment").remove();
             }
+            
+            tpl.find(".presription_tree .content").append(log_step);
         }
+        var view_tree   = $("<button>").text("View Patient Interactive Tree View").addClass("btn btn-info btn-large");
+        var log_step    = $(tree_log_step);
+        log_step.find("ul").remove();
+        log_step.find(".instep").css("text-align","center").css("padding","0px 20px 20px").append( view_tree );
+        view_tree.click(function(e){
+            e.preventDefault();
+            location.href = _this["ptree_url"]+"&patient="+record_id;
+        });
+        tpl.find(".presription_tree .content").append(log_step);
 
-
-
+        //BP READINGS GRAPH
         if(patient["bp_readings"].length){
             var json_bp_readings = JSON.stringify(patient["bp_readings"]);
             tpl.find("section.data span").text(json_bp_readings);
         }
 
-
-
         if(patient["filter"] == "rx_change"){
             var rec = $(recommendation);
-            console.log("patient info", patient);
             var patient_id          = record_id;  
             var cur_tree_step_idx   = parseInt(patient["patient_treatment_status"]);
             var cur_drugs           = _this.intf.ptree["logicTree"][cur_tree_step_idx]["drugs"].join(", ");
