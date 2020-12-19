@@ -46,34 +46,6 @@ $home_active    = "active";
 </html>
 <script>
 $(document).ready(function(){
-    if(typeof(Storage) !== "undefined"){
-        if(localStorage.getItem("patient_list")){
-            patient_list    = JSON.parse(localStorage.getItem("patient_list"));
-        }
-
-        if(localStorage.getItem("treatment_trees")){
-            treatment_trees = JSON.parse(localStorage.getItem("treatment_trees"));
-
-            $("#view_tree option:not(:first-child),#patient_tree option:not(:first-child)").remove();
-            for(var treatment_name in treatment_trees){
-                var newopt  = $("<option>").val(treatment_name).text(treatment_name);
-                $("#view_tree").append(newopt);
-                $("#patient_tree").append(newopt.clone());
-            }
-        }
-        
-        // localStorage.setItem("key",JSON.stringify(OB));
-        // localStorage.removeItem("key");
-        // localStorage.clear();
-    }else{
-        console.log("no local storage support");
-    }
-
-    $("#clear_storage").click(function(){
-        localStorage.clear();
-        return;
-    });
-
     //make initial call to dashboard to grab data and draw out pertinent UI
     var urls = {
          "ajax_endpoint" : '<?=$module->getURL("endpoints/ajax_handler.php", true, true);?>'

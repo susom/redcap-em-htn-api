@@ -58,4 +58,10 @@
         background-position:50%;
         background-repeat:no-repeat;
     }
+    .step li.note{
+        background-image:url(<?= $module->getUrl('assets/images/icon_note.png') ?>);
+        background-repeat:no-repeat;
+        background-position:0 50%;
+        background-size:15px 15px;
+    }
 </style>

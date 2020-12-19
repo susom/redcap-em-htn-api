@@ -503,3 +503,81 @@ i.email.sent{
     cursor:pointer;
     color:red;
 }
+
+
+.step {
+    padding-left:30px;
+}
+.instep{
+    border-left:3px solid #4E7AF5;
+    padding:20px;
+    position:relative;
+}
+.step ul{
+    margin:0; padding:15px 0;
+    list-style:none; 
+    box-shadow:1px 1px 4px 0px #ccc; 
+}
+.step ul::before{
+    content: "";
+    position: absolute;
+    left: -12px; top:50%;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #bbb;
+    transform: translateY(-50%);
+    border-radius: 50px;
+    background: #fff;
+}
+.step:last-child ul::before{
+    border: 3px solid #4E7AF5;
+}
+.step li {
+    display:inline-block;
+    vertical-align:top;
+    padding:0 20px;
+    position:relative;
+}
+.step li em{
+    color:#bbb; 
+    font-style:normal; 
+    font-size:77%
+}
+.step li h5, .step li h6{
+    font-family:inherit;
+    color:#bbb;
+    margin:0; padding:0; 
+}
+.step:last-child li h5, .step:last-child li h6{
+    color:#333;
+}
+.step li.ts:after{
+    content:"";
+    border:1px solid #efefef;
+    width:1px; 
+    position:absolute; 
+    height:80%;
+    right:0; 
+    top:50%;
+    transform:translateY(-50%);
+}
+.step li.meds{
+    max-width:360px;
+}
+.step li.note{
+    position:absolute; 
+    right:20px; top:50px;
+    color:#bbb;
+    font-size:85%;
+    cursor:pointer;
+}
+.step:last-child li.note{
+    color:#4E7AF5;
+}
+.step .comment{
+    margin:20px 20px 0; 
+    padding:10px 15px;
+    border:1px solid #bbb;
+    border-radius:3px;
+    font-size:85%;
+}

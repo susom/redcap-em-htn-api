@@ -142,7 +142,7 @@ class HTNdashboard {
                         ,"patient_bp_target_pulse"
                         ,"patient_bp_target_systolic"
                         ,"patient_bp_target_diastolic"
-
+                        ,"patient_add_ts"
                         ,"patient_physician_id"
                         ,"current_treatment_plan_id"
                         ,"patient_treatment_status"
@@ -385,6 +385,8 @@ class HTNdashboard {
         }
         $data["patient_physician_id"]       = $_SESSION["logged_in_user"]["record_id"];
         $data["patient_treatment_status"]   = 0; //always start with the first step of whatever tree
+        $data["patient_treatment_status"]   = 0; //always start with the first step of whatever tree
+        $data["patient_add_ts"]             = Date("Y-m-d H:i:s"); //always start with the first step of whatever tree
         
         //TODO how to pick template?
         $data["current_treatment_plan_id"]  = 1;

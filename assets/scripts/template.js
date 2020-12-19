@@ -299,7 +299,6 @@ var rec_modal = `
     <div class="underlay"></div>
 `;
 
-
 var overview_filter = `
     <div class="d-inline-block text-center stat-group">
         <a href="#" class="stat d-inline-block">
@@ -332,7 +331,6 @@ var patient_nav = `
         </dd>
     </dl>
 `;
-
 
 var patient_details = `
     <ul class="nav nav-tabs border-0">
@@ -432,8 +430,9 @@ var patient_details = `
             <section class="presription_tree">
                 <h3 class="text-center p-3">Prescription Log</h3>
                 <div class="content bg-light mh-10 mx-1">
-                TBD 
+                    
                 </div>
+                
             </section>
 
             <section class="bp_threshold">
@@ -524,6 +523,19 @@ var patient_details = `
             <div id="recommendations">
                 <p class="p-3"><i>No current recommendations</i></p>
             </div>
+        </div>
+    </div>
+`;
+
+var tree_log_step = `
+    <div class="step">
+        <div class="instep">
+            <ul>
+                <li class="ts"><h5></h5><em></em></li>
+                <li class="meds"><em>Meds</em><h6></h6></li>
+                <li class="note">Note</li>
+                <p class="comment"><b>Notes:</b> <span></span></p>
+            </ul>
         </div>
     </div>
 `;

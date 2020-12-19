@@ -24,7 +24,7 @@ function dashboard(record_id,urls){
 
         if(this.getSession("patient_detail")){
             console.log("this was in session storage patient_detail", this.getSession("patient_detail") );
-            this.patient_detail = this.getSession("patient_detail");
+            // this.patient_detail = this.getSession("patient_detail");
         }
     }else{
         console.log("no local storage support");
@@ -48,6 +48,10 @@ function dashboard(record_id,urls){
     setInterval(function(){
         _this.refreshData();
     },180000);  // get new data every 3 min
+
+    if(!this.cur_patient){
+        _this.displayPatientDetail();
+    }
 }
 dashboard.prototype.refreshData = function(){
     var _this       = this;
@@ -59,10 +63,10 @@ dashboard.prototype.refreshData = function(){
         data: { "action" : "refresh" , "record_id" : record_id},
         dataType: 'json'
     }).done(function (result) {
+        console.log("refreshed data");
         _this.intf = result;
         _this.updateOverview();
-        _this.updateAlerts();
-        _this.displayPatientDetail();
+        // _this.updateAlerts();
     }).fail(function () {
         console.log("something failed");
     });
@@ -247,7 +251,7 @@ dashboard.prototype.buildNav = function(){
         newnav.find("b").text(patient["patient_name"]);
         newnav.find("i").text(patient["age"] + ", " + patient["sex"]);
         newnav.find("img").attr("src", patient["patient_photo"]);
-        newnav.click(function(e){
+        newnav.click(function(e, isAutoClick){
             e.preventDefault();
 
             var record_id = $(this).data("record_id");
@@ -269,21 +273,27 @@ dashboard.prototype.buildNav = function(){
 
                 //artificial delay to draw the eye when theres a change 
                 $("#patient_details").removeClass().addClass("col-md-8 none_selected bg-light rounded").empty().addClass("loading_patient");
-                setTimeout(function(){
+                
+                if(isAutoClick){
+                    //if its autoclick from a refreshData call dont bother with the fake settimeout
                     _this.displayPatientDetail(record_id);
-                },1250);
+                }else{
+                    setTimeout(function(){
+                        _this.displayPatientDetail(record_id);
+                    },1250);
+                }
             }).fail(function (e) {
                 console.log(e,"something failed");
             });
 
         });
 
+        $("#patient_list").append(newnav);
+
         if(_this.cur_patient == patient["record_id"]){
             //preserving page state while page data refreshes
-            newnav.addClass("active");
+            newnav.trigger("click", true);
         }
-
-        $("#patient_list").append(newnav);
     }
 
     if(!displayed){
@@ -384,11 +394,52 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             console.log("change out flip all of displayPaientDetail to ... editPatientDetail... same as patient detail without the recommendation tab");
         });
 
+        if(patient["tree_log"].length){
+            var json_tree_logs = patient["tree_log"];
+            
+            //Always add the first free step
+            json_tree_logs.unshift({
+                "ptree_current_meds": this.intf["ptree"]["logicTree"][0]["drugs"].join(", "),
+                "ptree_log_ts": patient["patient_add_ts"]
+            });
+            
+            tpl.find(".presription_tree .content").empty();
+            for(var i in json_tree_logs){
+                var log = json_tree_logs[i];
+                var log_step = $(tree_log_step);
+
+                var ts_temp = log["ptree_log_ts"].split(" ");
+                log_step.find(".ts h5").html(ts_temp[0]);
+                log_step.find(".ts em").html(ts_temp[1]);
+                log_step.find(".meds h6").html(log["ptree_current_meds"]);
+                
+                if(log.hasOwnProperty("ptree_log_comment") && log["ptree_log_comment"].length){
+                    log_step.find(".comment span").html(log["ptree_log_comment"]);
+                    log_step.find(".comment").hide();
+                    log_step.find(".note").click(function(){
+                        if($(this).next(".comment").is(":visible")){
+                            $(this).next(".comment").slideUp("fast");
+                        }else{
+                            $(this).next(".comment").slideDown("medium");
+                        }
+                    });
+                }else{
+                    log_step.find(".note").remove();
+                    log_step.find(".comment").remove();
+                }
+                
+                tpl.find(".presription_tree .content").append(log_step);
+            }
+        }
+
+
 
         if(patient["bp_readings"].length){
             var json_bp_readings = JSON.stringify(patient["bp_readings"]);
             tpl.find("section.data span").text(json_bp_readings);
         }
+
+
 
         if(patient["filter"] == "rx_change"){
             var rec = $(recommendation);
@@ -444,6 +495,8 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                         tpl.find("#recommendations").empty();
                         tpl.find("#recommendations").append($('<p class="p-3"><i>No current recommendations</i></p>'));
 
+                        _this.patient_detail["filter"] = null;
+
                         //NEED TO IMMEDIELTY REFRESH DASHBOARD NOW!
                         _this.refreshData();
                     });
@@ -488,7 +541,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
     $("#patient_details").append(tpl);
     
     //open to recoommendation (must be after append) if it is an rxchangeoh
-    if(patient["filter"] == "rx_change"){
+    if(this.cur_patient && patient["filter"] == "rx_change"){
         $(".recommendation_tab").trigger("click");
     }else{
         $(".profile_tab").trigger("click");
