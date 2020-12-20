@@ -419,25 +419,9 @@ var patient_details = `
             </div>
         </div>
         <div class="patient_data col-md-12 py-2">
-            <section class="information">
-                <h1 class="text-center p-3">Information</h2>
-                <div class="content bg-light mh-10 mx-1">
-                    TBD
-                </div>
-                <div class="content bg-light mh-10 mx-1"></div>
-            </section>
-
-            <section class="presription_tree">
-                <h3 class="text-center p-3">Prescription Log</h3>
-                <div class="content bg-light mh-10 mx-1">
-                    
-                </div>
-                
-            </section>
-
             <section class="bp_threshold">
                 <h3 class="text-center p-3">BP Threshold</h3>
-                <div class="content bg-light mh-10 mx-1b py-3 row">
+                <div class="content bg-light mh-10 mx-1 py-3 row">
                     <dl class="col-md-5 offset-md-1">
                         <dt>BP Goal</dt>
                         <dd class="font-weight-light mb-0 systolic_goal">Systolic : <span>130</span></dd>
@@ -456,6 +440,13 @@ var patient_details = `
                         <dd class="font-weight-light mb-0">Average Data : <select class="avg_data_range"><option selected>Daily</option><option >Weekly</option><option >AM</option><option >PM</option></select></dd>
                         <dd class="font-weight-light mb-0 define_controlled">Define Uncontrolled : <span>60%</span></dd>
                     </dl>
+                </div>
+            </section>
+
+            <section class="presription_tree">
+                <h3 class="text-center p-3">Prescription Log</h3>
+                <div class="content bg-light mh-10 mx-1">
+                    
                 </div>
             </section>
 
