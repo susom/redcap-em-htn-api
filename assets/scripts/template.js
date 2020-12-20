@@ -462,7 +462,7 @@ var patient_details = `
             <section class="data">
                 <h3 class="text-center p-3">Data</h3>
                 <div class="content rounded-bottom bg-light mh-10 mx-1">
-                    <span></span>
+                    <div id="bpchart"></div>
                 </div>
             </section>
         </div>

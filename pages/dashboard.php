@@ -56,6 +56,7 @@ $(document).ready(function(){
 
     var dash = new dashboard(<?=$_SESSION["logged_in_user"]["record_id"]?>,urls);
 });
+
 function removeA(arr) {
     var what, a = arguments, L = a.length, ax;
     while (L > 1 && arr.length) {
@@ -65,36 +66,5 @@ function removeA(arr) {
         }
     }
     return arr;
-}
-function clear_elements(element, exception_classes) {
-  $(".hide").removeClass("hide");
-  $(".delete_this").remove();
-
-  element.find(':input').each(function() {
-    for(var i in exception_classes){
-        if($(this).attr("class") == exception_classes[i]){
-            return;
-        }
-    }
-    
-    switch(this.type) {
-        case 'password':
-        case 'text':
-        case 'textarea':
-        case 'file':
-        case 'select-one':
-        case 'select-multiple':
-        case 'date':
-        case 'number':
-        case 'tel':
-        case 'email':
-            $(this).val('');
-            break;
-        case 'checkbox':
-        case 'radio':
-            this.checked = false;
-            break;
-    }
-  });
 }
 </script>

@@ -15,6 +15,10 @@
 
 <script src="<?php echo $module->getUrl('assets/scripts/dashboard.js') ?>" crossorigin="anonymous"></script>
 <script src="<?php echo $module->getUrl('assets/scripts/template.js') ?>" crossorigin="anonymous"></script>
+
+<script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.js"></script>
+<link  href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.css"rel="stylesheet" type="text/css"></link>
 <style>
     nav .dropdown-toggle::after{
         background:url(<?php echo $module->getUrl('assets/images/icon_anon.gif') ?>) 0 0 no-repeat;

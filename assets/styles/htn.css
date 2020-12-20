@@ -581,3 +581,6 @@ i.email.sent{
     border-radius:3px;
     font-size:85%;
 }
+#bpchart svg{
+    width: 99%;
+}

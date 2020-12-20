@@ -444,8 +444,8 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
         //BP READINGS GRAPH
         if(patient["bp_readings"].length){
-            var json_bp_readings = JSON.stringify(patient["bp_readings"]);
-            tpl.find("section.data span").text(json_bp_readings);
+            // generateBpGraph(patient["bp_readings"]);
+            this.graphBpData();
         }
 
         if(patient["filter"] == "rx_change"){
@@ -573,4 +573,88 @@ dashboard.prototype.deleteSession = function(key){
     }else{
         sessionStorage.clear();
     }
+}
+dashboard.prototype.graphBpData = function(){
+    var record_id   = this.cur_patient;
+    var patient     = this.patient_detail[record_id];
+
+    var parseTime   = d3.time.format("%Y-%m-%dT%H:%M:%S").parse;
+    var xaxis       = [];
+    var datadia     = [];
+    var datasys     = [];
+
+    var htn_bps     = patient["bp_readings"];
+    for(var i in htn_bps){
+        var bp      = htn_bps[i];
+        var ts      = bp["bp_reading_ts"];
+        var sys     = bp["bp_systolic"];
+        var dia     = bp["bp_diastolic"];
+        var puls    = bp["bp_pulse"];
+        var pu_un   = bp["bp_pulse_units"];
+        var bp_un   = bp["bp_units"];
+
+        ts          = ts.replace(" ","T");
+        xaxis.push(parseTime(ts));
+        datasys.push(sys);
+        datadia.push(dia);
+    }
+    
+    setTimeout(function(){
+        var chart = c3.generate({
+            "bindto"    : "#bpchart",
+            "title"     : {
+                "text": function(d){
+                    return patient["patient_fname"]+"'s Blood Pressure Data"; 
+                }
+            },
+            "data"      : {
+                "x"         : 'x',
+                "json"      : {
+                                "Systolic"  : datasys,
+                                "Diastolic" : datadia,
+                                "x"         : xaxis
+                            }
+            },
+            "subchart"  : {
+                "show" : false
+            },
+            "axis"      : {
+                "x" : {
+                    "type"  : 'timeseries'
+                    ,"tick"  : {
+                                "count" : 6
+                                //'%Y-%m-%dT%H:%M:%S.%LZ'
+                                //("%Y-%m-%dT%H:%M:%S%Z");
+                                //1942-08-22T06:31:59-04:00'
+                                ,"format" : '%Y-%m-%d'
+                            }
+                    ,"label" : { // ADD
+                                "text"      : 'Date'
+                                ,"position"  : 'outer-center'
+                            }
+                },
+                "y" : {
+                    "tick"   : {
+                                "format": d3.format("s")
+                            }
+                    ,"label" : { // ADD
+                                "text": 'Blood Pressure ' + bp_un
+                                ,"position": 'outer-middle'
+                            }
+                },
+            },
+            "tooltip"   : {
+                format: {
+                    "title" : function(d) {
+                        var dr = d; 
+                        return 'BP: ' + dr; 
+                    },
+                    "value" : function(value, ratio, id) {
+                        var format = id === 'data1' ? d3.format(',') : d3.format('');
+                        return format(value);
+                    }
+                }
+            }
+        });
+    },500);
 }
