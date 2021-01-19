@@ -13,6 +13,8 @@ if(!empty($_POST)){
     exit;   
 }
 
+$provider_trees = $_SESSION["provider_trees"];
+
 $page       = "patient_detail";
 $showhide   = $page !== "dashboard" ? "hide" : "";
 ?>
@@ -143,6 +145,20 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                     <dl class="mb-4">
                                     <dt class="d-inline-block align-top">Pharmacy Info</dt>
                                     <dd class="d-inline-block"><input type="text" name='pharmacy_info' placeholder="Pharmacy Name"/></dd>
+                                    </dl>
+
+                                    <dl class="mb-4">
+                                    <dt class="d-inline-block align-top">Prescription Tree Template</dt>
+                                    <dd class="d-inline-block">
+                                        <select id="alias_select">
+                                            <option value="99">View or Edit Saved Templates</option>
+                                            <?php
+                                                foreach($provider_trees as $ptree){
+                                                    echo "<option value='".$ptree["template_id"]."' data-rc='".$ptree["record_id"]."' data-raw='".json_encode($ptree)."'>".$ptree["template_name"]."</option>";
+                                                }
+                                            ?>
+                                        </select>
+                                    </dd>
                                     </dl>
                                 </div>
                             </div>

@@ -179,7 +179,7 @@ class HTNdashboard {
             $result["planning_pregnancy"]   = $result["planning_pregnancy"] == "1" ? "Yes" : "No";
             
             //GET PATIENT BP READINGS DATA OVER LAST 2 WEEKS
-            $bp_filter  = "[omron_bp_id] != '' AND [bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-2 weeks')) . "'";
+            $bp_filter  = "[omron_bp_id] != '' AND [bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-4 weeks')) . "'";
             $bp_params  = array(
                 "records"       => array($result["record_id"]),
                 "fields"        => array("record_id", "omron_bp_id", "bp_reading_ts" , "bp_systolic", "bp_diastolic", "bp_pulse", "bp_device_type", "bp_units", "bp_pulse_units"),
@@ -395,7 +395,7 @@ class HTNdashboard {
         $data["record_id"]  = $next_id;
 
         $r    = \REDCap::saveData('json', json_encode(array($data)) );
-        $this->module->emDebug("ahha", $data);
+        $this->module->emDebug("patient added or what?", $r, $data);
         return $r;
     }
 

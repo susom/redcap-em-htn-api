@@ -227,17 +227,40 @@ class HTNtree  {
         return $response;
     }
 
+    public function getProviderTrees($provider_id){
+        $filter = "[provider_id] = '$provider_id'";
+        $fields = array();
+		$params	= array(
+			'project_id'	=> $this->tree_templates_project,
+            'return_format' => 'json',
+            'fields'        => $fields,
+            'filterLogic'   => $filter 
+		);
+		if($record_id){
+			$params['records'] = array($record_id);
+		}
+
+        $q      = \REDCap::getData($params);
+        $trees  = json_decode($q, true);
+
+        $this->module->emDebug($trees);
+        return $trees;
+    }
+    
     public function saveTemplate($provider_id, $post){
-        $next_id    = !empty($post["record_id"]) ? $post["record_id"] : $this->module->getNextAvailableRecordId($this->tree_templates_project);
+        $next_id    = !empty($post["record_id"]) ? $post["record_id"] : $this->module->getNextAvailableRecordId($this->module->enabledProjects['tree_templates']['pid']);
         $data       = array(
             "record_id"             => $next_id,
             "provider_id"           => $provider_id,
             "template_name"         => $post["template_name"],
+            "template_id"           => $post["template_id"],
             "acei_class"            => $post["acei_class"],
             "arb_class"             => $post["arb_class"],
             "diuretic_class"        => $post["diuretic_class"],
             "ccb_class"             => $post["ccb_class"],
-            "bb_class"              => $post["bb_class"]
+            "bb_class"              => $post["bb_class"],
+            "spirno_class"          => $post["spirno_class"],
+            "epler_class"           => $post["epler_class"]
         );
         $r = \REDCap::saveData($this->tree_templates_project, 'json', json_encode(array($data)) );
         $this->module->emDebug("save_template", $data);
@@ -319,7 +342,6 @@ class HTNtree  {
 
         if(!empty($records)){
             $meds 	    = current($records);
-            $this->module->emDebug("drugs", $meds);
             
             //TODO GET THIS FROM RC PROJECT
             // Eplerenone

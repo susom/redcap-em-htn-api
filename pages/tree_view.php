@@ -11,7 +11,12 @@ if(isset($_POST["action"])){
 
     switch($action){
         case "save_template":
+            if($_POST["confirm_template_name"] != $_POST["template_name"]){
+                $_POST["record_id"] = null;
+                $module->emDebug("no match, new record");
+            }
             $module->saveTemplate($provider_id, $_POST);
+            unset($_SESSION["logged_in_user"]["provider_trees"]);
         break;
     }
 }
@@ -26,9 +31,17 @@ if(!empty($_GET["patient"])){
     $rec_step_idx       = $patient["patient_rec_tree_step"];
 }
 
-$tpl_record_id  = $tree_id ?? 1;
+if(empty($_SESSION["logged_in_user"]["provider_trees"])){
+    $provider_trees = $module->getProviderTrees($provider_id);
+    $_SESSION["logged_in_user"]["provider_trees"] = $provider_trees;
+}
+$provider_trees = $_SESSION["logged_in_user"]["provider_trees"];
+
+
 $tree_logic     = $module->treeLogic($provider_id);
 $name_na        = "None Selected";
+
+$available_trees= array(1, 2, 3, 4);
 
 // $tree_active    = "active";
 ?>
@@ -66,7 +79,7 @@ $name_na        = "None Selected";
     <main role="main" class="flex-shrink-0">
         <div class="container mt-5">
             <div class="row">
-                <h1 class="col-sm-12 mt-5 mb-4 mx-3 align-middle tree_header">Interactive Tree View: <span class="template_name"></span></h1>
+                <h1 class="col-sm-12 mt-5 mb-4 mx-3 align-middle tree_header">Interactive Tree View <span class="template_name"></span></h1>
             </div>
 
             <div id="prescription_tree" class="content bg-light mh-10 mx-1">
@@ -112,7 +125,7 @@ $name_na        = "None Selected";
                         }
 
                         #templates {
-                            padding-left:30px;
+                            margin:0 0 30px; 
                         }
                         #templates label{
                             width:80px;
@@ -134,28 +147,28 @@ $name_na        = "None Selected";
                             cursor:pointer;
                         }
 
-                        #tpl1 + label {
+                        .tpl + label {
                             border: 2px solid blue;
                             color:blue;
                         }
-                        #tpl2 + label {
-                            border:2px solid orange;
-                            color:orange;
-                        }
-
-                        #tpl1:checked + label {
+                        .tpl:checked + label {
                             background:blue;
                             color:#fff;
                         }
-                        #tpl2:checked + label {
-                            background:orange;
-                            color:#fff;
+
+                        .tpl:disabled + label {
+                            border:2px solid #666;
+                            color:#666;
+                            background:#ccc;
+                            cursor:default !important;
                         }
 
-
                         #template_form{
-                            margin:30px; 
                             font-size:130%;
+                        }
+
+                        .class_drug.alias {
+                            margin-top:20px; 
                         }
 
                         .class_drug label{
@@ -196,88 +209,123 @@ $name_na        = "None Selected";
                         button:focus {
                             outline: none;
                         }
+
+                        #alias_select option{
+                            border:1px solid red; 
+                        }
+
+                        .drugs {
+                            display:none;
+                        }
                     </style>
                     <div id="template_select" class="container mx-5 ">
                         <div class="row">
-                            <h3 class="mb-4 mr-3 ml-3 d-inline-block align-middle">Template Select</h3>
+                            <h3 class="mb-4 mr-3 ml-3 d-inline-block align-middle">Customize Drugs for Templates</h3>
                         </div>
 
                         <form id="template_form" method="POST">
-                            <input type="hidden" name="action" value="save_template"/>
-                            <input type="hidden" name="record_id" value="<?=$tpl_record_id?>"/>
+                            <input type="hidden" id="hidden_action" name="action" value="save_template"/>
+                            <input type="hidden" id="hidden_record_id" name="record_id" value=""/>
+                            <input type="hidden" id="hidden_template_name" name="confirm_template_name" value=""/>
                             <div id="templates" class="row">
-                                <div><input id="tpl1" name="template_name" value="template_1" type="radio" checked/> <label for="tpl1">1</label></div>
-                                <div><input id="tpl2" name="template_name" value="template_2" type="radio"/> <label for="tpl2">2</label></div>
+                                <div class="col-sm-12 mb-6">
+                                    <h5>Choose a saved custom tree to view or edit</h5>
+                                    <select id="alias_select">
+                                        <option value="99">View/Edit Saved Templates</option>
+                                        <?php
+                                            foreach($provider_trees as $idx => $ptree){
+                                                echo "<option value='".$ptree["template_id"]."' data-rc='".$ptree["record_id"]."' data-raw='".json_encode($ptree)."'>".$ptree["template_name"]."</option>";
+                                            }
+                                        ?>
+                                    </select>
+                                </div>
+
+                                <div class="col-sm-7 mt-5 row">
+                                    <h5 class="col-sm-12"><b>OR</b> Choose a default tree template to customize</h5>
+                                    <?php
+                                        foreach($available_trees as $i=> $tree){
+                                            $disabled = ($i > 0) ? "disabled" : "";
+                                            echo '<div class="col-sm-3"><input class="tpl" '.$disabled.' id="tpl'.$tree.'" name="template_id" value="'.$tree.'" type="radio"/> <label for="tpl'.$tree.'">'.$tree.'</label></div>';
+                                        }
+                                    ?>
+                                    <em>*Not all trees are available yet.</em>
+                                </div>
                             </div>
-                            <div class="class_drug">
-                                <label>ACE-I HCTZ</label> 
-                                <select name="acei_diuretic class">
-                                    <option value="LISINOPRIL - HCTZ">LISINOPRIL - HCTZ</option>
-                                    <option value="CAPTOPRIL - HCTZ">CAPTOPRIL - HCTZ</option>
-                                    <option value="BENAZEPRIL - HCTZ">BENAZEPRIL - HCTZ</option>
-                                    <option value="FOSINOPRIL - HCTZ">FOSINOPRIL - HCTZ</option>
-                                    <option value="QUINAPRIL - HCTZ">QUINAPRIL - HCTZ</option>
-                                    <option value="ENALAPRIL - HCTZ">ENALAPRIL - HCTZ</option>
-                                </select>
-                            </div>
-                            <div class="class_drug">
-                                <label>ACE-I</label> 
-                                <select name="acei_class">
-                                    <option value="LISINOPRIL">LISINOPRIL</option>
-                                    <option value="CAPTOPRIL">CAPTOPRIL</option>
-                                    <option value="BENAZEPRIL">BENAZEPRIL</option>
-                                    <option value="FOSINOPRIL">FOSINOPRIL</option>
-                                    <option value="QUINAPRIL">QUINAPRIL</option>
-                                    <option value="ENALAPRIL">ENALAPRIL</option>
-                                </select>
-                            </div>
-                            <div class="class_drug">
-                                <label>ARB HCTZ</label> 
-                                <select name="arb_diuretic_class">
-                                    <option value="LOSARTAN - HCTZ">LOSARTAN - HCTZ</option>
-                                </select>
-                            </div>
-                            <div class="class_drug">
-                                <label>ARB</label> 
-                                <select name="arb_class">
-                                    <option value="LOSARTAN">LOSARTAN</option>
-                                </select>
-                            </div>
-                            <div class="class_drug">
-                                <label>Diuretic</label> 
-                                <select name="diuretic_class">
-                                    <option value="HCTZ">HCTZ</option>
-                                </select>
-                            </div>
-                            <div class="class_drug">
-                                <label>Spirnolactone</label> 
-                                <select name="spirno_class">
-                                    <option value="Spirnolactone">Spirnolactone</option>
-                                </select>
-                            </div>
-                            <div class="class_drug">
-                                <label>Eplerenone</label> 
-                                <select name="epler_class">
-                                    <option value="Eplerenone">Eplerenone</option>
-                                </select>
-                            </div>
-                            <div class="class_drug">
-                                <label>CCB</label> 
-                                <select name="ccb_class">
-                                    <option value="AMLODIPINE">AMLODIPINE</option>
-                                    <option value="DILTIAZEM">DILTIAZEM</option>
-                                    <option value="VERAPAMIL">VERAPAMIL</option>
-                                </select>
-                            </div>
-                            <div class="class_drug">
-                                <label>BB</label> 
-                                <select name="bb_class">
-                                    <option value="BISOPROLOL">BISOPROLOL</option>
-                                </select>
-                            </div>
-                        
-                            <div class='btns'>
-                                <label><input type="checkbox" id="modify_defaults"> Modify Defaults?</label>  <button type='submit' class="btn btn-primary" id="save_template">Save As Is</button>
+                            
+                            <div class="drugs">
+                                <div class="class_drug">
+                                    <label>ACE-I HCTZ</label> 
+                                    <select name="acei_diuretic class">
+                                        <option value="LISINOPRIL - HCTZ">LISINOPRIL - HCTZ</option>
+                                        <option value="CAPTOPRIL - HCTZ">CAPTOPRIL - HCTZ</option>
+                                        <option value="BENAZEPRIL - HCTZ">BENAZEPRIL - HCTZ</option>
+                                        <option value="FOSINOPRIL - HCTZ">FOSINOPRIL - HCTZ</option>
+                                        <option value="QUINAPRIL - HCTZ">QUINAPRIL - HCTZ</option>
+                                        <option value="ENALAPRIL - HCTZ">ENALAPRIL - HCTZ</option>
+                                    </select>
+                                </div>
+                                <div class="class_drug">
+                                    <label>ACE-I</label> 
+                                    <select name="acei_class">
+                                        <option value="LISINOPRIL">LISINOPRIL</option>
+                                        <option value="CAPTOPRIL">CAPTOPRIL</option>
+                                        <option value="BENAZEPRIL">BENAZEPRIL</option>
+                                        <option value="FOSINOPRIL">FOSINOPRIL</option>
+                                        <option value="QUINAPRIL">QUINAPRIL</option>
+                                        <option value="ENALAPRIL">ENALAPRIL</option>
+                                    </select>
+                                </div>
+                                <div class="class_drug">
+                                    <label>ARB HCTZ</label> 
+                                    <select name="arb_diuretic_class">
+                                        <option value="LOSARTAN - HCTZ">LOSARTAN - HCTZ</option>
+                                    </select>
+                                </div>
+                                <div class="class_drug">
+                                    <label>ARB</label> 
+                                    <select name="arb_class">
+                                        <option value="LOSARTAN">LOSARTAN</option>
+                                    </select>
+                                </div>
+                                <div class="class_drug">
+                                    <label>Diuretic</label> 
+                                    <select name="diuretic_class">
+                                        <option value="HCTZ">HCTZ</option>
+                                    </select>
+                                </div>
+                                <div class="class_drug">
+                                    <label>Spirnolactone</label> 
+                                    <select name="spirno_class">
+                                        <option value="Spirnolactone">Spirnolactone</option>
+                                    </select>
+                                </div>
+                                <div class="class_drug">
+                                    <label>Eplerenone</label> 
+                                    <select name="epler_class">
+                                        <option value="Eplerenone">Eplerenone</option>
+                                    </select>
+                                </div>
+                                <div class="class_drug">
+                                    <label>CCB</label> 
+                                    <select name="ccb_class">
+                                        <option value="AMLODIPINE">AMLODIPINE</option>
+                                        <option value="DILTIAZEM">DILTIAZEM</option>
+                                        <option value="VERAPAMIL">VERAPAMIL</option>
+                                    </select>
+                                </div>
+                                <div class="class_drug">
+                                    <label>BB</label> 
+                                    <select name="bb_class">
+                                        <option value="BISOPROLOL">BISOPROLOL</option>
+                                    </select>
+                                </div>
+                                <div class="alias class_drug">
+                                    <label>Template Alias</label> 
+                                    <input type="text" id="template_name" name="template_name"/>
+                                </div>
+                                <div class='btns'>
+                                    <label><input type="checkbox" id="modify_defaults"> Modify Defaults?</label>  <button type='submit' class="btn btn-primary" id="save_template">Save As Is</button>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -294,12 +342,13 @@ $name_na        = "None Selected";
 </html>
 <script>
 $(document).ready(function(){
-    $(".btns input").click(function(){
+    $("#modify_defaults").click(function(){
         if($(this).prop("checked")){
             // $("#template_form").removeClass("hide");
             $(".class_drug select").each(function(){
                 $(this).prop("disabled",false);
             });
+            $("#save_template").val("Save As");
         }else{
             // $("#template_form").addClass("hide");
             $(".class_drug select").each(function(){
@@ -309,6 +358,7 @@ $(document).ready(function(){
                 $(this).prop("disabled",true);
                 $("#save_template").removeClass("btn-danger").text("Save As Is");
             });
+            $("#save_template").val("Save As Is");
         }
     });
 
@@ -336,6 +386,70 @@ $(document).ready(function(){
             $("#modify_defaults").trigger("click");
         }
     });
+    
+    $("#alias_select").change(function(){
+        resetDrugs();
+
+        if($(this).find(":selected").length && $(this).find(":selected").val() != 99){            
+            var _opt = $(this).find(":selected");
+            var raw  = _opt.data("raw");
+
+            $("#hidden_record_id").val(_opt.data("rc")); //actual redcap record id
+            $("#tpl"+raw["template_id"]).prop("checked", true); //template id (the base templates 1 - 5)
+            $("#template_name").val(_opt.text()); // provider alias for this configuration
+            $("#hidden_template_name").val(_opt.text());
+
+            for(var i in raw){
+                if(i.indexOf("_class") > -1){
+                    console.log("wtf", i, raw[i]); 
+                    $("select[name='"+i + "'] option[value='"+raw[i]+"']").attr("selected",true);
+                }
+            }
+
+            // raw["acei_class"]
+            // raw["arb_class"]
+            // raw["bb_class"]
+            // raw["ccb_class"]
+            // raw["diuretic_class"]
+            // raw["epler_class"]
+            // raw["provider_id"]
+            // raw["spirno_class"]
+
+            $(".drugs").slideDown("medium");
+            if(!$("#modify_defaults").prop("checked")){
+                $("#modify_defaults").trigger("click");
+            }
+        }else{
+            $("#template_name").val("");
+            $("#hidden_record_id").val("");
+            $(".tpl").attr("checked", false);
+        }
+    });
+
+    $(".tpl").click(function(){
+        resetDrugs();
+        $(this).prop("checked", true);
+        $(".drugs").slideDown("medium");
+    });
+    // $("#templates input:first-child").attr("checked",true);
+
+
+    function resetDrugs(){
+        //uncheck template picker
+        $(".tpl:checked").prop("checked", false);
+
+        // slide up drugs and reset all selectd
+        $(".drugs").slideUp("fast");
+        $(".drugs select").prop("selectedIndex", 0);
+
+        // if checked uncheck
+        if($("#modify_defaults").prop("checked")){
+            $("#modify_defaults").trigger("click");
+        }
+    }
+
+
+
     // BUILD TREE SHOULD HAVE EVERY PERMUTATION + NEXT STEP + SIDE-EFFECT BRANCHES
 
     //make initial call to dashboard to grab data and draw out pertinent UI

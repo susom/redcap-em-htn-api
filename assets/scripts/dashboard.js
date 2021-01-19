@@ -613,8 +613,11 @@ dashboard.prototype.graphBpData = function(){
                                 "Systolic"  : datasys,
                                 "Diastolic" : datadia,
                                 "x"         : xaxis
-                            }
+                            },
+                "type" : "spline"
             },
+            
+
             "subchart"  : {
                 "show" : false
             },

@@ -48,6 +48,14 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		// what else?  API stuff?
 	}
 
+	//Get All Provider Trees
+	public function getProviderTrees($provider_id){
+		$this->loadEM();
+
+		$trees = $this->tree->getProviderTrees($provider_id);
+		return $trees;
+	}
+
 	//Get All Patients
 	public function dashBoardInterface($provider_id){
 		$this->loadEM();
@@ -507,7 +515,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		//more complex algo than mean for triggering rx change
 		if(!empty($target_systolic)){
 			//TODO FIX THE FILTER  one week? two weeks?!?
-			$filter = "[bp_reading_ts] > '" . date("n/j/y H:i", strtotime('-2 weeks')) . "'";
+			$filter = "[bp_reading_ts] > '" . date("n/j/y H:i", strtotime('-20 weeks')) . "'";
 			$params	= array(
 				'records' 		=> array($record_id),
 				'return_format' => 'json',
@@ -537,6 +545,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$pulse_mean 	= round(array_sum($pulse)/count($pulse));
 
 			//TODO 
+			$systolic_mean 	= array_pop($systolic);
+			
 			$this->emDebug("TODO, need a more granular evaluation for _uncontrolled");
 			$sys_uncontrolled = $systolic_mean > $target_systolic ? true : false;
 			$dia_uncontrolled = $diastolic_mean > $target_diastolic ? true : false;
