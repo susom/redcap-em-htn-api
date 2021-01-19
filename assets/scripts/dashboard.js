@@ -228,7 +228,7 @@ dashboard.prototype.buildNav = function(){
             new_filter.find('span').click(function(e){
                 e.preventDefault();
                 _this.filter_nav = [];
-                this.deleteSession("filter_nav");
+                _this.deleteSession("filter_nav");
                 _this.updateOverview();
             });
         }
@@ -446,6 +446,9 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         if(patient["bp_readings"].length){
             // generateBpGraph(patient["bp_readings"]);
             this.graphBpData();
+        }else{
+            var nodata = $("<em>").addClass("nodata").text("No BP data within the past 2 weeks");
+            tpl.find("#bpchart").html(nodata);
         }
 
         if(patient["filter"] == "rx_change"){

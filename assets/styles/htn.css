@@ -584,3 +584,8 @@ i.email.sent{
 #bpchart svg{
     width: 99%;
 }
+.nodata{
+    display:block;
+    text-align:center;
+    padding:60px 0;
+}
