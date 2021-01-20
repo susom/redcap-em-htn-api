@@ -2,6 +2,10 @@
 namespace Stanford\HTNapi;
 /** @var \Stanford\HTNapi\HTNapi $module */
 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 include("components/gl_checklogin.php");
 
 if(!empty($_POST)){
