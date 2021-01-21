@@ -8,6 +8,13 @@ if(!empty($_POST)){
     // $module->emDebug("refresh dashboard INTF", $_POST);
     $action = $_POST["action"];
     switch($action){
+        case "manual_eval_bp":
+            $record_id  = $_POST["record_id"] ?? null;
+            $module->evaluateOmronBPavg($record_id);
+
+            $result = array("yay we did it");
+        break;
+
         case "addEditPatient":
             
         break; 

@@ -451,6 +451,25 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             tpl.find("#bpchart").html(nodata);
         }
 
+        tpl.find("#run_bp_eval").click(function(e){
+            e.preventDefault();
+
+            $.ajax({
+                url : _this["ajax_endpoint"],
+                method: 'POST',
+                data: { "action" : "manual_eval_bp" , "record_id" : patient["record_id"], "patient" : patient },
+                dataType: 'json'
+            }).done(function (result) {
+                console.log("yay it did it");
+                //NEED TO IMMEDIELTY REFRESH DASHBOARD NOW!
+                _this.refreshData();
+            }).fail(function () {
+                console.log("something failed");
+            });
+
+
+        });
+
         if(patient["filter"] == "rx_change"){
             var rec = $(recommendation);
             var patient_id          = record_id;  

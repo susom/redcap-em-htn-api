@@ -513,6 +513,9 @@ i.email.sent{
     padding:20px;
     position:relative;
 }
+.data .instep{
+    border-left:none;
+}
 .step ul{
     margin:0; padding:15px 0;
     list-style:none; 

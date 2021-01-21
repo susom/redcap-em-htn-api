@@ -546,7 +546,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 			//TODO 
 			$systolic_mean 	= array_pop($systolic);
-			
+
 			$this->emDebug("TODO, need a more granular evaluation for _uncontrolled");
 			$sys_uncontrolled = $systolic_mean > $target_systolic ? true : false;
 			$dia_uncontrolled = $diastolic_mean > $target_diastolic ? true : false;
