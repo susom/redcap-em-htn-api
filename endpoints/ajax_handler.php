@@ -2,6 +2,7 @@
 namespace Stanford\HTNtree;
 /** @var \Stanford\HTNtree\HTNtree $module */
 
+header("Access-Control-Allow-Origin: *");
 
 if(!empty($_POST)){
     // $module->emDebug("refresh dashboard INTF", $_POST);
