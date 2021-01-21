@@ -154,7 +154,83 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
 
 
 
+                                    <div class="col-sm-12 row pt-5">
+                                        <h3 class="col-sm-12">Patient Medical</h3>
+
+                                        <div class="form-group col-sm-6">
+                                            <label><b>Patient CKD</b></label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="ckd" id="ckd1" value="1">
+                                                <label class="form-check-label" for="ckd1">
+                                                    Yes
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="ckd" id="ckd2" value="0">
+                                                <label class="form-check-label" for="ckd2">
+                                                    No
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group col-sm-6">
+                                            <label><b>Planning Pregnancy</b></label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="planning_pregnancy" id="planning_pregnancy1" value="1">
+                                                <label class="form-check-label" for="planning_pregnancy1">
+                                                    Yes
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="planning_pregnancy" id="planning_pregnancy2" value="0">
+                                                <label class="form-check-label" for="planning_pregnancy2">
+                                                    No
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group col-sm-6">
+                                            <label><b>Patient Demographic</b></label>
+                                            <?php
+                                                $patient_groups = array("General Population - Non-Black (no CKD present)","General Population - Black (no CKD present)","CKD Present","Resistant Hypertension","All Drug Classes");
+                                                foreach($patient_groups as $i=> $pg){
+                                                    ?>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" name="patient_group" id="patient_group<?=$i?>" value="<?=$pg?>">
+                                                            <label class="form-check-label" for="ckd2">
+                                                                <?=$pg?>
+                                                            </label>
+                                                        </div>
+                                                    <?php
+                                                }
+                                            ?>
+                                        </div>
                                     
+                                    
+                                        <div class="form-group col-sm-12">
+                                            <label for="comorbidity"><b>Comorbidities</b></label>
+                                            <input type="text" class="form-control" name="comorbidity" id="comorbidity" aria-describedby="comorbidity" placeholder="eg; diabetes, whooping cough">
+                                            <small id="comorbidity" class="form-text text-muted">*This will also be pulled from STARR/EPIC databses.</small>
+                                        </div>
+                                    
+                                        <div class="form-group col-sm-12">
+                                            <label for="pharmacy_info"><b>Pharmacy Info</b></label>
+                                            <input type="text" class="form-control" name="pharmacy_info" id="pharmacy_info" aria-describedby="pharmacy_info" placeholder="eg; CVS">
+                                        </div>
+                                                
+
+                                        <div class="form-group col-sm-12">
+                                            <label for="exampleFormControlSelect1"><b>Prescription Tree</b></label>
+                                            <select class="form-control" id="alias_select" name="alias_select">
+                                                <option value="99">View or Edit Saved Templates</option>
+                                                <?php
+                                                    foreach($provider_trees as $ptree){
+                                                        echo "<option value='".$ptree["record_id"]."' data-templateid='".$ptree["templpate_id"]."' data-raw='".json_encode($ptree)."'>".$ptree["template_name"]."</option>";
+                                                    }
+                                                ?>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div class="btns text-center">
