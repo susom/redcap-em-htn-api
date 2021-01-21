@@ -7,7 +7,7 @@
 $(document).ready(function(){
     setInterval(function(){
         console.log("refresh session");
-        $.post('<?=$module->getURL("pages/refresh_session.php");?>');
+        $.post('<?= $module->getURL("pages/refresh_session.php"); ?>');
     },180000); //refreshes the session every 5 minutes
 });
 </script>

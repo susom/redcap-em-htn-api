@@ -41,7 +41,26 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
 <body class="d-flex flex-column h-100">
     <?php include("components/gl_topnav.php") ?>
 
-    
+    <!-- Begin page content -->
+    <main role="main" class="flex-shrink-0">        
+        <div id="patients" class="container mt-5">
+            <div class="row pt-5">
+                <h1 class="mt-0 mb-3 mr-3 ml-3 d-inline-block align-middle">New Patient</h1>
+            </div>
+
+            <div class="row patient_body">
+                <div class="patient_details col-md-12">
+                    <div class="bg-light rounded-right rounded-bottom rounded-left p-3 profile panels">
+                        <div class="patient_detail mb-5">
+                            
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </main>
 
     <?php include("components/gl_foot.php"); ?>
 </body>

@@ -589,3 +589,10 @@ i.email.sent{
     text-align:center;
     padding:60px 0;
 }
+
+.footer{
+    position:absolute;
+    bottom:0;
+    width:100%;
+
+}
