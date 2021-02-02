@@ -242,13 +242,16 @@ class HTNdashboard {
         return $dict;
     }
 
-    public function loginProvider($em_input, $pw_input){
+    public function loginProvider($em_input, $pw_input, $already_hashed=false){
         $salt       = $em_input;
         $pepper     = $this->pepper;
         $input      = $salt.$pw_input.$pepper;
         $pw_hash    = $this->pwHash($input);
+        if($already_hashed){
+            $pw_hash = $pw_input;
+        }
 
-        $filter     = "[provider_email] = '" . $salt . "'";
+        $filter     = "[provider_email] = '" . $salt . "'"; //TODO CHHECKK AGAINST PW TOO HAHAHA
         $fields     = array("record_id", "provider_email", "provider_pw", "provider_fname", "provider_mname", "provider_lname");
         $params     = array(
             'project_id'    => $this->providers_project,
@@ -263,12 +266,15 @@ class HTNdashboard {
         if(!empty($results)){
             $result         = current($results);
             $db_pw_hash     = $result["provider_pw"];
-            $this->module->emDebug("verify pw",  $input, $pw_hash, $db_pw_hash);
 
-            if($this->pwVerify($input, $db_pw_hash)){
+            if($this->pwVerify($input, $db_pw_hash) || $already_hashed){
+                session_start();
                 $_SESSION["logged_in_user"] = $result;
+                $this->module->emDebug("the sessiono not saving?",$_SESSION["logged_in_user"]);
+
                 return true;
             }else{
+                $this->module->emDebug("not pwverified?");
                 return false;
             }
         }else{
@@ -277,7 +283,7 @@ class HTNdashboard {
     }
 
     public function registerProvider($post){
-        // $this->module->emDebug("post", $post);
+        $this->module->emDebug("register post", $post);
 
         $_POST          = $post;
         $dict           = $this->getProjectDictionary($this->providers_project);
@@ -286,6 +292,8 @@ class HTNdashboard {
         $provider_email = in_array("provider_email", $dict_keys) ? strtolower(trim(filter_var($_POST["provider_email"], FILTER_SANITIZE_STRING))) : null;
         $provider_pw    = in_array("provider_pw", $dict_keys) ? strtolower(trim(filter_var($_POST["provider_pw"], FILTER_SANITIZE_STRING))) : null;
         $provider_pw2   = in_array("provider_pw", $dict_keys) ? strtolower(trim(filter_var($_POST["provider_pw2"], FILTER_SANITIZE_STRING))) : null;
+
+        $edit_id        = $_POST["record_id"] ?? null;
 
         $errors         = array(); 
         if(!$provider_email || !$provider_pw || $provider_pw != $provider_pw2){
@@ -301,17 +309,20 @@ class HTNdashboard {
             return array("errors" => $errors);
         }
         
-        $filter     = "[provider_email] = '" . $provider_email . "'";
-        $fields     = array("record_id", "provider_email", "provider_pw");
-        $params     = array(
-            'project_id'    => $this->providers_project,
-            'fields'        => $fields,
-            'filterLogic'   => $filter,
-            'return_format' => 'json'
-        );
-        $raw        = \REDCap::getData($params);
-        $results    = json_decode($raw,1);
-
+        if($edit_id){
+            $results = null;
+        }else{
+            $filter     = "[provider_email] = '" . $provider_email . "'";
+            $fields     = array("record_id", "provider_email", "provider_pw");
+            $params     = array(
+                'project_id'    => $this->providers_project,
+                'fields'        => $fields,
+                'filterLogic'   => $filter,
+                'return_format' => 'json'
+            );
+            $raw        = \REDCap::getData($params);
+            $results    = json_decode($raw,1);
+        }
         if(!empty($results)){
             $errors[] = "Username/Email already in system";
             return array("errors" => $errors);
@@ -343,33 +354,110 @@ class HTNdashboard {
                     $data[$key] = $post_val;
                 }
             }
-            $record_id          = $this->module->getNextAvailableRecordId($this->providers_project);
-            $data["record_id"]  = $record_id;
+            $record_id                  = $edit_id ?? $this->module->getNextAvailableRecordId($this->providers_project);
+            $data["record_id"]          = $record_id;
+            $data["verification_token"] = $edit_id ?? $this->module->makeEmailVerifyToken();
+
+            $new_account = array();
+            $new_account[] = $data;
 
             $instance_data      = array();
             $next_instance_id   = $this->module->getNextInstanceId($record_id, "provider_delegates", "provider_delegate");
             if(!empty($post["delegates"])){
-                foreach($post["delegates"] as $delegate){
+                foreach($post["delegates"] as $idx => $delegate){
+                    $next_id                            = $this->module->getNextAvailableRecordId($this->providers_project) + $idx + 1;
                     $temp                               = array();
                     $temp["redcap_repeat_instance"]     = $next_instance_id;
                     $temp["redcap_repeat_instrument"]   = "provider_delegates";
                     $temp["provider_delegate"]          = $delegate;
+                    $temp["delegate_id"]                = $next_id;
                     $temp["record_id"]                  = $record_id;
-                    
-                    
                     $next_instance_id++;
                     $instance_data[] = $temp;
+
+                    $delegate_info = array();
+                    $delegate_info["verification_token"] = $this->module->makeEmailVerifyToken();
+                    $delegate_info["provider_email"]     = $delegate;
+                    $delegate_info["sponsor_id"]         = $record_id;
+                    $delegate_info["record_id"]          = $next_id;
+                    $new_account[] = $delegate_info;
                 }
             }
 
-            $r  = \REDCap::saveData($this->providers_project, 'json', json_encode(array($data)) );
-            $i  = \REDCap::saveData($this->providers_project, 'json', json_encode($instance_data) );
-            if(empty($r["errors"])){
-                $this->loginProvider($provider_email, $provider_pw);
-            }   
+            $r  = \REDCap::saveData($this->providers_project, 'json', json_encode($new_account) );
+            if(empty($edit_id)){
+                $i  = \REDCap::saveData($this->providers_project, 'json', json_encode($instance_data) );
+            }
+            if(empty($r["errors"]) && empty($edit_id)){
+                $this->newAccountEmail($new_account);
+            } else {
+                $this->loginProvider($data["provider_email"], $data["provider_pw"], true);
+            }
             return $r;
         }
     }
+
+    public function newAccountEmail($providers){
+        $this->module->emDebug("providers?", $providers );
+
+        $main_provider = $providers[0];
+        foreach($providers as $new_account){
+            $is_delegate    = array_key_exists("sponsor_id",$new_account);
+
+            $verify_link        = $this->module->getURL("pages/registration.php", true, true)."&email=".$new_account["provider_email"]."&verify=".$new_account["verification_token"];
+            $msg_arr            = array();
+            $welcome        = $is_delegate ? "To whom it may concern," : "Dear " . $new_account["provider_fname"] .",";
+            $msg_arr[]      = "<p>" . $welcome . "</p>";
+            if($is_delegate){
+                $main_pro_name  = $main_provider["provider_fname"] . " " . $main_provider["provider_lname"];
+                $msg_arr[]	    = "<p>You have been designated a delegate for ".$main_pro_name."'s Hypertension Patients.</p>";
+            }else{
+                $msg_arr[]	    = "<p>Thanks for registering as a Provider.</p>";
+            }
+            $msg_arr[]      = "<p>Please click this <a href='".$verify_link."'>link</a> to complete your account registration.<p>";
+            $msg_arr[]      = "<p>Thank You! <br> Stanford HypertensionStudy Team</p>";
+            
+            $message 	= implode("\r\n", $msg_arr);
+            $to 		= $new_account["provider_email"];
+            $from 		= "no-reply@stanford.edu";
+            $subject 	= "HTN needs to verify your email";
+            $fromName	= "Stanford Hypertension Team";
+
+            $result = \REDCap::email($to, $from, $subject, $message);
+            $this->module->emDebug("verification email sent?", $result,$verify_link );
+        }
+    }
+
+	public function verifyAccount($verification_email, $verification_token){
+		$provider = $this->findProviderByToken($verification_email, $verification_token);
+        if(!empty($provider)){
+            // delete the verification token , set the time stamp
+            $data = array(
+                "record_id"         => $provider["record_id"],
+                "verification_token"=> "",
+                "verification_ts"   => Date("Y-m-d H:i:s"),
+            );
+            $r    = \REDCap::saveData($this->providers_project, 'json', json_encode(array($data)) , $overwriteBehavior = "overwrite");
+            return array("errors" => $r["errors"], "provider" => $provider);
+        }
+		return false;
+	}
+	
+	public function findProviderByToken($verification_email, $verification_token){
+		$filter	= "[verification_token] = '$verification_token' and [provider_email] = '$verification_email'";
+        $fields	= array("record_id","provider_email", "provider_pw", "sponsor_id");
+		$params	= array(
+            'project_id'    => $this->providers_project,
+			'return_format' => 'json',
+			'fields'        => $fields,
+			'filterLogic'   => $filter 
+		);
+		$q 			= \REDCap::getData($params);
+        $records 	= json_decode($q, true);
+        return current($records);
+	}
+
+
 
     public function addPatient($post){
         $script_fieldnames = \REDCap::getFieldNames("patient_baseline");
@@ -398,11 +486,6 @@ class HTNdashboard {
         $this->module->emDebug("patient added or what?", $r, $data);
         return $r;
     }
-
-
-
-
-
 
     private function pwHash($pw_input, $cost=12){
         $pw_hash = password_hash($pw_input, PASSWORD_BCRYPT, array('cost'=>$cost));

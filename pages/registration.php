@@ -2,22 +2,45 @@
 namespace Stanford\HTNapi;
 /** @var \Stanford\HTNapi\HTNapi $module */
 
-if(isset($_POST["action"])){
-    $action = $_POST["action"];
-
+if(isset($_REQUEST)){
+    if( isset($_GET["verify"]) ){
+        $action = "verify";
+        $verification_token = !empty($_GET["verify"]) ? filter_var($_GET["verify"], FILTER_SANITIZE_STRING) : null;
+        $verification_email = !empty($_GET["email"]) ? filter_var($_GET["email"], FILTER_SANITIZE_STRING) : null;
+    }else{
+        $action = $_POST["action"];
+    }
+    
     switch($action){
         case "register_provider": 
-            $account_created = $module->registerProvider($_POST);
-            if(empty($account_created["errors"])){
-                header("Location: " . $module->getUrl("pages/dashboard.php", true, true));
-                exit;
+            $account_created = $module->registerProvider($_POST); 
+            header("Location: " . $module->getUrl("pages/dashboard.php", true, true));
+            exit;
+        break;
+    
+        case "verify":
+            $verify_account = $module->verifyAccount($verification_email,$verification_token);
+            if(array_key_exists("errors",$verify_account) && empty($verify_account["errors"])){
+                if(array_key_exists("sponsor_id",$verify_account["provider"]) && !empty($verify_account["provider"]["sponsor_id"])){
+                    // stay on reg page, need to complete registration
+                    $edit_email   = $verify_account["provider"]["provider_email"];
+                    $edit_id      = $verify_account["provider"]["record_id"];
+                }else{
+                    $module->loginProvider($verify_account["provider"]["provider_email"],$verify_account["provider"]["provider_pw"], true);
+                    header("Location: " . $module->getUrl("pages/dashboard.php", true, true));
+                    exit;
+                }
             }else{
-                $errors = $account_created["errors"];
-            }   
+                $module->emDebug("Sorry token expired");
+            }  
         break;
     }
 }
 
+
+
+$edit_provider = !empty($_SESSSION["logged_in_user"]) ? "show_reg" : "hide_reg";
+$edit_delegate = empty($edit_id) ? "show_del" : "hide_del";
 $page = "login_reg";
 ?>
 <!DOCTYPE html>
@@ -25,6 +48,14 @@ $page = "login_reg";
 <head>
     <?php include("components/gl_meta.php") ?>
     <!-- Custom styles for this template -->
+    <style>
+        .hide_reg, .hide_del{
+            display:none;
+        }
+        .show_reg, .show_del{
+            display:block;
+        }
+    </style>
 </head>
 <body class="d-flex flex-column h-100">
     <?php include("components/gl_topnav.php") ?>
@@ -35,13 +66,14 @@ $page = "login_reg";
             <div class="row">
                 <div class="col-md-6 offset-md-3 mt-5">
                     <h1 class="mt-3 mr-3 ml-3 d-inline-block align-middle">Registration</h1>
-                    <form method="POST" class="mr-3 ml-3">
+                    <form action=<?=$module->getUrl("pages/registration.php");?> method="POST" class="mr-3 ml-3">
                         <input type="hidden" name="action" value="register_provider"/>
+                        <input type="hidden" name="record_id" value="<?=$edit_id?>"/>
                         <h4 class="pt-4 pb-1 mb-4">Create an Account</h4>
                         <aside>
                             <div class="form-group">
                                 <label for="exampleInputEmail1">Email address</label>
-                                <input type="email" class="form-control" id="provider_email" name="provider_email" placeholder="johndoe@stanford.edu" aria-describedby="emailHelp">
+                                <input type="email" class="form-control" id="provider_email" name="provider_email" placeholder="johndoe@stanford.edu" aria-describedby="emailHelp" value="<?=$edit_email?>">
                             </div>
                             <div class="form-group">
                                 <label for="exampleInputPassword1">Password</label>
@@ -99,18 +131,6 @@ $page = "login_reg";
                         <h4 class="pt-4 pb-1 mb-4">Personal Information</h4>
                         <aside>
                             <div class="form-group row">
-                                <label for="provider_dea" class="col-md-6">DEA Numbers(s)</label>
-                                <input type="text" class="form-control col-md-5" id="provider_dea" name="provider_dea" placeholder="DEA #s" >
-                            </div>
-                            <div class="form-group row">
-                                <label for="exampleInputEmail1" class="col-md-6">Professional License Number</label>
-                                <input type="text" class="form-control col-md-5" id="provider_lic_num" name="provider_lic_num"  placeholder="License #"  >
-                            </div>
-                            <div class="form-group row">
-                                <label for="exampleInputEmail1" class="col-md-6">License Type</label>
-                                <input type="text" class="form-control col-md-5" id="provider_lic_type" name="provider_lic_type" placeholder="License Type" >
-                            </div>
-                            <div class="form-group row">
                                 <label for="exampleInputEmail1" class="col-md-6">First Name<span>*</span></label>
                                 <input type="text" class="form-control col-md-5" id="provider_fname" name="provider_fname" placeholder="First Name"  >
                             </div>
@@ -126,65 +146,85 @@ $page = "login_reg";
                                 <label for="exampleInputEmail1" class="col-md-6">Date of Birth<span>*</span></label>
                                 <input type="text" class="form-control col-md-5" id="provider_dob" name="provider_dob" placeholder="MM/DD/YYYY" >
                             </div>
-                            <div class="form-group row">
-                                <label for="exampleInputEmail1" class="col-md-6">Healthcare Specialty</label>
-                                <input type="text" class="form-control col-md-5" id="provider_specialty" name="provider_specialty"  placeholder="Specialty" >
-                            </div>
                         </aside>
 
-                        <h4 class="pt-4 pb-1 mb-4">Employer</h4>
-                        <aside>
-                            <div class="form-group row">
-                                <label for="exampleInputEmail1" class="col-md-6">Name</label>
-                                <input type="text" class="form-control col-md-5" id="employer_name" name="employer_name" placeholder="Employer Name" >
-                            </div>
-                            <div class="form-group row">
-                                <label for="exampleInputEmail1" class="col-md-6">Address</label>
-                                <input type="text" class="form-control col-md-5" id="employer_address" name="employer_address" placeholder="Employer Address" >
-                            </div>
-                            <div class="form-group row">
-                                <label for="exampleInputEmail1" class="col-md-6">City<span>*</span></label>
-                                <input type="text" class="form-control col-md-5" id="employer_city" name="employer_city" placeholder="Employer City" >
-                            </div>
-                            <div class="form-group row">
-                                <label for="exampleInputEmail1" class="col-md-6">State<span>*</span></label>
-                                <input type="text" class="form-control col-md-5" id="employer_state" name="employer_state" placeholder="Employer State" >
-                            </div>
-                            <div class="form-group row">
-                                <label for="exampleInputEmail1" class="col-md-6">Zip code<span>*</span></label>
-                                <input type="text" class="form-control col-md-5" id="employer_zip" name="employer_zip" placeholder="Employer Zip" >
-                            </div>
-                            <div class="form-group row">
-                                <label for="exampleInputEmail1" class="col-md-6">Phone Number<span>*</span></label>
-                                <input type="text" class="form-control col-md-5" id="employer_phone" name="employer_phone" placeholder="Employer Phone" >
-                            </div>
-                            <div class="form-group row">
-                                <label for="exampleInputEmail1" class="col-md-6">Do you dispense medication out of your office?<span>*</span></label>
-                                <label class="form-check-label d-inline col-md-2 pl-4" for="defaultCheck11"><input class="form-check-input" type="radio" value="1" name="employer_med_dispense" id="defaultCheck11"> Yes</label>
-                                <label class="form-check-label d-inline col-md-2" for="defaultCheck12"><input class="form-check-input" type="radio" value="0" name="employer_med_dispense" id="defaultCheck12"> No</label>
-                            </div>
-                            
-                        </aside>
 
-                        <h4 class="pt-4 pb-1 mb-4">Delegate</h4>
-                        <aside>
-                            <div class="form-group">
-                                <label for="exampleInputEmail1">I am a delegate for the following people<span>*</span>:</label>
-                            </div>
-                            <div class="form-group">
-                                <label for="exampleInputEmail1 d-block ">Email Address</label>
-                                <div class='row'>
-                                    <input type="text" class="form-control col-md-8 ml-3" id="exampleInputEmail1" > <button id="add_people" class='btn btn-info btn-sm col-md-2 ml-3'>Add +</button>
+                        <div class="<?=$edit_provider?>">
+                            <h4 class="pt-4 pb-1 mb-4">Professional License</h4>
+                            <aside>
+                                <div class="form-group row">
+                                    <label for="provider_dea" class="col-md-6">DEA Numbers(s)</label>
+                                    <input type="text" class="form-control col-md-5" id="provider_dea" name="provider_dea" placeholder="DEA #s" >
                                 </div>
-                            </div>
+                                <div class="form-group row">
+                                    <label for="exampleInputEmail1" class="col-md-6">Professional License Number</label>
+                                    <input type="text" class="form-control col-md-5" id="provider_lic_num" name="provider_lic_num"  placeholder="License #"  >
+                                </div>
+                                <div class="form-group row">
+                                    <label for="exampleInputEmail1" class="col-md-6">License Type</label>
+                                    <input type="text" class="form-control col-md-5" id="provider_lic_type" name="provider_lic_type" placeholder="License Type" >
+                                </div>
+                                <div class="form-group row">
+                                    <label for="exampleInputEmail1" class="col-md-6">Healthcare Specialty</label>
+                                    <input type="text" class="form-control col-md-5" id="provider_specialty" name="provider_specialty"  placeholder="Specialty" >
+                                </div> 
+                            </aside>
 
-                            <div class="form-group" >
-                                <label for="exampleInputEmail1">Selected Personnel<span>*</span></label>
-                            </div>
-                            <div class="delegates">
-                                
-                            </div>
-                        </aside>
+                            <h4 class="pt-4 pb-1 mb-4">Employer</h4>
+                            <aside>
+                                <div class="form-group row">
+                                    <label for="exampleInputEmail1" class="col-md-6">Name</label>
+                                    <input type="text" class="form-control col-md-5" id="employer_name" name="employer_name" placeholder="Employer Name" >
+                                </div>
+                                <div class="form-group row">
+                                    <label for="exampleInputEmail1" class="col-md-6">Address</label>
+                                    <input type="text" class="form-control col-md-5" id="employer_address" name="employer_address" placeholder="Employer Address" >
+                                </div>
+                                <div class="form-group row">
+                                    <label for="exampleInputEmail1" class="col-md-6">City<span>*</span></label>
+                                    <input type="text" class="form-control col-md-5" id="employer_city" name="employer_city" placeholder="Employer City" >
+                                </div>
+                                <div class="form-group row">
+                                    <label for="exampleInputEmail1" class="col-md-6">State<span>*</span></label>
+                                    <input type="text" class="form-control col-md-5" id="employer_state" name="employer_state" placeholder="Employer State" >
+                                </div>
+                                <div class="form-group row">
+                                    <label for="exampleInputEmail1" class="col-md-6">Zip code<span>*</span></label>
+                                    <input type="text" class="form-control col-md-5" id="employer_zip" name="employer_zip" placeholder="Employer Zip" >
+                                </div>
+                                <div class="form-group row">
+                                    <label for="exampleInputEmail1" class="col-md-6">Phone Number<span>*</span></label>
+                                    <input type="text" class="form-control col-md-5" id="employer_phone" name="employer_phone" placeholder="Employer Phone" >
+                                </div>
+                                <div class="form-group row">
+                                    <label for="exampleInputEmail1" class="col-md-6">Do you dispense medication out of your office?<span>*</span></label>
+                                    <label class="form-check-label d-inline col-md-2 pl-4" for="defaultCheck11"><input class="form-check-input" type="radio" value="1" name="employer_med_dispense" id="defaultCheck11"> Yes</label>
+                                    <label class="form-check-label d-inline col-md-2" for="defaultCheck12"><input class="form-check-input" type="radio" value="0" name="employer_med_dispense" id="defaultCheck12"> No</label>
+                                </div>
+                            </aside>
+                        </div>
+
+                        <div class="<?=$edit_delegate?>">
+                            <h4 class="pt-4 pb-1 mb-4">Delegate</h4>
+                            <aside>
+                                <div class="form-group">
+                                    <label for="exampleInputEmail1">I am a delegate for the following people<span>*</span>:</label>
+                                </div>
+                                <div class="form-group">
+                                    <label for="exampleInputEmail1 d-block ">Email Address</label>
+                                    <div class='row'>
+                                        <input type="text" class="form-control col-md-8 ml-3" id="exampleInputEmail1" > <button id="add_people" class='btn btn-info btn-sm col-md-2 ml-3'>Add +</button>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" >
+                                    <label for="exampleInputEmail1">Selected Personnel<span>*</span></label>
+                                </div>
+                                <div class="delegates">
+                                    
+                                </div>
+                            </aside>
+                        </div>
 
                         <div class="btns pt-4 pb-4">
                             <button type="submit" class="btn btn-primary btn-block">Submit Registration</button>

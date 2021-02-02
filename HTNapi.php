@@ -75,10 +75,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	}
 
 	//Login Provider
-	public function loginProvider($login_email, $login_pw){
+	public function loginProvider($login_email, $login_pw, $already_hashed=false){
 		$this->loadEM();
 
-		return $this->dashboard->loginProvider($login_email, $login_pw);
+		return $this->dashboard->loginProvider($login_email, $login_pw,  $already_hashed);
 	}
 
 	//REgister PRovider
@@ -185,16 +185,43 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$this->emDebug("SEND TO PHARMACY FOR patient", $patient);
 		return;
 	}
+	public function verifyAccount($verification_email,$verification_token){
+		$this->loadEM();
+		return $this->dashboard->verifyAccount($verification_email,$verification_token);
+	}
 
+	public function makeEmailVerifyToken(){
+		return $this->generateRandomString(10,false,true);
+	}
 
+	// Creates random alphanumeric string
+	public function generateRandomString($length=25, $addNonAlphaChars=false, $onlyHandEnterableChars=false, $alphaCharsOnly=false) {
+		// Use character list that is human enterable by hand or for regular hashes (i.e. for URLs)
+		if ($onlyHandEnterableChars) {
+			$characters = '34789ACDEFHJKLMNPRTWXY'; // Potential characters to use (omitting 150QOIS2Z6GVU)
+		} else {
+			$characters = 'abcdefghijkmnopqrstuvwxyzABCDEFGHIJKLMNPQRSTUVWXYZ23456789'; // Potential characters to use 
+			if ($addNonAlphaChars) $characters .= '~.$#@!%^&*-';
+		}
+		// If returning only letter, then remove all non-alphas from $characters
+		if ($alphaCharsOnly) {
+			$characters = preg_replace("/[^a-zA-Z]/", "", $characters);
+		}
+		// Build string
+		$strlen_characters = strlen($characters);
+		$string = '';
+		for ($p = 0; $p < $length; $p++) {
+			$string .= $characters[mt_rand(0, $strlen_characters-1)];
+		}
+		// If hash matches a number in Scientific Notation, then fetch another one 
+		// (because this could cause issues if opened in certain software - e.g. Excel)
+		if (preg_match('/^\d+E\d/', $string)) {
+			return generateRandomString($length, $addNonAlphaChars, $onlyHandEnterableChars);
+		} 
+			
+		return $string;
+	}
 
-
-
-
-
-
-
-	
 	/*
 		BELOW HERE IS ALL THE OMRON AUTHORIZATION WORK FLOW STUFF
 	*/

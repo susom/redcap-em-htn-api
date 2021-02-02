@@ -2,11 +2,8 @@
 namespace Stanford\HTNtree;
 /** @var \Stanford\HTNtree\HTNtree $module */
 
-// $API_TOKEN  = "7FDC083BFED646678E9613FFB48F203D";
-// $API_URL    = "http://localhost/api/";
-
-
-if(isset($_POST["action"])){
+$verification_token = !empty($_GET["verify"]) ? filter_var($_GET["verify"], FILTER_SANITIZE_STRING) : null;
+if($verification_token){
     $action = $_POST["action"];
 
     switch($action){
