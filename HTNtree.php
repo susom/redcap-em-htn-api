@@ -365,6 +365,10 @@ class HTNtree  {
     }
 
     public function treeLogic($provider_id){
+        $this->module->emDebug("provider id", $provider_id);
+
+
+
         $provider_tree  = $this->getTemplateDrugs($provider_id);
         $logicTree      = array();
 
