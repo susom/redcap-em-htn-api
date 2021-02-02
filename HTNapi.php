@@ -233,8 +233,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$auth_link 		= $this->getOAUTHurl($patient["record_id"]);
 
 			$msg_arr        = array();
-            $msg_arr[]      = "<p>Dear " . $patient["patient_fname"] . "</p>";
-            $msg_arr[]	    = "<p>In order to participate in this study, we need access to your Blood Pressure Cuff data.</p>";
+			$msg_arr[]      = "<p>Dear " . $patient["patient_fname"] . "</p>";
+			$msg_arr[]	    = "<p>In order to participate in this study, we need access to your Blood Pressure Cuff data.</p>";
+			$msg_arr[]	    = "<p>If you have not downloaded and set up your <b>Omron Heart Advisor</b> App yet, Please download them first.</p>";
+			$msg_arr[]	    = "<p><a href='https://apps.apple.com/us/app/omron-heartadvisor/id1444973178' target='_blank'>Apple App Store</a> or <a href='https://play.google.com/store/apps/details?id=com.omronhealthcare.heartadvisor&hl=en_US&gl=US' target='_blank'>Google Play Store</a></p>";
             $msg_arr[]      = "<p>Please click this <a href='".$this->getURL("pages/oauth.php", true, true)."&state=".$patient["record_id"]."'>link</a> to start the process of authorizing us to retrieve your data from Omron.<p>";
 			$msg_arr[]      = "<p>Thank You! <br> Stanford HypertensionStudy Team</p>";
 			
