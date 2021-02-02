@@ -11,6 +11,8 @@ include("components/gl_checklogin.php");
 if(!empty($_POST)){
     $patient_added = $module->addPatient($_POST);
 
+    $module->emDebug("shitcaskes",$patient_added);
+    exit;
     if(empty($patient_added["errors"])){
         header("location:".$module->getUrl("pages/dashboard.php"));
     }
@@ -110,10 +112,10 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                 </div>
 
                                 <div class="patient_details col-sm-10 offset-sm-1 row pt-3">
-                                    <h3 class="col-sm-12">Patient Baseline</h3>
+                                    <!-- <h3 class="col-sm-12">Patient Baseline</h3>
                                     <em class="col-sm-12 mb-3">Much of this will be pulled and automatically refreshed from STARR/EPIC</em>
-                                    
-                                    <div class="form-group col-sm-6">
+                                     -->
+                                    <!-- <div class="form-group col-sm-6">
                                         <label><b>Patient Sex*</b></label>
                                         <div class="form-check">
                                             <input class="form-check-input" type="radio" name="sex" id="sex1" value="Male">
@@ -127,9 +129,9 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                                 Female
                                             </label>
                                         </div>
-                                    </div>
+                                    </div> -->
 
-                                    <div class="form-group col-sm-6">
+                                    <!-- <div class="form-group col-sm-6">
                                         <label for="patient_mrn"><b>Patient DOB*</b></label>
                                         <input type="text" class="form-control" name="patient_birthday" id="patient_birthday" aria-describedby="patient_birthday" placeholder="eg; mm/dd/yyyy">
                                         <small id="patient_birthday_help" class="form-text text-muted">*This will also be pulled from STARR/EPIC databses.</small>
@@ -150,11 +152,11 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                             <label for="bmi"><b>BMI*</b></label>
                                             <input type="text" class="form-control" name="bmi" id="bmi" aria-describedby="bmi" placeholder="eg; 23">
                                         </div>
-                                    </div>
+                                    </div> -->
 
 
 
-                                    <div class="col-sm-12 row pt-5">
+                                    <!-- <div class="col-sm-12 row pt-5">
                                         <h3 class="col-sm-12">Patient Medical</h3>
 
                                         <div class="form-group col-sm-6">
@@ -204,10 +206,10 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                                     <?php
                                                 }
                                             ?>
-                                        </div>
+                                        </div> -->
                                     
                                     
-                                        <div class="form-group col-sm-12">
+                                        <!-- <div class="form-group col-sm-12">
                                             <label for="comorbidity"><b>Comorbidities</b></label>
                                             <input type="text" class="form-control" name="comorbidity" id="comorbidity" aria-describedby="comorbidity" placeholder="eg; diabetes, whooping cough">
                                             <small id="comorbidity" class="form-text text-muted">*This will also be pulled from STARR/EPIC databses.</small>
@@ -217,7 +219,7 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                             <label for="pharmacy_info"><b>Pharmacy Info</b></label>
                                             <input type="text" class="form-control" name="pharmacy_info" id="pharmacy_info" aria-describedby="pharmacy_info" placeholder="eg; CVS">
                                         </div>
-                                                
+                                                 -->
 
                                         <div class="form-group col-sm-12">
                                             <label for="exampleFormControlSelect1"><b>Prescription Tree</b></label>
