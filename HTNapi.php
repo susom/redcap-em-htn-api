@@ -153,7 +153,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			"ptree_log_comment" 		=> $patient_details["provider_comment"],
 			"ptree_log_ts"				=> Date("Y-m-d H:i:s")
 		);
-		$r = \REDCap::saveData('json', json_encode(array($data_log)) );
+		$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data_log)) );
 
 		// update the shortcut data in patient baseline
 		$data = array(
@@ -165,7 +165,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		);
 		// TODO THIS timestamp IS WHEN THE LAST RECOMMENDATION WAS MADE or Accepted, DONT MAKE ANOTHER ONE FOR 2 WEEKS at LEAST 
 
-		$r = \REDCap::saveData('json', json_encode(array($data)), "overwrite" );
+		$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
 		$this->emDebug("accepting rec rx change", $data_log);
 		return array("rec saved");
 	}
@@ -177,7 +177,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			"patient_rec_tree_step" 	=> '',
 			"filter" 					=> ''
 		);
-		$r = \REDCap::saveData('json', json_encode(array($data)), "overwrite" );
+		$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
 		return array("rec declined");
 	}
 
@@ -383,6 +383,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$filter	= "[omron_client_id] = '$omron_client_id'";
 		$fields	= array("record_id","omron_access_token","omron_token_type");
 		$params	= array(
+			'project_id'	=> $this->enabledProjects["patients"]["pid"],
 			'return_format' => 'json',
 			'fields'        => $fields,
 			'filterLogic'   => $filter 
@@ -476,7 +477,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 					}
 				}
 			
-				$r = \REDCap::saveData('json', json_encode($data) );
+				$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode($data) );
 				if(empty($r["errors"])){
 					$readings_saved = count($r["ids"]);
 					$this->emDebug("Saved $readings_saved Omron BP readings for RC $record_id");
@@ -597,13 +598,12 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				
 				// Recommended RX change
 				$data = array(
-					'project_id'	=> $this->enabledProjects["patients"]["pid"],
 					"record_id"             	=> $record_id,
 					"patient_rec_tree_step" 	=> $uncontrolled_next_step,
 					"last_update_ts"			=> $current_update_ts,
-					"filter"      				=> "rx_change"
+					"filter"      				=> "rx_change",
 				);
-				$r = \REDCap::saveData('json', json_encode(array($data)) );
+				$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)) );
 				$this->emDebug("for saves too?" , $r);
 			}
 		}
@@ -616,6 +616,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$result = false;
 
 		$params	= array(
+			'project_id'	=> $this->enabledProjects["patients"]["pid"],
 			'records' 		=> array($record_id),
 			'return_format' => 'json',
 			'fields'        => array("patient_email", "patient_phone", "patient_fname")
@@ -652,6 +653,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$fields	= array("record_id","omron_bp_id");
 
 		$params	= array(
+			'project_id'	=> $this->enabledProjects["patients"]["pid"],
             'return_format' => 'json',
 			'fields'        => $fields,
             'filterLogic'   => $filter 
@@ -677,6 +679,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	// get the next instance id (repeating) in bp_readings_log
 	public function getNextInstanceId($record_id, $instrument, $field){
 		$params	= array(
+			'project_id'	=> $this->enabledProjects["patients"]["pid"],
 			'return_format' => 'json',
 			'records'		=> $record_id,
 			'fields'        => $field,
@@ -816,7 +819,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			}
 		}
 		if(!empty($data)){
-			$r = \REDCap::saveData('json', json_encode($data) );
+			$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode($data) );
 			if(empty($r["errors"])){
 				$this->emDebug("REFRESH TOKENS CRON : " . count($data) . " tokens updated");
 			}else{

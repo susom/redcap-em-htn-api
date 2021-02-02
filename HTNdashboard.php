@@ -90,6 +90,7 @@ class HTNdashboard {
 
             $bp_filter  = "[omron_bp_id] != '' AND [bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-1 weeks')) . "'";
             $bp_params  = array(
+                'project_id'    => $this->patients_project,
                 "records"       => array($result["record_id"]),
                 "fields"        => array("record_id", "omron_bp_id", "bp_reading_ts" , "bp_systolic", "bp_diastolic", "bp_pulse", "bp_device_type", "bp_units", "bp_pulse_units"),
                 'return_format' => 'json',
@@ -224,7 +225,7 @@ class HTNdashboard {
             // $this->module->emDebug("tree log", $tree_results);
             $result["tree_log"] = $tree_results;
         }
-        $this->module->emDebug("patient_detail", $result);
+        // $this->module->emDebug("patient_detail", $result);
         return $result;
     }
 
@@ -506,7 +507,7 @@ class HTNdashboard {
         $next_id            = $this->module->getNextAvailableRecordId($this->patients_project);
         $data["record_id"]  = $next_id;
 
-        $r    = \REDCap::saveData('json', json_encode(array($data)) );
+        $r    = \REDCap::saveData($this->patients_project, 'json', json_encode(array($data)) );
         $this->module->emDebug("patient added or what?", $r, $data);
         return $r;
     }

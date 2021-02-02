@@ -13,17 +13,17 @@ function dashboard(record_id,urls){
 
     if(typeof(Storage) !== "undefined"){
         if(this.getSession("cur_patient")){
-            console.log("this was in session storage cur_patient", this.getSession("cur_patient") );
+            // console.log("this was in session storage cur_patient", this.getSession("cur_patient") );
             this.cur_patient = this.getSession("cur_patient");
         }
 
         if(this.getSession("filter_nav")){
-            console.log("this was in session storage filter_nav", this.getSession("filter_nav") );
+            // console.log("this was in session storage filter_nav", this.getSession("filter_nav") );
             this.filter_nav = this.getSession("filter_nav");
         }
 
         if(this.getSession("patient_detail")){
-            console.log("this was in session storage patient_detail", this.getSession("patient_detail") );
+            // console.log("this was in session storage patient_detail", this.getSession("patient_detail") );
             // this.patient_detail = this.getSession("patient_detail");
         }
     }else{
@@ -476,6 +476,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             var cur_tree_step_idx   = parseInt(patient["patient_treatment_status"]);
             var cur_drugs           = _this.intf.ptree["logicTree"][cur_tree_step_idx]["drugs"].join(", ");
 
+
             var rec_tree_step_idx   = parseInt(patient["patient_rec_tree_step"]);
             var rec_drugs           = _this.intf.ptree["logicTree"][rec_tree_step_idx]["drugs"].join(", ");
             rec.find("h6").text(rec_drugs);
@@ -576,13 +577,13 @@ dashboard.prototype.displayPatientDetail = function(record_id){
     }
 }
 dashboard.prototype.setSession = function(key,val){
-    console.log("setting session var " + key, val);
+    // console.log("setting session var " + key, val);
     val = JSON.stringify(val);
     sessionStorage.setItem(key,val);
 }
 dashboard.prototype.getSession = function(key){
     if(sessionStorage.getItem(key)){
-        console.log("getting session var "+ key);
+        // console.log("getting session var "+ key);
         var val = sessionStorage.getItem(key);
         return JSON.parse(val);
     }else{
