@@ -62,8 +62,11 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 		$intf = $this->dashboard->getAllPatients($provider_id);
 		
+		$this->emDebug("intf for dashboard", $intf);
+
 		//TODO ADD TREE ITSELF TO the INTF
 		$intf["ptree"] = $this->tree->treeLogic(1);
+
 		return $intf;
 	}
 

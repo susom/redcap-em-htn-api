@@ -21,7 +21,6 @@ if(isset($_POST["action"])){
                     $_SESSION["provider_trees"] = $provider_trees;
                 }
                 
-                $module->emDebug("yay i am logged in?", $_SESSION["logged_in_user"]);
                 header("Location: " . $module->getUrl("pages/dashboard.php", true, true));
                 exit;
             }else{

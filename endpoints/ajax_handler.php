@@ -86,7 +86,7 @@ if(!empty($_POST)){
         break;
 
         default:
-            $module->emDebug("refreshing session?", $_SESSION);
+            session_start();
             $_SESSION['logged_in_user'] = $_SESSION['logged_in_user'];
             $provider_id                = $_POST["record_id"];
             

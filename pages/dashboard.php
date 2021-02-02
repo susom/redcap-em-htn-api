@@ -5,7 +5,7 @@ namespace Stanford\HTNapi;
 include("components/gl_checklogin.php");
 
 // $module->evaluateOmronBPavg(1);
- 
+$provider_id    = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"]; 
 $page           = "dashboard";
 $home_active    = "active";
 ?>
@@ -56,7 +56,7 @@ $(document).ready(function(){
         
     };
 
-    var dash = new dashboard(<?=$_SESSION["logged_in_user"]["record_id"]?>,urls);
+    var dash = new dashboard(<?=$provider_id?>,urls);
 });
 
 function removeA(arr) {

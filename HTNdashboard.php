@@ -45,18 +45,22 @@ class HTNdashboard {
     }
 
     public function getAllPatients($provider_id){
-        $filter     = "[patient_physician_id] = '$provider_id'";
-        $params     = array(
-            "fields"        => array("record_id", "patient_fname", "patient_lname" , "patient_birthday", "sex", "patient_photo", "filter", "patient_message", "message_ts", "message_read"),
-            'return_format' => 'json',
-            'filterLogic'   => $filter
-        );
-        $raw            = \REDCap::getData($params);
-        $results        = json_decode($raw,1);
+        // $this->getProviderbyId($provider_id)
+        
+        $filter	= "[patient_physician_id] = '$provider_id'";
+        $fields	= array("record_id", "patient_fname", "patient_lname" , "patient_birthday", "sex", "patient_photo", "filter");
+		$params	= array(
+            'project_id'    => $this->patients_project,
+			'return_format' => 'json',
+			'fields'        => $fields,
+			'filterLogic'   => $filter 
+		);
+		$q 			= \REDCap::getData($params);
+        $results 	= json_decode($q, true);
         
         $patients       = array();
         $rx_change      = array();
-        $labs_needed = array();
+        $labs_needed    = array();
         $data_needed    = array();
         $messages       = array();
 
@@ -252,7 +256,7 @@ class HTNdashboard {
         }
 
         $filter     = "[provider_email] = '" . $salt . "'"; //TODO CHHECKK AGAINST PW TOO HAHAHA
-        $fields     = array("record_id", "provider_email", "provider_pw", "provider_fname", "provider_mname", "provider_lname");
+        $fields     = array("record_id", "provider_email", "provider_pw", "provider_fname", "provider_mname", "provider_lname", "sponsor_id");
         $params     = array(
             'project_id'    => $this->providers_project,
             'fields'        => $fields,
@@ -270,8 +274,7 @@ class HTNdashboard {
             if($this->pwVerify($input, $db_pw_hash) || $already_hashed){
                 session_start();
                 $_SESSION["logged_in_user"] = $result;
-                $this->module->emDebug("the sessiono not saving?",$_SESSION["logged_in_user"]);
-
+                $this->module->emDebug($_SESSION["logged_in_user"]);
                 return true;
             }else{
                 $this->module->emDebug("not pwverified?");
@@ -293,7 +296,7 @@ class HTNdashboard {
         $provider_pw    = in_array("provider_pw", $dict_keys) ? strtolower(trim(filter_var($_POST["provider_pw"], FILTER_SANITIZE_STRING))) : null;
         $provider_pw2   = in_array("provider_pw", $dict_keys) ? strtolower(trim(filter_var($_POST["provider_pw2"], FILTER_SANITIZE_STRING))) : null;
 
-        $edit_id        = $_POST["record_id"] ?? null;
+        $edit_id        = empty($_POST["record_id"]) ? null : $_POST["record_id"];
 
         $errors         = array(); 
         if(!$provider_email || !$provider_pw || $provider_pw != $provider_pw2){
@@ -354,9 +357,9 @@ class HTNdashboard {
                     $data[$key] = $post_val;
                 }
             }
-            $record_id                  = $edit_id ?? $this->module->getNextAvailableRecordId($this->providers_project);
+            $record_id                  = !empty($edit_id) ? $edit_id :  $this->module->getNextAvailableRecordId($this->providers_project);
             $data["record_id"]          = $record_id;
-            $data["verification_token"] = $edit_id ?? $this->module->makeEmailVerifyToken();
+            $data["verification_token"] = $edit_id ? null : $this->module->makeEmailVerifyToken();
 
             $new_account = array();
             $new_account[] = $data;
@@ -385,10 +388,14 @@ class HTNdashboard {
             }
 
             $r  = \REDCap::saveData($this->providers_project, 'json', json_encode($new_account) );
+            $this->module->emDebug("what the fuck what the fuck", $r);
+
             if(empty($edit_id)){
+                $this->module->emDebug("save deligates", $instance_data);
                 $i  = \REDCap::saveData($this->providers_project, 'json', json_encode($instance_data) );
             }
             if(empty($r["errors"]) && empty($edit_id)){
+                $this->module->emDebug("send new verification emails", $new_account);
                 $this->newAccountEmail($new_account);
             } else {
                 $this->loginProvider($data["provider_email"], $data["provider_pw"], true);
@@ -457,7 +464,19 @@ class HTNdashboard {
         return current($records);
 	}
 
-
+    public function getProviderbyId($provider_id){
+		$filter	= "[record_id] = '$provider_id'";
+        $fields	= array("record_id","provider_email", "provider_pw", "sponsor_id");
+		$params	= array(
+            'project_id'    => $this->providers_project,
+			'return_format' => 'json',
+			'fields'        => $fields,
+			'filterLogic'   => $filter 
+		);
+		$q 			= \REDCap::getData($params);
+        $records 	= json_decode($q, true);
+        return current($records);
+	}
 
     public function addPatient($post){
         $script_fieldnames = \REDCap::getFieldNames("patient_baseline");
@@ -471,7 +490,7 @@ class HTNdashboard {
             }
             $data[$rc_var] = $rc_val;
         }
-        $data["patient_physician_id"]       = $_SESSION["logged_in_user"]["record_id"];
+        $data["patient_physician_id"]       = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
         $data["patient_treatment_status"]   = 0; //always start with the first step of whatever tree
         $data["patient_treatment_status"]   = 0; //always start with the first step of whatever tree
         $data["patient_add_ts"]             = Date("Y-m-d H:i:s"); //always start with the first step of whatever tree

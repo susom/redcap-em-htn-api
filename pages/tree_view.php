@@ -4,7 +4,7 @@ namespace Stanford\HTNapi;
 
 include("components/gl_checklogin.php");
 
-$provider_id    = $_SESSION["logged_in_user"]["record_id"];
+$provider_id    = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
 
 if(isset($_POST["action"])){
     $action     = $_POST["action"];
