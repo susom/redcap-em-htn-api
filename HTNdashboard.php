@@ -46,7 +46,7 @@ class HTNdashboard {
 
     public function getAllPatients($provider_id){
         // $this->getProviderbyId($provider_id)
-        
+
         $filter	= "[patient_physician_id] = '$provider_id'";
         $fields	= array("record_id", "patient_fname", "patient_lname" , "patient_birthday", "sex", "patient_photo", "filter");
 		$params	= array(
@@ -125,12 +125,12 @@ class HTNdashboard {
         $ui_intf = array(
             "patients"          => $patients,
             "rx_change"         => $rx_change,
-            "labs_needed"    => $labs_needed,
+            "labs_needed"       => $labs_needed,
             "data_needed"       => $data_needed,
             "messages"          => $messages
         );
 
-        $this->module->emDebug("getAllPatients()", $ui_intf);
+        // $this->module->emDebug("getAllPatients() uiintf", $ui_intf);
         return $ui_intf;
     }
 
@@ -164,15 +164,16 @@ class HTNdashboard {
                         ,"pharmacy_info"
                         ,"patient_email"
                         ,"omron_client_id"
-
                        );
         $params = array(
-            "records"       => $record_id,
+            'project_id'    => $this->patients_project,
+            "records"       => array($record_id),
             "fields"        => $fields,
             "return_format" => 'json'
         );
         $raw    = \REDCap::getData($params);
         $result = json_decode($raw,1);
+
         if(!empty($result)){
             $result = current($result);
             $date2  = Date("Y-m-d");
@@ -183,8 +184,9 @@ class HTNdashboard {
             $result["planning_pregnancy"]   = $result["planning_pregnancy"] == "1" ? "Yes" : "No";
             
             //GET PATIENT BP READINGS DATA OVER LAST 2 WEEKS
-            $bp_filter  = "[omron_bp_id] != '' AND [bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-4 weeks')) . "'";
+            $bp_filter  = "[omron_bp_id] != '' AND [bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-20 weeks')) . "'";
             $bp_params  = array(
+                'project_id'    => $this->patients_project,
                 "records"       => array($result["record_id"]),
                 "fields"        => array("record_id", "omron_bp_id", "bp_reading_ts" , "bp_systolic", "bp_diastolic", "bp_pulse", "bp_device_type", "bp_units", "bp_pulse_units"),
                 'return_format' => 'json',
@@ -195,8 +197,9 @@ class HTNdashboard {
             $result["bp_readings"] = $bp_results;
 
             //GET PATIENT CRK MEASUREMENTS AND LAST UPDATED OVER LAST 6 MONTHS
-            $crk_filter  = "[creatinine] != '' AND [potassium] != '' AND [cr_ts] > '" . date("Y-m-d H:i:s", strtotime('-6 months')) . "'";
+            $crk_filter  = "([lab_name] = 'creatinin' OR [lab_name] != 'potassium') AND [lab_ts] > '" . date("Y-m-d H:i:s", strtotime('-6 months')) . "'";
             $crk_params  = array(
+                'project_id'    => $this->patients_project,
                 "records"       => array($result["record_id"]),
                 "fields"        => array("record_id", "creatinine", "potassium" , "cr_ts", "k_ts"),
                 'return_format' => 'json',
@@ -210,6 +213,7 @@ class HTNdashboard {
             //GET PATIENT TREE CHANGE STEPS TAKEN (not including the first step 0)
             $tree_filter  = "[ptree_log_ts] != ''";
             $tree_params  = array(
+                'project_id'    => $this->patients_project,
                 "records"       => array($result["record_id"]),
                 "fields"        => array("record_id", "ptree_log_ts", "ptree_log_prev_step" , "ptree_log_current_step", "ptree_current_meds", "ptree_log_comment"),
                 'return_format' => 'json',
@@ -217,9 +221,10 @@ class HTNdashboard {
             );
             $tree_raw         = \REDCap::getData($tree_params);
             $tree_results     = json_decode($tree_raw,1);
-            $this->module->emDebug("tree log", $tree_results);
+            // $this->module->emDebug("tree log", $tree_results);
             $result["tree_log"] = $tree_results;
         }
+        $this->module->emDebug("patient_detail", $result);
         return $result;
     }
 

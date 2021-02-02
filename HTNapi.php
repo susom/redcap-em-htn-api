@@ -61,8 +61,6 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$this->loadEM();
 
 		$intf = $this->dashboard->getAllPatients($provider_id);
-		
-		$this->emDebug("intf for dashboard", $intf);
 
 		//TODO ADD TREE ITSELF TO the INTF
 		$intf["ptree"] = $this->tree->treeLogic(1);
@@ -510,6 +508,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		
 		// GET patient BP data, current filter status, and 
 		$params	= array(
+			'project_id'	=> $this->enabledProjects["patients"]["pid"],
 			'records' 		=> array($record_id),
 			'return_format' => 'json',
 			'fields'        => array("record_id", "filter", "patient_bp_target_systolic", "patient_bp_target_diastolic", "patient_bp_target_pulse","current_treatment_plan_id", "patient_treatment_status", "last_update_ts"),
@@ -518,6 +517,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$q 					= \REDCap::getData($params);
 		$records			= json_decode($q, true);
 		$patient 			= current($records);
+
+		$this->emDebug("the fucking patient", $patient);
 
 		//GET PATIENT TREE CHANGE STEPS TAKEN (not including the first step 0)
 		// $tree_filter  		= "[ptree_log_ts] != ''";
@@ -545,8 +546,9 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		//more complex algo than mean for triggering rx change
 		if(!empty($target_systolic)){
 			//TODO FIX THE FILTER  one week? two weeks?!?
-			$filter = "[bp_reading_ts] > '" . date("n/j/y H:i", strtotime('-20 weeks')) . "'";
+			$filter = "";//"[bp_reading_ts] > '" . date("n/j/y H:i", strtotime('-20 weeks')) . "'";
 			$params	= array(
+				'project_id'	=> $this->enabledProjects["patients"]["pid"],
 				'records' 		=> array($record_id),
 				'return_format' => 'json',
 				'fields'        => array("record_id", "patient_bp_target_systolic", "patient_bp_target_diastolic", "patient_bp_target_pulse", "bp_reading_ts",  "omron_bp_id", "bp_systolic", "bp_diastolic", "bp_pulse"),
@@ -559,7 +561,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$diastolic 	= array();
 			$pulse 		= array();
 
-			$this->emDebug("TODO will need to make sure not to eval if less than 2 weeks data?");
+			// $this->emDebug("TODO will need to make sure not to eval if less than 2 weeks data?");
 			//TODO 12/1/2020 : rEDO eval logic against target COMPARE individual readings in the last 2 weeks vs goals as long at 60% of them... wtf
 
 			foreach($records as $record){
@@ -577,7 +579,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			//TODO 
 			$systolic_mean 	= array_pop($systolic);
 
-			$this->emDebug("TODO, need a more granular evaluation for _uncontrolled");
+			// $this->emDebug("TODO, need a more granular evaluation for _uncontrolled");
 			$sys_uncontrolled = $systolic_mean > $target_systolic ? true : false;
 			$dia_uncontrolled = $diastolic_mean > $target_diastolic ? true : false;
 			$pls_uncontrolled = $pulse_mean > $target_pulse ? true : false;	
@@ -595,12 +597,14 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				
 				// Recommended RX change
 				$data = array(
+					'project_id'	=> $this->enabledProjects["patients"]["pid"],
 					"record_id"             	=> $record_id,
 					"patient_rec_tree_step" 	=> $uncontrolled_next_step,
 					"last_update_ts"			=> $current_update_ts,
 					"filter"      				=> "rx_change"
 				);
 				$r = \REDCap::saveData('json', json_encode(array($data)) );
+				$this->emDebug("for saves too?" , $r);
 			}
 		}
 
