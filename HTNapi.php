@@ -181,6 +181,12 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		return array("rec declined");
 	}
 
+	public function getPatientBaselineFields(){
+		$this->loadEM();
+		$script_fieldnames = \REDCap::getFieldNames("patient_baseline");
+		return $script_fieldnames;
+	}
+
 	public function sendToPharmacy($patient){
 		//TODO, FIGURE OUT PHARMACY API
 		$this->emDebug("SEND TO PHARMACY FOR patient", $patient);

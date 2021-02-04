@@ -141,6 +141,8 @@ class HTNdashboard {
                         ,"patient_fname"
                         ,"patient_mname"
                         ,"patient_lname"
+                        ,"patient_mrn"
+                        ,"patient_phone"
                         ,"patient_photo"
                         ,"patient_birthday"
                         ,"patient_group"
@@ -485,7 +487,14 @@ class HTNdashboard {
 	}
 
     public function addPatient($post){
-        $script_fieldnames = \REDCap::getFieldNames("patient_baseline");
+        $script_fieldnames = $this->module->getPatientBaselineFields(); //\REDCap::getFieldNames("patient_baseline");
+        $this->module->emDebug("post", $post);
+        
+        if(empty($script_fieldnames)){
+            //WTF NOW? THIS NO LONGER WORKS?
+            $script_fieldnames = array("record_id","patient_fname","patient_mname","patient_lname","alias_select", "patient_bp_target_pulse", "patient_mrn", "patient_email", "patient_phone", "patient_bp_target_systolic", "patient_bp_target_diastolic");
+        }
+
         $data = array();
         foreach($post as $rc_var => $rc_val){
             if( !in_array($rc_var, $script_fieldnames) ){
@@ -496,19 +505,17 @@ class HTNdashboard {
             }
             $data[$rc_var] = $rc_val;
         }
-        $data["patient_physician_id"]       = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
-        $data["patient_treatment_status"]   = 0; //always start with the first step of whatever tree
-        $data["patient_treatment_status"]   = 0; //always start with the first step of whatever tree
-        $data["patient_add_ts"]             = Date("Y-m-d H:i:s"); //always start with the first step of whatever tree
-        
-        //TODO how to pick template?
-        $data["current_treatment_plan_id"]  = 1;
-
-        $next_id            = $this->module->getNextAvailableRecordId($this->patients_project);
-        $data["record_id"]  = $next_id;
+        if( (isset($post["action"]) && $post["action"] == "add") || empty($post["action"]) ){
+            $data["patient_physician_id"]       = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
+            $data["patient_treatment_status"]   = 0; //always start with the first step of whatever tree
+            $data["patient_add_ts"]             = Date("Y-m-d H:i:s"); //always start with the first step of whatever tree
+        }
+        $data["current_treatment_plan_id"]  = $post["current_treatment_plan_id"] ?? 1;
+        $next_id                            = $post["record_id"] ?? $this->module->getNextAvailableRecordId($this->patients_project);
+        $data["record_id"]                  = $next_id;
 
         $r    = \REDCap::saveData($this->patients_project, 'json', json_encode(array($data)) );
-        $this->module->emDebug("patient added or what?", $r, $data);
+        $this->module->emDebug("patient added or edited or what?", $r, $data);
         return $r;
     }
 

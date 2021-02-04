@@ -53,6 +53,7 @@ $(document).ready(function(){
          "ajax_endpoint" : '<?=$module->getURL("endpoints/ajax_handler.php", true, true);?>'
         ,"anon_profile_src" : '<?=$module->getUrl('assets/images/icon_anon.gif')?>'
         ,"ptree_url" : '<?=$module->getUrl('pages/tree_view.php', true, true)?>'
+        ,"edit_patient" : '<?=$module->getUrl('pages/add_patient.php')?>'
         
     };
 

@@ -371,6 +371,8 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         tpl.find(".patient_profile img").attr("src",this.anon_profile_src);
         tpl.find(".patient_profile figcaption").text(patient["patient_fname"] + " " + patient["patient_mname"] + " " + patient["patient_lname"]);
         
+        tpl.find(".edit_patient").attr("href", _this["edit_patient"]).data("patient",patient["record_id"]);
+
         tpl.find(".nav-link").click(function(e){
             e.preventDefault();
             var tab = $(this).data("tab");
@@ -392,10 +394,8 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
         tpl.find(".edit_patient").click(function(e){
             e.preventDefault();
-            console.log("change out flip all of displayPaientDetail to ... editPatientDetail... same as patient detail without the recommendation tab");
+            location.href=$(this).attr("href")+"&patient="+$(this).data("patient");
         });
-
-
 
 
         // PTREE LOG
