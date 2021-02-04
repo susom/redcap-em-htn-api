@@ -30,7 +30,7 @@
             }else{
                 ?>
                 <div class="dropdown align-baseline text-white">
-                    <a class="text-white" href="<?=$module->getUrl('pages/login.php')?>">Login</a> | <a class="text-white"  href="<?=$module->getUrl('pages/registration.php')?>">Register</a>
+                    <a class="text-white" href="<?=$module->getUrl('pages/login.php')?>">Login</a> | <a class="text-white"  href="<?=$module->getUrl('pages/registration.php',true,true)?>">Register</a>
                 </div>
                 <?php
             }

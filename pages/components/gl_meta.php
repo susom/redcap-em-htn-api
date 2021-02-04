@@ -4,17 +4,17 @@
 <meta name="description" content="">
 <meta name="author" content="Irvin Szeto">
 <!-- Bootstrap core CSS -->
-<link href="<?php echo $module->getUrl('assets/styles/bootstrap.min.css') ?>" rel="stylesheet" crossorigin="anonymous">
-<link href="<?php echo $module->getUrl('assets/styles/sticky-footer-navbar.css') ?>" rel="stylesheet">
+<link href="<?php echo $module->getUrl('assets/styles/bootstrap.min.css', true, true) ?>" rel="stylesheet" crossorigin="anonymous">
+<link href="<?php echo $module->getUrl('assets/styles/sticky-footer-navbar.css', true, true) ?>" rel="stylesheet">
 
-<link href="<?php echo $module->getUrl('assets/styles/htn_gl.css') ?>" rel="stylesheet">
-<link href="<?php echo $module->getUrl('assets/styles/htn.css') ?>" rel="stylesheet">
+<link href="<?php echo $module->getUrl('assets/styles/htn_gl.css', true, true) ?>" rel="stylesheet">
+<link href="<?php echo $module->getUrl('assets/styles/htn.css', true, true) ?>" rel="stylesheet">
 
-<script src="<?php echo $module->getUrl('assets/scripts/jquery.min.js') ?>" crossorigin="anonymous"></script>
-<script src="<?php echo $module->getUrl('assets/scripts/bootstrap.bundle.min.js') ?>" crossorigin="anonymous"></script>
+<script src="<?php echo $module->getUrl('assets/scripts/jquery.min.js', true, true) ?>" crossorigin="anonymous"></script>
+<script src="<?php echo $module->getUrl('assets/scripts/bootstrap.bundle.min.js', true, true) ?>" crossorigin="anonymous"></script>
 
-<script src="<?php echo $module->getUrl('assets/scripts/dashboard.js') ?>" crossorigin="anonymous"></script>
-<script src="<?php echo $module->getUrl('assets/scripts/template.js') ?>" crossorigin="anonymous"></script>
+<script src="<?php echo $module->getUrl('assets/scripts/dashboard.js', true, true) ?>" crossorigin="anonymous"></script>
+<script src="<?php echo $module->getUrl('assets/scripts/template.js', true, true) ?>" crossorigin="anonymous"></script>
 
 <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.js"></script>

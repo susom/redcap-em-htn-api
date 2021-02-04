@@ -511,7 +511,7 @@ class HTNdashboard {
             $data["patient_add_ts"]             = Date("Y-m-d H:i:s"); //always start with the first step of whatever tree
         }
         $data["current_treatment_plan_id"]  = $post["current_treatment_plan_id"] ?? 1;
-        $next_id                            = $post["record_id"] ?? $this->module->getNextAvailableRecordId($this->patients_project);
+        $next_id                            = !empty($post["record_id"]) ? $post["record_id"] : $this->module->getNextAvailableRecordId($this->patients_project);
         $data["record_id"]                  = $next_id;
 
         $r    = \REDCap::saveData($this->patients_project, 'json', json_encode(array($data)) );
