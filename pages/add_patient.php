@@ -13,7 +13,7 @@ if(!empty($_POST)){
     $patient_added  = $module->addPatient($_POST);
 
     if(empty($patient_added["errors"])){
-        header("location:".$module->getUrl("pages/dashboard.php"));
+        header("location:".$module->getUrl("pages/dashboard.php", true, true));
     }
     switch($action){
         case "edit":

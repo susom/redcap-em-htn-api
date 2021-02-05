@@ -15,14 +15,14 @@ nav .dropdown-toggle::after{
     margin-left: .5em;
     vertical-align:middle;
     border:none;
-    background:url(<?php echo $module->getUrl('assets/images/icon_anon.gif') ?>) 0 0 no-repeat;
+    background:url(<?php echo $module->getUrl('assets/images/icon_anon.gif', true, true) ?>) 0 0 no-repeat;
     background-size:contain;
     width:40px; height:40px; 
 }
 
 .navbar-brand {
     display:inline-block;
-    background:url(<?php echo $module->getUrl('assets/images/logo_heartex.gif') ?>) 0 0 no-repeat;
+    background:url(<?php echo $module->getUrl('assets/images/logo_heartex.gif', true, true) ?>) 0 0 no-repeat;
     /*background: url(https://identity.stanford.edu/img/stanford-university-white.png) 0 50% no-repeat;*/
     background-size: contain;
     text-indent: -5000px;

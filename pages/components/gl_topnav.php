@@ -7,14 +7,14 @@
     <!-- Fixed navbar -->
     <nav class="navbar navbar-expand-md navbar-dark fixed-top">
         <div class="container pt-3 pb-3">
-            <a class="navbar-brand p-0 m-0" href="<?=$module->getUrl('pages/dashboard.php')?>" title="HeartEx">HeartEx®</a>
+            <a class="navbar-brand p-0 m-0" href="<?=$module->getUrl('pages/dashboard.php', true, true)?>" title="HeartEx">HeartEx®</a>
             <?php
             if(!empty($_SESSION["logged_in_user"])){
                 ?>
                 <ul class="nav justify-content-center align-baseline">
-                    <li class="nav-item"><a class="nav-link <?= $home_active ?> home" href="<?=$module->getUrl('pages/dashboard.php')?>">Home</a></li>
-                    <li class="nav-item"><a class="nav-link <?= $tree_active ?> ptree" href="<?=$module->getUrl('pages/tree_view.php')?>">Tree Templates</a></li>
-                    <li class="nav-item"><a class="nav-link <?= $help_active ?> help" href="<?=$module->getUrl('pages/help.php')?>">Support</a></li>
+                    <li class="nav-item"><a class="nav-link <?= $home_active ?> home" href="<?=$module->getUrl('pages/dashboard.php', true, true)?>">Home</a></li>
+                    <li class="nav-item"><a class="nav-link <?= $tree_active ?> ptree" href="<?=$module->getUrl('pages/tree_view.php', true, true)?>">Tree Templates</a></li>
+                    <li class="nav-item"><a class="nav-link <?= $help_active ?> help" href="<?=$module->getUrl('pages/help.php', true, true)?>">Support</a></li>
                 </ul>
                 <?php
                     $provider_full_name = $_SESSION["logged_in_user"]["provider_fname"] . " " . $_SESSION["logged_in_user"]["provider_mname"] . " " . $_SESSION["logged_in_user"]["provider_lname"];
@@ -30,7 +30,7 @@
             }else{
                 ?>
                 <div class="dropdown align-baseline text-white">
-                    <a class="text-white" href="<?=$module->getUrl('pages/login.php')?>">Login</a> | <a class="text-white"  href="<?=$module->getUrl('pages/registration.php',true,true)?>">Register</a>
+                    <a class="text-white" href="<?=$module->getUrl('pages/login.php', true, true)?>">Login</a> | <a class="text-white"  href="<?=$module->getUrl('pages/registration.php',true,true)?>">Register</a>
                 </div>
                 <?php
             }

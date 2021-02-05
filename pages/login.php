@@ -70,14 +70,14 @@ $page = "login_reg";
                         <div class="form-group">
                             <label for="login_pw">Password</label>
                             <input type="password" class="form-control" id="login_pw" name="login_pw" placeholder="secret password">
-                            <a class='reset_link float-right' href='<?=$module->getUrl("/pages/reset_password.php")?>'>Reset Password</a>
+                            <a class='reset_link float-right' href='<?=$module->getUrl("/pages/reset_password.php", true, true)?>'>Reset Password</a>
                         </div>
                         <div class="btns pt-4 pb-4">
                             <button type="submit" id="login_go" class="btn btn-primary btn-block">Log In</button>
                         </div>
                         <div class="more_links pb-3">
-                            <a class='reg_link pb-5' href="<?=$module->getUrl("/pages/registration.php")?>">Create an Account</a>
-                            <a class="help_link" href="<?=$module->getUrl("/pages/help.php")?>">Need Help?</a>
+                            <a class='reg_link pb-5' href="<?=$module->getUrl("/pages/registration.php", true, true)?>">Create an Account</a>
+                            <a class="help_link" href="<?=$module->getUrl("/pages/help.php", true, true)?>">Need Help?</a>
                         </div>
                     </form>
 

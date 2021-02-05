@@ -9,7 +9,7 @@ if(isset($_POST["action"])){
         case "register_provider": 
             $account_created = $module->registerProvider($_POST);
             if(empty($account_created["errors"])){
-                header("Location: " . $module->getUrl("pages/dashboard.php"));
+                header("Location: " . $module->getUrl("pages/dashboard.php", true, true));
                 exit;
             }else{
                 $errors = $account_created["errors"];

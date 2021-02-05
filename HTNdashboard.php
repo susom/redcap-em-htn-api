@@ -70,7 +70,7 @@ class HTNdashboard {
             $years          = floor($diff / (365*60*60*24));
             $result["age"]  = "$years yrs old";
 
-            $result["patient_photo"]    = $this->module->getUrl('assets/images/icon_anon.gif');
+            $result["patient_photo"]    = $this->module->getUrl('assets/images/icon_anon.gif', true, true);
             $result["patient_name"]     = $result["patient_lname"] . ", " . $result["patient_fname"] . " " . substr($result["patient_mname"],0,1);
 
             if(!empty($result["redcap_repeat_instrument"])){
@@ -419,7 +419,7 @@ class HTNdashboard {
         foreach($providers as $new_account){
             $is_delegate    = array_key_exists("sponsor_id",$new_account);
 
-            $verify_link        = $this->module->getURL("pages/registration.php", true, true)."&email=".$new_account["provider_email"]."&verify=".$new_account["verification_token"];
+            $verify_link        = $this->module("pages/registration.php", true, true)."&email=".$new_account["provider_email"]."&verify=".$new_account["verification_token"];
             $msg_arr            = array();
             $welcome        = $is_delegate ? "To whom it may concern," : "Dear " . $new_account["provider_fname"] .",";
             $msg_arr[]      = "<p>" . $welcome . "</p>";

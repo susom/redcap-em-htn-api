@@ -2,6 +2,7 @@
 namespace Stanford\HTNapi;
 /** @var \Stanford\HTNapi\HTNapi $module */
 
+
 if(isset($_REQUEST)){
     if( isset($_GET["verify"]) ){
         $action = "verify";
@@ -66,7 +67,7 @@ $page = "login_reg";
             <div class="row">
                 <div class="col-md-6 offset-md-3 mt-5">
                     <h1 class="mt-3 mr-3 ml-3 d-inline-block align-middle">Registration</h1>
-                    <form action=<?=$module->getUrl("pages/registration.php");?> method="POST" class="mr-3 ml-3">
+                    <form action=<?=$module->getUrl("pages/registration.php", true, true);?> method="POST" class="mr-3 ml-3">
                         <input type="hidden" name="action" value="register_provider"/>
                         <input type="hidden" name="record_id" value="<?=$edit_id?>"/>
                         <h4 class="pt-4 pb-1 mb-4">Create an Account</h4>

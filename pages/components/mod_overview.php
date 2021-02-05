@@ -18,7 +18,7 @@
     <div class="row header">
         <h1 class="mt-5 mb-3 mr-3 ml-3 d-inline-block align-middle">Overview</h1>
         <aside class="float-right mt-5">
-            <a href="<?=$module->getUrl("pages/add_patient.php")?>" class="add_patient d-inline-block mr-3 mt-2">+ Add Patient</a> 
+            <a href="<?=$module->getUrl("pages/add_patient.php", true, true)?>" class="add_patient d-inline-block mr-3 mt-2">+ Add Patient</a> 
             <!-- <form class="d-inline-block  mt-2"><input type="text" class="search rounded" placeholder="Search Patients"/></form> -->
         </aside>
     </div>

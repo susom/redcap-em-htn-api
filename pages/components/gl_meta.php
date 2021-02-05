@@ -21,49 +21,49 @@
 <link  href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.css"rel="stylesheet" type="text/css"></link>
 <style>
     nav .dropdown-toggle::after{
-        background:url(<?php echo $module->getUrl('assets/images/icon_anon.gif') ?>) 0 0 no-repeat;
+        background:url(<?php echo $module->getUrl('assets/images/icon_anon.gif', true, true) ?>) 0 0 no-repeat;
         background-size:contain; 
     }
     .navbar-brand {
-        background:url(<?= $module->getUrl('assets/images/logo_heartex.gif') ?>) 0 0 no-repeat;
+        background:url(<?= $module->getUrl('assets/images/logo_heartex.gif', true, true) ?>) 0 0 no-repeat;
         background-size: contain;
     }
     i.email {
         display:inline-block;
         font-size:100%;
         font-style:normal;
-        background:url(<?= $module->getUrl('assets/images/icon_email.png') ?>) no-repeat;
+        background:url(<?= $module->getUrl('assets/images/icon_email.png', true, true) ?>) no-repeat;
         background-size:20px 20px;
         line-height:130%;
         cursor:pointer;
         padding-left:25px;
     }
     .edit_patient{
-        background:url(<?= $module->getUrl('assets/images/icon_edit.png') ?>) no-repeat;
+        background:url(<?= $module->getUrl('assets/images/icon_edit.png', true, true) ?>) no-repeat;
         background-size:20px 20px;
     }
 
     .patient_status b{
         display:inline-block;
-        background:url(<?= $module->getUrl('assets/images/icon_bp_cuff_color.png') ?>) no-repeat;
+        background:url(<?= $module->getUrl('assets/images/icon_bp_cuff_color.png', true, true) ?>) no-repeat;
         background-size:20px 20px;
         line-height:130%;
         padding-left:25px;
     }
 
     .clear_filters{
-        background:url(<?= $module->getUrl('assets/images/icon_clear_filters.png') ?>) 100% no-repeat;
+        background:url(<?= $module->getUrl('assets/images/icon_clear_filters.png', true, true) ?>) 100% no-repeat;
         background-size:19px 28px;
         padding-right:23px;
     }
     .loading_patient{
         text-indent:-5000px;
-        background-image:url(<?= $module->getUrl('assets/images/loading_patient2.gif') ?>);
+        background-image:url(<?= $module->getUrl('assets/images/loading_patient2.gif', true, true) ?>);
         background-position:50%;
         background-repeat:no-repeat;
     }
     .step li.note{
-        background-image:url(<?= $module->getUrl('assets/images/icon_note.png') ?>);
+        background-image:url(<?= $module->getUrl('assets/images/icon_note.png', true, true) ?>);
         background-repeat:no-repeat;
         background-position:0 50%;
         background-size:15px 15px;
