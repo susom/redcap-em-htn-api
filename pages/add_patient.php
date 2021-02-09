@@ -2,9 +2,9 @@
 namespace Stanford\HTNapi;
 /** @var \Stanford\HTNapi\HTNapi $module */
 
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+// error_reporting(E_ALL);
 
 include("components/gl_checklogin.php");
 
@@ -54,7 +54,6 @@ $current_treatment_plan_id      = !empty($patient["current_treatment_plan_id"]) 
 $add_edit_btn_text  = !empty($patient) ? "Edit Patient $patient_fname's Data" : "Add New Patient";
 $action             = !empty($patient) ? "edit" : "add";
 $provider_trees = $_SESSION["logged_in_user"]["provider_trees"];
-
 
 $page       = "patient_detail";
 $showhide   = $page !== "dashboard" ? "hide" : "";
@@ -211,6 +210,9 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                     </div>
                                 </div>
                                 
+                                <?php
+                                    if(!empty($provider_trees)){
+                                ?>
                                 <div class="patient_name mb-5">
                                     <fig class="patient_profile d-block mx-auto row">
                                         <!-- <figure class="text-center "><a href="#" class="rounded-circle add_photo d-inline-block">Add Photo</a></figure> -->
@@ -266,12 +268,20 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                         </figcaption>
                                     </fig>
                                 </div>
-
-                                
-
                                 <div class="btns text-center mb-5">
                                     <button type="submit" id="save_patient" class='btn btn-primary btn-lg'><?=$add_edit_btn_text?></button>
                                 </div>
+                                <?php
+                                    }else{
+                                ?>
+                                    <div class="patient_name mb-5">
+                                        <p class="text-center">Before Adding a Patient, You must save a tree template. 
+                                           Go to  <a href="<?=$module->getUrl("pages/tree_view.php",true,true)?>">Tree Templates</a> to do so.
+                                        </p>
+                                    </div>        
+                                <?php
+                                    }
+                                ?>
                             </form>
                         </div>
                         
