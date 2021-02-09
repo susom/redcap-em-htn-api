@@ -38,9 +38,11 @@ if(isset($_REQUEST)){
     }
 }
 
+if(!empty($_SESSION["logged_in_user"])){
+    $module->emDebug("fucker fucker", $_SESSION["logged_in_user"]);
+}
 
-
-$edit_provider = !empty($_SESSSION["logged_in_user"]) ? "show_reg" : "hide_reg";
+$edit_provider = !empty($_SESSION["logged_in_user"]) ? "show_reg" : "hide_reg";
 $edit_delegate = empty($edit_id) ? "show_del" : "hide_del";
 $page = "login_reg";
 ?>

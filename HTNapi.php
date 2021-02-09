@@ -46,6 +46,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$this->tree			= new \Stanford\HTNapi\HTNtree($this);
 
 		// what else?  API stuff?
+		session_start();
 	}
 
 	//Get All Provider Trees
@@ -87,6 +88,42 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$this->loadEM();
 
 		$this->dashboard->registerProvider($post);
+	}
+
+	//EDIT PRovider
+	public function editProvider($post){
+		$this->loadEM();
+
+		$this->dashboard->editProvider($post);
+	}
+
+	public function getProvider($provider_id){
+		$this->loadEM();
+
+		return $this->dashboard->getProvider($provider_id);
+	}
+
+	//EDIT LAB READING
+	public function updateLabReading($record_id, $lab, $reading){
+		$this->loadEM();
+
+		// update the shortcut data in patient baseline
+		$next_instance_id = $this->getNextInstanceId($record_id, "labs_log", "lab_ts");
+
+		$data_log = array(
+			"record_id"             	=> $record_id,
+			"redcap_repeat_instance" 	=> $next_instance_id,
+			"redcap_repeat_instrument" 	=> "labs_log",
+			"lab_name" 					=> $lab,
+			"lab_value" 				=> $reading,
+			"lab_token" 				=> "manual",
+			"lab_ts"				=> Date("Y-m-d")
+		);
+
+		$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data_log)) );
+
+		$this->emDebug("fuck you", $r , $data_log);
+		return array("errors" => $r["errors"], "data"=> $data_log);
 	}
 
 	/**
@@ -865,8 +902,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	public function htnAPICron(){
 		$projects 	= $this->framework->getProjectsWithModuleEnabled();
 		$urls 		= array(
-						$this->getUrl('cron/refresh_omron_tokens.php', true)
-						,$this->getUrl('cron/daily_omron_data_pull.php', true)
+						$this->getUrl('cron/refresh_omron_tokens.php', true, true)
+						,$this->getUrl('cron/daily_omron_data_pull.php', true, true)
 					); //has to be page
 		foreach($projects as $index => $project_id){
 			foreach($urls as $url){

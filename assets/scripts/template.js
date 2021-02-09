@@ -397,11 +397,11 @@ var patient_details = `
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">CR <i>mg/dl</i></dt>
-                    <dd class="d-inline-block cr"><span></span> <i>last updated: <span>n/a</span></i></dd>
+                    <dd class="d-inline-block cr"><span><input class="form-control input-sm cr_reading" type="text"></span> <i>last updated: <span>n/a</span></i></dd>
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">K <i>mmo/l</i></dt>
-                    <dd class="d-inline-block k"><span></span> <i>last updated: <span>n/a</span></i></dd>
+                    <dd class="d-inline-block k"><span><input class="form-control input-sm k_reading" type="text"></span> <i>last updated: <span>n/a</span></i></dd>
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">Calculated EGFR</dt>

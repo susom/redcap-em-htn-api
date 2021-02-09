@@ -12,7 +12,7 @@ if($verification_token){
             $login_pw       = strtolower(trim(filter_var($_POST["login_pw"], FILTER_SANITIZE_STRING)));  
             $verify         = $module->loginProvider($login_email, $login_pw);
             if($verify){
-                header("Location: " . $module->getUrl("pages/dashboard.php"));
+                header("Location: " . $module->getUrl("pages/dashboard.php", true, true));
                 exit;
             }else{
                 $module->emDebug("not verified!");
@@ -68,7 +68,7 @@ $page = "login_reg";
                             <button type="submit" id="login_go" class="btn btn-primary btn-block">Reset Password</button>
                         </div>
                         <div class="more_links pb-3">
-                            <a class="help_link" href="<?=$module->getUrl("/pages/help.php")?>">Need Help?</a>
+                            <a class="help_link" href="<?=$module->getUrl("/pages/help.php", true, true)?>">Need Help?</a>
                         </div>
                     </form>
 

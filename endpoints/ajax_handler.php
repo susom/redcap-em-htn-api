@@ -8,6 +8,24 @@ if(!empty($_POST)){
     // $module->emDebug("refresh dashboard INTF", $_POST);
     $action = $_POST["action"];
     switch($action){
+        case "update_cr_reading":
+            $lab = "cr";
+
+            $record_id  = $_POST["record_id"] ?? null;
+            $reading    = $_POST["reading"] ?? null;
+
+            $result     = $module->updateLabReading($record_id, $lab, $reading);
+        break;
+
+        case "update_k_reading":
+            $lab = "k";
+            
+            $record_id  = $_POST["record_id"] ?? null;
+            $reading    = $_POST["reading"] ?? null;
+
+            $result     =$module->updateLabReading($record_id, $lab, $reading);
+        break;
+
         case "manual_eval_bp":
             $record_id  = $_POST["record_id"] ?? null;
             $module->evaluateOmronBPavg($record_id);

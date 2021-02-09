@@ -57,14 +57,14 @@ $edit_show      = is_null($edit_tree) ? "" : "class='show'";
             margin-left: .5em;
             vertical-align:middle;
             border:none;
-            background:url(<?php echo $module->getUrl('assets/images/icon_anon.gif') ?>) 0 0 no-repeat;
+            background:url(<?php echo $module->getUrl('assets/images/icon_anon.gif', true, true) ?>) 0 0 no-repeat;
             background-size:contain;
             width:40px; height:40px; 
         }
 
         .navbar-brand {
             display:inline-block;
-            background:url(<?php echo $module->getUrl('assets/images/logo_heartex.gif') ?>) 0 0 no-repeat;
+            background:url(<?php echo $module->getUrl('assets/images/logo_heartex.gif', true, true) ?>) 0 0 no-repeat;
             /*background: url(https://identity.stanford.edu/img/stanford-university-white.png) 0 50% no-repeat;*/
             background-size: contain;
             text-indent: -5000px;
@@ -212,7 +212,7 @@ $edit_show      = is_null($edit_tree) ? "" : "class='show'";
         }
         .stat::after{
             content:"";
-            background:url(<?php echo $module->getUrl('assets/images/icon_info.gif') ?>) 0 0 no-repeat;
+            background:url(<?php echo $module->getUrl('assets/images/icon_info.gif', true, true) ?>) 0 0 no-repeat;
             background-size:contain;
             width: 20px;
             height: 20px;
@@ -391,9 +391,9 @@ $edit_show      = is_null($edit_tree) ? "" : "class='show'";
     <?php include("gl_foot.php"); ?>
 </body>
 </html>
-<script src="<?php echo $module->getUrl('assets/scripts/template.js') ?>" crossorigin="anonymous"></script>
-<script src="<?php echo $module->getUrl('assets/scripts/makeTree.js') ?>" crossorigin="anonymous"></script>
-<script src="<?php echo $module->getUrl('assets/scripts/treeViewer.js') ?>" crossorigin="anonymous"></script>
+<script src="<?php echo $module->getUrl('assets/scripts/template.js', true, true) ?>" crossorigin="anonymous"></script>
+<script src="<?php echo $module->getUrl('assets/scripts/makeTree.js', true, true) ?>" crossorigin="anonymous"></script>
+<script src="<?php echo $module->getUrl('assets/scripts/treeViewer.js', true, true) ?>" crossorigin="anonymous"></script>
 <script>
 $(document).ready(function(){
     // tree nav

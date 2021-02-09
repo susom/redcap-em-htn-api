@@ -325,12 +325,16 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         
         var need_CRK    = patient["crk_readings"].length ? false : true;
         if(!need_CRK){
-            var last_crk = patient["crk_readings"].pop();
-            tpl.find(".cr > span").text(last_crk["creatinine"]);
-            tpl.find(".k > span").text(last_crk["potassium"]);
+            for(var i in patient["crk_readings"]){
+                var lab = patient["crk_readings"][i];
+                var lab_name = lab["lab_name"];
+                var lab_val  = lab["lab_value"];
+                var lab_ts   = lab["lab_ts"];
 
-            tpl.find(".cr i span").text(last_crk["cr_ts"]);
-            tpl.find(".k i span").text(last_crk["k_ts"]);
+                var inputname = "." + lab_name ;
+                tpl.find(inputname + " input").val(lab_val);
+                tpl.find(inputname + " i span").text(lab_ts);
+            }
         }
 
         var cuff_type   = patient["bp_readings"].length ? "<b>" + patient["bp_readings"][0]["bp_device_type"] + "</b>" : "N/A";
@@ -397,6 +401,49 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             location.href=$(this).attr("href")+"&patient="+$(this).data("patient");
         });
 
+        tpl.find(".cr_reading").change(function(e){
+            e.preventDefault();
+            $.ajax({
+                url : _this["ajax_endpoint"],
+                method: 'POST',
+                data: { "action" : "update_cr_reading" , "reading" : $(this).val() , "record_id" : patient["record_id"], "patient" : patient },
+                dataType: 'json'
+            }).done(function (result) {
+                var lab      = result["data"];
+                var lab_name = lab["lab_name"];
+                var lab_val  = lab["lab_value"];
+                var lab_ts   = lab["lab_ts"];
+
+                var inputname = "." + lab_name ;
+                tpl.find(inputname + " input").val(lab_val);
+                tpl.find(inputname + " i span").text(lab_ts);
+            }).fail(function () {
+                console.log("something failed");
+            });
+        });
+
+        tpl.find(".k_reading").change(function(e){
+            e.preventDefault();
+            console.log("update k reading", $(this).val());
+            $.ajax({
+                url : _this["ajax_endpoint"],
+                method: 'POST',
+                data: { "action" : "update_k_reading" , "reading" : $(this).val() ,"record_id" : patient["record_id"], "patient" : patient },
+                dataType: 'json'
+            }).done(function (result) {
+                var lab      = result["data"];
+                var lab_name = lab["lab_name"];
+                var lab_val  = lab["lab_value"];
+                var lab_ts   = lab["lab_ts"];
+
+                var inputname = "." + lab_name ;
+                tpl.find(inputname + " input").val(lab_val);
+                tpl.find(inputname + " i span").text(lab_ts);
+            }).fail(function () {
+                console.log("something failed");
+            });
+
+        });
 
         // PTREE LOG
         var json_tree_logs = patient["tree_log"];

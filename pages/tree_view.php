@@ -49,24 +49,24 @@ $available_trees= array(1, 2, 3, 4);
 <html lang="en" class="h-100">
 <head>
 <?php include("components/gl_meta.php") ?>
-<link href="<?php echo $module->getUrl('assets/styles/treeview.css') ?>" rel="stylesheet">
+<link href="<?php echo $module->getUrl('assets/styles/treeview.css', true, true) ?>" rel="stylesheet">
 <style>
     b.drug {
         padding-left:23px;
-        background:url(<?= $module->getUrl('assets/images/icon_drug.png') ?>) 0 0 no-repeat;
+        background:url(<?= $module->getUrl('assets/images/icon_drug.png', true, true) ?>) 0 0 no-repeat;
         background-size:18px 18px;
     }
     .step_drugs li.increase{
-        background:url(<?= $module->getUrl('assets/images/icon_arrow_up.png') ?>) 0 4px no-repeat;
+        background:url(<?= $module->getUrl('assets/images/icon_arrow_up.png', true, true) ?>) 0 4px no-repeat;
         background-size:18px 18px;
     }
     .step_drugs li.decrease{
-        background:url(<?= $module->getUrl('assets/images/icon_arrow_down.png') ?>) 0 4px no-repeat;
+        background:url(<?= $module->getUrl('assets/images/icon_arrow_down.png', true, true) ?>) 0 4px no-repeat;
         background-size:18px 18px;
     }
 
     .step_drugs li.add{
-        background:url(<?= $module->getUrl('assets/images/icon_add_plus.png') ?>) 0 4px no-repeat;
+        background:url(<?= $module->getUrl('assets/images/icon_add_plus.png', true, true) ?>) 0 4px no-repeat;
         background-size:18px 18px;
     }
 </style>
@@ -102,14 +102,14 @@ $available_trees= array(1, 2, 3, 4);
                             margin-left: .5em;
                             vertical-align:middle;
                             border:none;
-                            background:url(<?php echo $module->getUrl('assets/images/icon_anon.gif') ?>) 0 0 no-repeat;
+                            background:url(<?php echo $module->getUrl('assets/images/icon_anon.gif', true, true) ?>) 0 0 no-repeat;
                             background-size:contain;
                             width:40px; height:40px; 
                         }
 
                         .navbar-brand {
                             display:inline-block;
-                            background:url(<?php echo $module->getUrl('assets/images/logo_heartex.gif') ?>) 0 0 no-repeat;
+                            background:url(<?php echo $module->getUrl('assets/images/logo_heartex.gif', true, true) ?>) 0 0 no-repeat;
                             /*background: url(https://identity.stanford.edu/img/stanford-university-white.png) 0 50% no-repeat;*/
                             background-size: contain;
                             text-indent: -5000px;
@@ -335,9 +335,9 @@ $available_trees= array(1, 2, 3, 4);
     </main>
 
     <?php include("components/gl_foot.php"); ?>
-    <script src="<?php echo $module->getUrl('assets/scripts/template.js') ?>" crossorigin="anonymous"></script>
-    <script src="<?php echo $module->getUrl('assets/scripts/treeLogic.js') ?>" crossorigin="anonymous"></script>
-    <script src="<?php echo $module->getUrl('assets/scripts/treeLogicStep.js') ?>" crossorigin="anonymous"></script>
+    <script src="<?php echo $module->getUrl('assets/scripts/template.js', true, true) ?>" crossorigin="anonymous"></script>
+    <script src="<?php echo $module->getUrl('assets/scripts/treeLogic.js', true, true) ?>" crossorigin="anonymous"></script>
+    <script src="<?php echo $module->getUrl('assets/scripts/treeLogicStep.js', true, true) ?>" crossorigin="anonymous"></script>
 </body>
 </html>
 <script>

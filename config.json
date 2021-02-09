@@ -72,6 +72,7 @@
 		"pages/dashboard",
 		"pages/login",
 		"pages/registration",
+		"pages/add_patient",
 		"pages/help",
 		"pages/templates_select",
 		"pages/tree_view",

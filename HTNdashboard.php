@@ -200,17 +200,17 @@ class HTNdashboard {
             $result["bp_readings"] = $bp_results;
 
             //GET PATIENT CRK MEASUREMENTS AND LAST UPDATED OVER LAST 6 MONTHS
-            $crk_filter  = "([lab_name] = 'creatinin' OR [lab_name] != 'potassium') AND [lab_ts] > '" . date("Y-m-d H:i:s", strtotime('-6 months')) . "'";
+            //TODO LIMIT TO ONLY LATEST ONES
+            $crk_filter  = "([lab_name] = 'cr' OR [lab_name] = 'k') AND [lab_ts] > '" . date("Y-m-d H:i:s", strtotime('-6 months')) . "'";
             $crk_params  = array(
                 'project_id'    => $this->patients_project,
                 "records"       => array($result["record_id"]),
-                "fields"        => array("record_id", "creatinine", "potassium" , "cr_ts", "k_ts"),
+                "fields"        => array("record_id", "lab_name", "lab_value" , "lab_ts"),
                 'return_format' => 'json',
                 'filterLogic'   => $crk_filter
             );
             $crk_raw         = \REDCap::getData($crk_params);
             $crk_results     = json_decode($crk_raw,1);
-            // $this->module->emDebug($crk_results);
             $result["crk_readings"] = $crk_results;
 
             //GET PATIENT TREE CHANGE STEPS TAKEN (not including the first step 0)
@@ -410,6 +410,116 @@ class HTNdashboard {
             }
             return $r;
         }
+    }
+
+    public function editProvider($post){
+        $this->module->emDebug("edit post", $post);
+
+        $_POST          = $post;
+        $dict           = $this->getProjectDictionary($this->providers_project);
+        $dict_keys      = array_keys($dict);
+
+        // $provider_email = in_array("provider_email", $dict_keys) ? strtolower(trim(filter_var($_POST["provider_email"], FILTER_SANITIZE_STRING))) : null;
+        $provider_pw    = in_array("provider_pw", $dict_keys) ? strtolower(trim(filter_var($_POST["provider_pw"], FILTER_SANITIZE_STRING))) : null;
+        $provider_pw2   = in_array("provider_pw", $dict_keys) ? strtolower(trim(filter_var($_POST["provider_pw2"], FILTER_SANITIZE_STRING))) : null;
+        $edit_id        = empty($_POST["record_id"]) ? null : $_POST["record_id"];
+
+        $errors         = array(); 
+        if($provider_pw != $provider_pw2){
+            if( $provider_pw != $provider_pw2 ){
+                $errors[] = "Mismatched Password Inputs";
+            }
+            return array("errors" => $errors);
+        }
+        
+        if(empty($edit_id)){
+            $errors[] = "Missing record id";
+        }
+
+   
+        $data = array();
+        foreach($dict_keys as $key){
+            if(array_key_exists($key, $_POST)){
+                $post_val = trim(filter_var($_POST[$key], FILTER_SANITIZE_STRING));
+                if($key == "provider_pw"){
+                    if(empty($provider_pw)){
+                        continue;
+                    }
+                    $salt       = $provider_email;
+                    $pepper     = $this->pepper;
+                    $input      = $salt.$provider_pw.$pepper;
+                    $post_val   = $this->pwHash($input);
+                }
+                // MASSAGE FOR CHECKBOX
+                if ($dict[$key]["field_type"] == 'checkbox') {
+                    if(strpos($dict[$key]["select_choices_or_calculations"],$post_val.",") > -1){
+                        $key        = $key."___".$post_val;
+                        $post_val   = 1;
+                    }else{
+                        //IF CHOICE NOT FOUND, JUST SKIP THIS FIELD , FIX LATER
+                        continue;
+                    }
+                } 
+                //MASSAGE FOR DATE FIELDS
+                if ($dict[$key]["text_validation_type_or_show_slider_number"] == "date_ymd"){
+                    $post_val = Date("Y-m-d", strtotime($post_val));
+                }
+                $data[$key] = $post_val;
+            }
+        }
+        $record_id                  = !empty($edit_id) ? $edit_id :  $this->module->getNextAvailableRecordId($this->providers_project);
+        $data["record_id"]          = $record_id;
+
+        $new_account = array();
+        $new_account[] = $data;
+
+        $instance_data      = array();
+        $next_instance_id   = $this->module->getNextInstanceId($record_id, "provider_delegates", "provider_delegate");
+        if(!empty($post["delegates"])){
+            foreach($post["delegates"] as $idx => $delegate){
+                $next_id                            = $this->module->getNextAvailableRecordId($this->providers_project) + $idx + 1;
+                $temp                               = array();
+                $temp["redcap_repeat_instance"]     = $next_instance_id;
+                $temp["redcap_repeat_instrument"]   = "provider_delegates";
+                $temp["provider_delegate"]          = $delegate;
+                $temp["delegate_id"]                = $next_id;
+                $temp["record_id"]                  = $record_id;
+                $next_instance_id++;
+                $instance_data[] = $temp;
+
+                $delegate_info = array();
+                $delegate_info["verification_token"] = $this->module->makeEmailVerifyToken();
+                $delegate_info["provider_email"]     = $delegate;
+                $delegate_info["sponsor_id"]         = $record_id;
+                $delegate_info["record_id"]          = $next_id;
+                $new_account[] = $delegate_info;
+            }
+        }
+
+        $this->module->emDebug("edit accoutn", $new_account);
+        $r  = \REDCap::saveData($this->providers_project, 'json', json_encode($new_account) );
+
+        if(!empty($instance_data)){
+            //TODO something stomping on existing delgates
+            //NEED TO BE ABLE TO DELETE DELEGATES
+            $this->module->emDebug("save deligates", $instance_data);
+            $i  = \REDCap::saveData($this->providers_project, 'json', json_encode($instance_data) );
+        }
+        return $r;
+
+    }
+
+    public function getProvider($provider_id){
+        $fields     = array();
+        $params     = array(
+            'project_id'    => $this->providers_project,
+            'records'       => array($provider_id),
+            'fields'        => $fields,
+            'return_format' => 'json'
+        );
+        $raw        = \REDCap::getData($params);
+        $results    = json_decode($raw,1);
+        return $results;
     }
 
     public function newAccountEmail($providers){
