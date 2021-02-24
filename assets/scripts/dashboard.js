@@ -444,7 +444,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             });
 
         });
-
+/*
         // PTREE LOG
         var json_tree_logs = patient["tree_log"];
         //Always add the first free step
@@ -488,7 +488,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             location.href = _this["ptree_url"]+"&patient="+record_id;
         });
         tpl.find(".presription_tree .content").append(log_step);
-
+*/
         //BP READINGS GRAPH
         if(patient["bp_readings"].length){
             // generateBpGraph(patient["bp_readings"]);
@@ -516,7 +516,8 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
 
         });
-
+/*
+TODO FIX PTREE
         if(patient["filter"] == "rx_change"){
             var rec = $(recommendation);
             var patient_id          = record_id;  
@@ -610,6 +611,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             tpl.find("#recommendations").empty();
             tpl.find("#recommendations").append(rec);
         }
+*/
     }else{
         $("#patient_details").addClass("none_selected").addClass("bg-light").addClass("rounded");
         var tpl = $("<h1>No Patient Selected</h1>");

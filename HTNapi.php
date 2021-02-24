@@ -59,8 +59,9 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 		$intf = $this->dashboard->getAllPatients($provider_id);
 
-		//TODO ADD TREE ITSELF TO the INTF
-		$intf["ptree"] = $this->tree->treeLogic(1);
+		$intf["ptree"] = array();
+		$this->emDebug("its this fucking thing right?", $intf);
+
 
 		return $intf;
 	}
@@ -156,7 +157,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	public function addPatient($post){
 		$this->loadEM();
 
-		$this->dashboard->addPatient($post);
+		return $this->dashboard->addPatient($post);
 	}
 
 	public function treeLogic($provider_id){

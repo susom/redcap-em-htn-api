@@ -33,10 +33,6 @@ if(!empty($_POST)){
             $result = array("yay we did it");
         break;
 
-        case "addEditPatient":
-            
-        break; 
-
         case "sendAuth":
             //email patient a authorization request and link
             $patient  = $_POST["patient"] ?? null;
@@ -56,10 +52,6 @@ if(!empty($_POST)){
                 $data[] = $temp;
             }
             $result = \REDCap::saveData('json', json_encode($data) );
-        break;
-
-        case "addPatientNote":
-            
         break;
 
         case "patient_details":

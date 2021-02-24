@@ -597,20 +597,42 @@ class HTNdashboard {
 
     public function addPatient($post){
         $script_fieldnames = $this->module->getPatientBaselineFields(); //\REDCap::getFieldNames("patient_baseline");
-        $this->module->emDebug("post", $post);
-        
+        $required = array(
+            "current_treatment_plan_id"
+            ,"patient_fname"
+            ,"patient_lname"
+            ,"patient_mrn"
+            ,"patient_email"
+            ,"patient_phone"
+            ,"patient_bp_target_systolic"
+            ,"patient_bp_target_diastolic"
+            ,"patient_bp_target_pulse"
+        );
+
+
         if(empty($script_fieldnames)){
             //WTF NOW? THIS NO LONGER WORKS?
             $script_fieldnames = array("record_id","patient_fname","patient_mname","patient_lname","alias_select", "patient_bp_target_pulse", "patient_mrn", "patient_email", "patient_phone", "patient_bp_target_systolic", "patient_bp_target_diastolic");
         }
 
-        $data = array();
+        $error_str  = "";
+        $data       = array();
+        foreach($required as $req_var){
+            if($req_var == "current_treatment_plan_id" && $post[$req_var] == 99){
+                $post[$req_var] = null;
+            }
+            if(empty($post[$req_var])){
+                $error_str .= "<li>[$req_var] is required</li>";
+            }
+        }
+        if($error_str != ""){
+            $error_str = "<p>The following fields are required:</p><ul>$error_str</ul>";
+            return array("errors" => $error_str);
+        }
+
         foreach($post as $rc_var => $rc_val){
             if( !in_array($rc_var, $script_fieldnames) ){
                 continue;
-            }
-            if($rc_var == "patient_birthday"){
-                $rc_val = Date("Y-m-d", strtotime($rc_val));
             }
             $data[$rc_var] = $rc_val;
         }

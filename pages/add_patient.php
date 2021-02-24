@@ -9,14 +9,22 @@ namespace Stanford\HTNapi;
 include("components/gl_checklogin.php");
 
 if(!empty($_POST)){
-    $action         = $_POST["action"];
-    $patient_added  = $module->addPatient($_POST);
-
-    if(empty($patient_added["errors"])){
+    $action = $_POST["action"];
+    $error  = $module->addPatient($_POST);
+    if(empty($error["errors"])){
         header("location:".$module->getUrl("pages/dashboard.php", true, true));
+        exit;
+    }else{
+        $patient = $_POST;
     }
+
+    //THERE ARE ERRORS
     switch($action){
         case "edit":
+
+        break;
+
+        case "add":
 
         break;
 
@@ -25,8 +33,7 @@ if(!empty($_POST)){
             
         break;
     }
-    
-    exit;   
+
 }
 
 if(!empty($_GET["patient"])){
@@ -38,6 +45,8 @@ if(!empty($_GET["patient"])){
     $current_step_idx   = $patient["patient_treatment_status"];
     $rec_step_idx       = $patient["patient_rec_tree_step"];
 }
+
+$provider_id    = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
 
 $patient_id     = !empty($patient["record_id"]) ? $patient["record_id"] : null;
 $patient_fname  = !empty($patient["patient_fname"]) ? $patient["patient_fname"] : null;
@@ -53,7 +62,18 @@ $current_treatment_plan_id      = !empty($patient["current_treatment_plan_id"]) 
 
 $add_edit_btn_text  = !empty($patient) ? "Edit Patient $patient_fname's Data" : "Add New Patient";
 $action             = !empty($patient) ? "edit" : "add";
+
+//First Get the Pre made DEFAULT Trees
+$default_trees  = $module->getDefaultTrees();
+
+//Then get the Provider Custom Trees
+if(empty($_SESSION["logged_in_user"]["provider_trees"])){
+    $provider_trees = $module->getDefaultTrees($provider_id);
+    $_SESSION["logged_in_user"]["provider_trees"] = $provider_trees;
+}
 $provider_trees = $_SESSION["logged_in_user"]["provider_trees"];
+$default_trees  = array_merge($default_trees, $provider_trees);
+
 
 $page       = "patient_detail";
 $showhide   = $page !== "dashboard" ? "hide" : "";
@@ -71,7 +91,7 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
     <main role="main" class="flex-shrink-0">        
         <div id="patients" class="container mt-5">
             <div class="row pt-5">
-                <h1 class="mt-0 mb-3 mr-3 ml-3 d-inline-block align-middle">New Patient</h1>
+                <h1 class="mt-0 mb-3 mr-3 ml-3 d-inline-block align-middle"><?=$add_edit_btn_text?></h1>
             </div>
 
             <div class="row patient_body">
@@ -82,7 +102,18 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                 <input type="hidden" name="action" value="<?=$action?>"/>
                                 <input type="hidden" name="record_id" value="<?=$patient_id?>"/>
 
-                                <div class="patient_details col-sm-10 offset-sm-1 row pt-3">
+                               
+                                
+                                <div class="patient_details col-sm-10 offset-sm-1 row pt-5">
+                                    <?php
+                                        if(!empty($error)){
+                                            $greenred   = !empty($error["errors"]) ? "danger" : "success";
+                                            $msg        = !empty($error["errors"]) ? $error["errors"] : "Action Successful!";
+                                            echo "<div class='col-sm-12 alert alert-".$greenred."'>".$msg."</div>";
+                                        }
+                                    ?>
+                                    
+                                    
                                     <!-- <h3 class="col-sm-12">Patient Baseline</h3>
                                     <em class="col-sm-12 mb-3">Much of this will be pulled and automatically refreshed from STARR/EPIC</em>
                                      -->
@@ -193,16 +224,16 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                                  -->
 
                                         <div class="form-group col-sm-12">
-                                            <label for="exampleFormControlSelect1"><b>Prescription Tree</b></label>
+                                            <h3 >Patient Prescription Tree</h3>
+                                            <p class="text-muted lead small">When adding a new patient, please start them off with a preselected Prescription Tree</p>
+
                                             <select class="form-control" id="current_treatment_plan_id" name="current_treatment_plan_id">
-                                                <option value="99">View or Edit Saved Templates</option>
+                                                <option value="99">Select Prescription Tree</option>
                                                 <?php
-                                                    foreach($provider_trees as $ptree){
-                                                        $selected = "";
-                                                        if($ptree["record_id"] == $current_treatment_plan_id){
-                                                            $selected="selected";
-                                                        }
-                                                        echo "<option $selected value='".$ptree["record_id"]."' data-templateid='".$ptree["templpate_id"]."' data-raw='".json_encode($ptree)."'>".$ptree["template_name"]."</option>";
+                                                    foreach($default_trees as $idx => $ptree){
+                                                        $tree_id    = $ptree["tree_meta"]["record_id"];
+                                                        $selected   = $current_treatment_plan_id == $tree_id ? "selected" : "";
+                                                        echo "<option value='".$tree_id."' $selected>".$ptree["label"]."</option>";
                                                     }
                                                 ?>
                                             </select>
@@ -211,7 +242,7 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                 </div>
                                 
                                 <?php
-                                    if(!empty($provider_trees)){
+                                    if(!empty($default_trees)){
                                 ?>
                                 <div class="patient_name mb-5">
                                     <fig class="patient_profile d-block mx-auto row">
@@ -219,8 +250,10 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                         
                                         <figcaption class="my-4 col-sm-10 offset-sm-1 row">
                                             <h3 class="col-sm-12">Patient Contact Details</h3>
+                                            <p class="col-sm-12 text-muted lead small">The rest of the Patient's baseline data will be pulled from STARR/Epic databses based on the patient's MRN.  All required fields are marked with a *</p>
+
                                             <div class="form-group col-sm-4">
-                                                <label for="patient_fname"><b>Patient First Name</b></label>
+                                                <label for="patient_fname"><b>Patient First Name*</b></label>
                                                 <input type="text" class="form-control" name="patient_fname" value="<?=$patient["patient_fname"]?>" id="patient_fname" aria-describedby="patient_fname" placeholder="First Name">
                                             </div>
                                             <div class="form-group col-sm-4">
@@ -228,24 +261,24 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                                 <input type="text" class="form-control" name="patient_mname" value="<?=$patient["patient_mname"]?>" id="patient_mname" aria-describedby="patient_mname" placeholder="Middle Name">
                                             </div>
                                             <div class="form-group col-sm-4">
-                                                <label for="patient_lname"><b>Last Name</b></label>
+                                                <label for="patient_lname"><b>Last Name*</b></label>
                                                 <input type="text" class="form-control" name="patient_lname" value="<?=$patient["patient_lname"]?>" id="patient_lname" aria-describedby="patient_lname" placeholder="Last Name">
                                             </div>
                                     
                                             <div class="form-group col-sm-12">
-                                                <label for="patient_mrn"><b>Patient MRN</b></label>
+                                                <label for="patient_mrn"><b>Patient MRN*</b></label>
                                                 <input type="text" class="form-control" name="patient_mrn" value="<?=$patient["patient_mrn"]?>" id="patient_mrn" aria-describedby="patient_mrn" placeholder="eg; 123456789">
                                                 <small id="patient_mrn_help" class="form-text text-muted">This will be used to link with STARR/EPIC databses.</small>
                                             </div>
                                             
                                             <div class="form-group col-sm-6">
-                                                <label for="patient_email"><b>Patient Email</b></label>
+                                                <label for="patient_email"><b>Patient Email*</b></label>
                                                 <input type="text" class="form-control" name="patient_email" value="<?=$patient["patient_email"]?>" id="patient_email" aria-describedby="patient_email" placeholder="eg; jane@doe.com">
                                                 <small id="patient_email_help" class="form-text text-muted">This will be used to authorize BP data.</small>
                                             </div>
 
                                             <div class="form-group col-sm-4">
-                                                <label for="patient_phone"><b>Patient Cell</b></label>
+                                                <label for="patient_phone"><b>Patient Cell*</b></label>
                                                 <input type="text" class="form-control" name="patient_phone" value="<?=$patient["patient_phone"]?>" id="patient_phone" aria-describedby="patient_phone" placeholder="eg; 555-555-1234">
                                                 <small id="patient_phone_help" class="form-text text-muted">This will be used to text surveys to patient.</small>
                                             </div>
@@ -253,16 +286,16 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                             <div class="my-4 bg-info text-light py-3 row col-sm-12">
                                                 <h3 class="col-sm-12"><b>Blood Pressure Goals</b></h3>
                                                 <div class="form-group col-sm-4">
-                                                    <label for="patient_bp_target_systolic"><b>Systolic Goal</b></label>
-                                                    <input type="text" class="form-control" name="patient_bp_target_systolic" value="<?=$patient["patient_bp_target_systolic"]?>" id="patient_bp_target_systolic" aria-describedby="patient_bp_target_systolic" placeholder="eg; 120">
+                                                    <label for="patient_bp_target_systolic"><b>Systolic Goal*</b></label>
+                                                    <input type="text" class="form-control" name="patient_bp_target_systolic" value="<?=$patient["patient_bp_target_systolic"] ?? 120?>" id="patient_bp_target_systolic" aria-describedby="patient_bp_target_systolic">
                                                 </div>
                                                 <div class="form-group col-sm-4">
-                                                    <label for="patient_bp_target_diastolic"><b>Diastolic Goal</b></label>
-                                                    <input type="text" class="form-control" name="patient_bp_target_diastolic" value="<?=$patient["patient_bp_target_diastolic"]?>" id="patient_bp_target_diastolic" aria-describedby="patient_bp_target_diastolic" placeholder="eg; 80">
+                                                    <label for="patient_bp_target_diastolic"><b>Diastolic Goal*</b></label>
+                                                    <input type="text" class="form-control" name="patient_bp_target_diastolic" value="<?=$patient["patient_bp_target_diastolic"] ?? 80?>" id="patient_bp_target_diastolic" aria-describedby="patient_bp_target_diastolic">
                                                 </div>
                                                 <div class="form-group col-sm-4">
-                                                    <label for="patient_bp_target_pulse"><b>Pulse Goal</b></label>
-                                                    <input type="text" class="form-control" name="patient_bp_target_pulse" value="<?=$patient["patient_bp_target_pulse"]?>" id="patient_bp_target_pulse" aria-describedby="patient_bp_target_pulse" placeholder="eg; 65">
+                                                    <label for="patient_bp_target_pulse"><b>Pulse Goal*</b></label>
+                                                    <input type="text" class="form-control" name="patient_bp_target_pulse" value="<?=$patient["patient_bp_target_pulse"] ?? 65?>" id="patient_bp_target_pulse" aria-describedby="patient_bp_target_pulse">
                                                 </div>
                                             </div>
                                         </figcaption>
@@ -271,14 +304,6 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                 <div class="btns text-center mb-5">
                                     <button type="submit" id="save_patient" class='btn btn-primary btn-lg'><?=$add_edit_btn_text?></button>
                                 </div>
-                                <?php
-                                    }else{
-                                ?>
-                                    <div class="patient_name mb-5">
-                                        <p class="text-center">Before Adding a Patient, You must save a tree template. 
-                                           Go to  <a href="<?=$module->getUrl("pages/tree_view.php",true,true)?>">Tree Templates</a> to do so.
-                                        </p>
-                                    </div>        
                                 <?php
                                     }
                                 ?>

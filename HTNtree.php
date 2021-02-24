@@ -422,7 +422,7 @@ class HTNtree  {
                )
             )
             ,"ARA" => array("label" => "Aldosterone receptor antagonists" , "drugs" => array(
-                    array( "name" => "SPIRNOLACTONE" , "unit" => "mg" , "common_dosage" => array(12.5,25) , "note" => "" )
+                    array( "name" => "SPIRONOLACTONE" , "unit" => "mg" , "common_dosage" => array(12.5,25) , "note" => "" )
                 )
             )
 
@@ -519,6 +519,7 @@ class HTNtree  {
     }
 
     public function treeLogic($provider_id){
+        //TODO FIX THIS FOR NEW WORKFLOW
         $provider_tree  = $this->getTemplateDrugs($provider_id);
         
         $logicTree      = array();
