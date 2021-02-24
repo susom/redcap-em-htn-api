@@ -593,3 +593,17 @@ i.email.sent{
     padding:60px 0;
 }
 
+.logic_trees div{
+
+}
+
+.logic_trees p{
+    font-size: 88%;
+    border-radius: 3px;
+    padding-top: 8px;
+    min-height: 58px;
+    line-height: 115%;
+}
+.logic_trees h5 em{
+    font-size:77%;
+}

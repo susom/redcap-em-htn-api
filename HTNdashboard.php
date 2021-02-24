@@ -396,7 +396,6 @@ class HTNdashboard {
             }
 
             $r  = \REDCap::saveData($this->providers_project, 'json', json_encode($new_account) );
-            $this->module->emDebug("what the fuck what the fuck", $r);
 
             if(empty($edit_id)){
                 $this->module->emDebug("save deligates", $instance_data);

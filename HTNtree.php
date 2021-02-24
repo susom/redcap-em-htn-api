@@ -227,8 +227,8 @@ class HTNtree  {
         return $response;
     }
 
-    public function getProviderTrees($provider_id){
-        $filter = "[provider_id] = '$provider_id'";
+    public function getDefaultTrees($provider_id=0){
+        $filter = "[provider_id] = $provider_id";
         $fields = array();
 		$params	= array(
 			'project_id'	=> $this->tree_templates_project,
@@ -236,24 +236,33 @@ class HTNtree  {
             'fields'        => $fields,
             'filterLogic'   => $filter 
 		);
-		if($record_id){
-			$params['records'] = array($record_id);
-		}
-
         $q      = \REDCap::getData($params);
         $trees  = json_decode($q, true);
 
-        $this->module->emDebug($trees);
-        return $trees;
+        $labeled_trees = array();
+        foreach($trees as $tree){
+            $def_tree = $this->getTemplateDrugs($tree);
+            if(!empty($def_tree)){
+                $tree_id = $tree["record_id"];
+                $labeled_trees[$tree_id] = array("label" => $tree["template_name"], "tree_meta" => $tree, "doses" => $def_tree);
+            }
+        }
+
+        return $labeled_trees;
     }
-    
+
     public function saveTemplate($provider_id, $post){
+        $is_edit    = !empty($post["record_id"]) ? true : false;
+        if($is_edit && $post["record_id"] < 5){
+            //Dont Edit Default Templates
+            return array("errors" => "Default Prescription Tree Templates aren't editable." );
+        }
+
         $next_id    = !empty($post["record_id"]) ? $post["record_id"] : $this->module->getNextAvailableRecordId($this->module->enabledProjects['tree_templates']['pid']);
         $data       = array(
             "record_id"             => $next_id,
             "provider_id"           => $provider_id,
             "template_name"         => $post["template_name"],
-            "template_id"           => $post["template_id"],
             "acei_class"            => $post["acei_class"],
             "arb_class"             => $post["arb_class"],
             "diuretic_class"        => $post["diuretic_class"],
@@ -263,113 +272,255 @@ class HTNtree  {
             "epler_class"           => $post["epler_class"]
         );
         $r = \REDCap::saveData($this->tree_templates_project, 'json', json_encode(array($data)) );
-        $this->module->emDebug("save_template", $data);
+
+        //NOW SAVE THE MEDS IN MED PROJECT
+        $map_med_class      = array(
+            1 => "ACEI",
+            2 => "ARB",
+            3 => "DIURETIC",
+            4 => "SPIRNO",
+            5 => "EPLER",
+            6 => "CCB",
+            7 => "BB",
+        );
+        $map_med_class_r    = array_flip($map_med_class);
+
+        $med_instance       = array();
+        if($is_edit){
+            //GET MEDS BY tree_id (record_id) from above
+            $params	= array(
+                'project_id'	=> $this->meds_project,
+                'return_format' => 'json',
+                'fields'        => array("record_id","med_name", "med_unit", "med_class"),
+                'filterLogic'   => "[tree_id] = $next_id"
+            );
+            $q 					= \REDCap::getData($params);
+            $meds 			    = json_decode($q, true);
+            $this->module->emDebug("EDIT meds for tree_id $next_id");
+
+            foreach($meds as $med){
+                $med_name   = $med["med_name"];
+                $med_unit   = $med["med_unit"];
+                $med_id     = $med["record_id"];
+                $med_class  = $med["med_class"];
+                $post_med   = strtolower($map_med_class[$med_class])."_class";
+                $post_doses = strtolower($map_med_class[$med_class])."_doses";
+                $new_doses  = $post[$post_doses];
+                $post_unit  = array_shift($new_doses);
+                if($post[$post_med] != $med_name){
+                    //DRUG WAS CHANGED SO UPDATE IT NOW
+                    $temp   = array(
+                         "record_id"    => $med_id
+                        ,"med_name"     => $post[$post_med]
+                        ,"med_unit"     => $post_unit
+                    );
+                    array_push($med_instance, $temp);
+                }
+
+                $params	= array(
+                    'project_id'	=> $this->meds_project,
+                    'return_format' => 'json',
+                    'records'		=> $med_id,
+                    'fields'        => array("dose_value", "record_id")
+                );
+                $q 					= \REDCap::getData($params);
+                $doses 			    = json_decode($q, true);
+                array_shift($doses);
+
+                foreach($new_doses as $i => $new_dose){
+                    $edit_instance_id   = isset($doses[$i]) ? $doses[$i]["redcap_repeat_instance"] : $edit_instance_id;
+                    $old_dose           = isset($doses[$i]) ? $doses[$i]["dose_value"] : null;
+                    if($old_dose != $new_dose){
+                        $temp               = array(
+                            "record_id"                 => $med_id,
+                            "redcap_repeat_instance" 	=> $edit_instance_id,
+                            "redcap_repeat_instrument" 	=> "doses", 
+                            "dose_value"    => $new_dose
+                        );
+                        array_push($med_instance,$temp);
+                    }
+                    $edit_instance_id++;
+                }
+            }   
+            $this->module->emDebug("Final Updates for tree_id $next_id", $med_instance);
+        }else{
+            $next_med_id  = $this->module->getNextAvailableRecordId($this->meds_project);
+            foreach($post as $key => $doses){
+                if(strpos($key,"_doses") > -1){
+                    $temp           = explode("_",$key);
+                    $med_class      = $map_med_class_r[strtoupper($temp[0])];
+                    $unit           = array_shift($doses);
+                    $meddata        = array(
+                        "record_id" => $next_med_id
+                        ,"tree_id"   => $next_id 
+                        ,"med_class" => $med_class
+                        ,"med_name"  => $post[$temp[0]."_class"]
+                        ,"med_unit"  => $unit
+                    );
+                    $r = \REDCap::saveData($this->meds_project, 'json', json_encode(array($meddata)) );
+            
+                    $field  = "dose_value";
+                    $params	= array(
+                        'project_id'	=> $this->meds_project,
+                        'return_format' => 'json',
+                        'records'		=> $next_med_id,
+                        'fields'        => $field,
+                        'filterLogic'   => "[$field] != ''"
+                    );
+                    $q 					= \REDCap::getData($params);
+                    $records 			= json_decode($q, true);
+                    $last_instance_id 	= count($records);
+                    $last_instance_id++;
+                    foreach($doses as $dose){
+                        $temp               = array(
+                            "record_id"                 => $next_med_id,
+                            "redcap_repeat_instance" 	=> $last_instance_id,
+                            "redcap_repeat_instrument" 	=> "doses", 
+                            "dose_value"    => $dose
+                    );
+                    array_push($med_instance,$temp);
+                    $last_instance_id++;
+                    }
+                    $next_med_id++;
+                }
+            }
+        }
+        $r = \REDCap::saveData($this->meds_project, 'json', json_encode($med_instance) );
+        return $r;
+        // $this->module->emDebug("save_template tree, med, doses", $data, $meddata, $med_instance);
     }
 
     public function getDrugList(){
         return array(
-            "Diuretics"  => array(
-                 array( "name" => "HCTZ" , "unit" => "mg" , "common_dosage" => array(12.5,25,50) , "note" => "most effective when combined with ACEI" )
-                ,array( "name" => "Chlorthalidone" , "unit" => "mg" , "common_dosage" => array(12.5,25) , "note" => "most effective when combined with ACEI" )
-                ,array( "name" => "Indapamide" , "unit" => "mg" , "common_dosage" => array(1.25,2.5) , "note" => "most effective when combined with ACEI" )
-                ,array( "name" => "Triamterene" , "unit" => "mg" , "common_dosage" => array(25,50) , "note" => "most effective when combined with ACEI" )
-                ,array( "name" => "K+ sparing-spironolactone" , "unit" => "mg" , "common_dosage" => array(25,50) , "note" => "most effective when combined with ACEI" )
-                ,array( "name" => "Amiloride" , "unit" => "mg" , "common_dosage" => array(5,10) , "note" => "most effective when combined with ACEI" )
-                ,array( "name" => "Furosemide" , "unit" => "mg" , "common_dosage" => array(20,40,80) , "note" => "most effective when combined with ACEI", "frequency" => 2 )
-                ,array( "name" => "Torsemide" , "unit" => "mg" , "common_dosage" => array(10,20,40) , "note" => "most effective when combined with ACEI" )
+            
+            "ACEI" => array("label" => "ACE Inhibtor" , "drugs" => array(
+                     array( "name" => "Lisinopril" , "unit" => "mg" , "common_dosage" => array(10,20,30,40) , "note" => "" )
+                    ,array( "name" => "Benazaril" , "unit" => "mg" , "common_dosage" => array(5,10,20,40) , "note" => "" )
+                    ,array( "name" => "Fosinopril" , "unit" => "mg" , "common_dosage" => array(10,20,40) , "note" => "" )
+                    ,array( "name" => "Quinapril" , "unit" => "mg" , "common_dosage" => array(5,10,20,40) , "note" => "" )
+                    ,array( "name" => "Ramipril" , "unit" => "mg" , "common_dosage" => array(1.25,2.5,5,10) , "note" => "" )
+                    ,array( "name" => "Trandolapril" , "unit" => "mg" , "common_dosage" => array(1,2,4) , "note" => "" )
+                )
             )
-        ,"ACEI - ACE Inhibtor" => array(
-                 array( "name" => "Lisinopril" , "unit" => "mg" , "common_dosage" => array(10,20,30,40) , "note" => "" )
-                ,array( "name" => "Benazaril" , "unit" => "mg" , "common_dosage" => array(5,10,20,40) , "note" => "" )
-                ,array( "name" => "Fosinopril" , "unit" => "mg" , "common_dosage" => array(10,20,40) , "note" => "" )
-                ,array( "name" => "Quinapril" , "unit" => "mg" , "common_dosage" => array(5,10,20,40) , "note" => "" )
-                ,array( "name" => "Ramipril" , "unit" => "mg" , "common_dosage" => array(1.25,2.5,5,10) , "note" => "" )
-                ,array( "name" => "Trandolapril" , "unit" => "mg" , "common_dosage" => array(1,2,4) , "note" => "" )
+            ,"ARB" => array("label" => "Angiotensin receptor blocker", "drugs" => array(
+                     array( "name" => "Losartan" , "unit" => "mg" , "common_dosage" => array(50,100) , "note" => "" )
+                    ,array( "name" => "Candesartan" , "unit" => "mg" , "common_dosage" => array(8,16,32) , "note" => "may prevent migraine headaches" )
+                    ,array( "name" => "Valsartan" , "unit" => "mg" , "common_dosage" => array(40,80,160,320) , "note" => "" )
+                    ,array( "name" => "Olmesartan" , "unit" => "mg" , "common_dosage" => array(20,40) , "note" => "" )
+                    ,array( "name" => "Telmisartan" , "unit" => "mg" , "common_dosage" => array(20,40,80) , "note" => "" )
+                )
             )
-        ,"ARB (Angiotensin receptor blocker)" => array(
-                 array( "name" => "Candesartan" , "unit" => "mg" , "common_dosage" => array(8,16,32) , "note" => "may prevent migraine headaches" )
-                ,array( "name" => "Valsartan" , "unit" => "mg" , "common_dosage" => array(40,80,160,320) , "note" => "" )
-                ,array( "name" => "Iosartan" , "unit" => "mg" , "common_dosage" => array(50,100) , "note" => "" )
-                ,array( "name" => "Olmesartan" , "unit" => "mg" , "common_dosage" => array(20,40) , "note" => "" )
-                ,array( "name" => "Telmisartan" , "unit" => "mg" , "common_dosage" => array(20,40,80) , "note" => "" )
+            ,"DIURETIC"  => array("label" => "", "drugs" => array(
+                    array( "name" => "HCTZ" , "unit" => "mg" , "common_dosage" => array(12.5,25,50) , "note" => "most effective when combined with ACEI" )
+                   ,array( "name" => "Chlorthalidone" , "unit" => "mg" , "common_dosage" => array(12.5,25) , "note" => "most effective when combined with ACEI" )
+                   ,array( "name" => "Indapamide" , "unit" => "mg" , "common_dosage" => array(1.25,2.5) , "note" => "most effective when combined with ACEI" )
+                   ,array( "name" => "Triamterene" , "unit" => "mg" , "common_dosage" => array(25,50) , "note" => "most effective when combined with ACEI" )
+                   ,array( "name" => "K+ sparing-spironolactone" , "unit" => "mg" , "common_dosage" => array(25,50) , "note" => "most effective when combined with ACEI" )
+                   ,array( "name" => "Amiloride" , "unit" => "mg" , "common_dosage" => array(5,10) , "note" => "most effective when combined with ACEI" )
+                   ,array( "name" => "Furosemide" , "unit" => "mg" , "common_dosage" => array(20,40,80) , "note" => "most effective when combined with ACEI", "frequency" => 2 )
+                   ,array( "name" => "Torsemide" , "unit" => "mg" , "common_dosage" => array(10,20,40) , "note" => "most effective when combined with ACEI" )
+               )
             )
-        ,"Calcium Channel Blockers (CCB)" => array(
-                 array( "name" => "Nifedipine ER" , "unit" => "mg" , "common_dosage" => array(30,60,90) , "note" => "" )
-                ,array( "name" => "Diltiazem ER" , "unit" => "mg" , "common_dosage" => array(180,240,300,360) , "note" => "" )
-                ,array( "name" => "Amlodipine" , "unit" => "mg" , "common_dosage" => array(2.5,5,10) , "note" => "" )
-                ,array( "name" => "Verapamil" , "unit" => "mg" , "common_dosage" => array(80,120) , "note" => "" , "frequency" => 3)
-                ,array( "name" => "Verapamil ER" , "unit" => "mg" , "common_dosage" => array(240,480) , "note" => "" )
+            ,"ARA" => array("label" => "Aldosterone receptor antagonists" , "drugs" => array(
+                    array( "name" => "SPIRNOLACTONE" , "unit" => "mg" , "common_dosage" => array(12.5,25) , "note" => "" )
+                )
             )
-        ,"Beta-Blockers" => array(
-                 array( "name" => "Metroprolol succinate" , "unit" => "mg" , "common_dosage" => array(1,2,3) , "note" => "" )
-                ,array( "name" => "Tartrate" , "unit" => "mg" , "common_dosage" => array(50,100) , "note" => "" , "frequency" => 2)
-                ,array( "name" => "Propranolol" , "unit" => "mg" , "common_dosage" => array(40,80,120) , "note" => "" , "frequency" => 2)
-                ,array( "name" => "Carvedilol" , "unit" => "mg" , "common_dosage" => array(6.25,12.5,25) , "note" => "" , "frequency" => 2)
-                ,array( "name" => "Bisoprolol" , "unit" => "mg" , "common_dosage" => array(5,10) , "note" => "" )
-                ,array( "name" => "Labetalol" , "unit" => "mg" , "common_dosage" => array(100,200,300) , "note" => "" , "frequency" => 2)
-                ,array( "name" => "Nebivolol" , "unit" => "mg" , "common_dosage" => array(5,10) , "note" => "" )
+
+            ,"MRA" => array("label"=> "Mineralocorticoid receptor antagonists" , "drugs" => array(
+                    array( "name" => "EPLERENONE" , "unit" => "Daily" , "common_dosage" => array("1x","2x") , "note" => "" )
+                )
             )
-        ,"Vasodilators" => array(
-                 array( "name" => "Hydralazine" , "unit" => "mg" , "common_dosage" => array(25,50,100) , "note" => "" , "frequency" => 2)
-                ,array( "name" => "Minoxidil" , "unit" => "mg" , "common_dosage" => array(5,10) , "note" => "" )
-                ,array( "name" => "Terazosin" , "unit" => "mg" , "common_dosage" => array(1,2,5) , "note" => "" )
-                ,array( "name" => "Doxazosin" , "unit" => "mg" , "common_dosage" => array(1,2,4) , "note" => "at bedtime" )
+
+            ,"CCB" => array("label"=> "Calcium Channel Blockers" , "drugs" => array(
+                    array( "name" => "Amlodipine" , "unit" => "mg" , "common_dosage" => array(2.5,5,10) , "note" => "" )    
+                    ,array( "name" => "Nifedipine ER" , "unit" => "mg" , "common_dosage" => array(30,60,90) , "note" => "" )
+                    ,array( "name" => "Diltiazem ER" , "unit" => "mg" , "common_dosage" => array(180,240,300,360) , "note" => "" )
+                    ,array( "name" => "Verapamil" , "unit" => "mg" , "common_dosage" => array(80,120) , "note" => "" , "frequency" => 3)
+                    ,array( "name" => "Verapamil ER" , "unit" => "mg" , "common_dosage" => array(240,480) , "note" => "" )
+                )
             )
-        ,"Centrally-acting" => array(
-                 array( "name" => "Clonidine" , "unit" => "mg" , "common_dosage" => array(0.1,0.2) , "note" => "" , "frequency" => 2)
-                ,array( "name" => "Methyldopa" , "unit" => "mg" , "common_dosage" => array(250,500) , "note" => "" , "frequency" => 2)
-                ,array( "name" => "Guanfacine" , "unit" => "mg" , "common_dosage" => array(1,2,3) , "note" => "" )
+            ,"BB" => array("label"=> "Beta-Blockers" , "drugs" => array(
+                     array( "name" => "Bisoprolol" , "unit" => "mg" , "common_dosage" => array(5,10) , "note" => "" )
+
+                    ,array( "name" => "Metroprolol succinate" , "unit" => "mg" , "common_dosage" => array(1,2,3) , "note" => "" )
+                    ,array( "name" => "Tartrate" , "unit" => "mg" , "common_dosage" => array(50,100) , "note" => "" , "frequency" => 2)
+                    ,array( "name" => "Propranolol" , "unit" => "mg" , "common_dosage" => array(40,80,120) , "note" => "" , "frequency" => 2)
+                    ,array( "name" => "Carvedilol" , "unit" => "mg" , "common_dosage" => array(6.25,12.5,25) , "note" => "" , "frequency" => 2)
+                    ,array( "name" => "Labetalol" , "unit" => "mg" , "common_dosage" => array(100,200,300) , "note" => "" , "frequency" => 2)
+                    ,array( "name" => "Nebivolol" , "unit" => "mg" , "common_dosage" => array(5,10) , "note" => "" )
+                )
             )
         );
-
     }
     
-    public function getTemplateDrugs($provider_id, $record_id=null){
-        $filter = "[provider_id] = '$provider_id'";
-        $fields = array("record_id", "provider_id","template_name", "acei_class", "arb_class","diuretic_class", "ccb_class", "bb_class");
+    public function getTemplateDrugs($tree){
+        //matches radio values from redcap
+        $map_med_class = array(
+            1 => "ACEI",
+            2 => "ARB",
+            3 => "DIURETIC",
+            4 => "SPIRNO",
+            5 => "EPLER",
+            6 => "CCB",
+            7 => "BB",
+        );
+        $tree_id = $tree["record_id"];
+        
+        $filter = "[tree_id] = $tree_id";
+        $fields = array("record_id");
 		$params	= array(
-			'project_id'	=> $this->tree_templates_project,
+			'project_id'	=> $this->meds_project,
             'return_format' => 'json',
+            'records'       => array(),
             'fields'        => $fields,
             'filterLogic'   => $filter 
 		);
-		if($record_id){
-			$params['records'] = array($record_id);
-		}
+        $q      = \REDCap::getData($params);
+        $meds   = json_decode($q, true);
+        
+        if(!empty($meds)){
+            $med_ids = array();
+            foreach($meds as $i => $med){
+                $med_ids[] = $med["record_id"];
+            }
 
-        $q          = \REDCap::getData($params);
-        $records    = json_decode($q, true);
-
-        if(!empty($records)){
-            $meds 	    = current($records);
-            
-            //TODO GET THIS FROM RC PROJECT
-            // Eplerenone
-            // Spirnolactone
-            $tplname        = $meds["template_name"];
-            $template_drugs = array(
-                 "ACEI"     => array($meds["acei_class"]." 10mg", $meds["acei_class"]." 20mg", $meds["acei_class"]." 40mg")
-                ,"Diuretic" => array($meds["diuretic_class"]." 12.5mg", $meds["diuretic_class"]." 25mg")
-                ,"Spirno"   => array($meds["spirno_class"]." 12.5mg", $meds["spirno_class"]." 25mg", $meds["epler_class"]." 1 Daily", $meds["epler_class"]." 1 Bidaily")
-                ,"ARB"      => array($meds["arb_class"]." 50mg",$meds["arb_class"]." 100mg")
-                ,"CCB"      => array($meds["ccb_class"]." 2.5mg", $meds["ccb_class"]." 5mg", $meds["ccb_class"]." 10mg")
-                ,"BB"       => array($meds["bb_class"]." 2.5mg",  $meds["bb_class"]." 5mg", $meds["bb_class"]." 7.5mg", $meds["bb_class"]." 10mg")
+            $fields = array("record_id", "med_class", "med_unit", "dose_value");
+            $params	= array(
+                'project_id'	=> $this->meds_project,
+                'return_format' => 'json',
+                'records'       => $med_ids,
+                'fields'        => $fields
             );
+            $q      = \REDCap::getData($params);
+            $doses  = json_decode($q, true);
+
+            $template_drugs = array();
+            $med_unit       = "";
+            $drug_class     = "";
+            $drug_name      = "";
+            foreach($doses as $el){
+                if(empty($el["redcap_repeat_instrument"])){
+                    //top level meds instrument
+                    $drug_class     = $map_med_class[$el["med_class"]];
+                    $med_unit       = $el["med_unit"]; //this will be what it is until the next  
+                    $drug_name      = $tree[strtolower($drug_class)."_class"];
+                    $template_drugs[$drug_class] = array("raw" => array(), "pretty" => array());
+                    continue;
+                }
+                //else repeating dose instrument
+                $current_drug_dose = $drug_name. " ".$el["dose_value"].$med_unit;
+                array_push($template_drugs[$drug_class]["raw"], $el["dose_value"]);
+                array_push($template_drugs[$drug_class]["pretty"], $current_drug_dose);
+            }
         }else {
-            $tplname        = null;
             $template_drugs = array();
         }
-        
-
-        return array("template_name" => $tplname, "template_drugs" => $template_drugs);
+        return $template_drugs;
     }
 
     public function treeLogic($provider_id){
-        $this->module->emDebug("provider id", $provider_id);
-
-
-
         $provider_tree  = $this->getTemplateDrugs($provider_id);
+        
         $logicTree      = array();
 
         $template_drugs = $provider_tree["template_drugs"];

@@ -23,21 +23,6 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		// Other code to run when object is instantiated
 	}
 	
-	// public function redcap_module_system_enable( $version ) {}
-	// public function redcap_module_project_enable( $version, $project_id ) {}
-	// public function redcap_module_save_configuration( $project_id ) {}
-
-	// public function redcap_module_link_check_display($link){
-	// 	//only show the links in the main project?
-
-	// 	// $pid  = $this->getProjectId();
-    //     // $this->emDebug("pid", $pid, $this->patients_project);
-	// 	// if($pid == $this->patients_project){
-	// 	// 	return $link;
-	// 	// }
-	// 	return $link;
-    // }
-	
 	//Load the pertinent EM stuff, as well as the broken off Classes for Dashboard and Tree
 	public function loadEM(){
 		$this->getEnabledProjects();
@@ -49,13 +34,24 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		session_start();
 	}
 
-	//Get All Provider Trees
-	public function getProviderTrees($provider_id){
+	//DEFAULT TREES
+	public function getDefaultTrees($provider_id=0){
 		$this->loadEM();
 
-		$trees = $this->tree->getProviderTrees($provider_id);
-		return $trees;
+		return $this->tree->getDefaultTrees($provider_id);
 	}
+
+	public function getDefaultMeds(){
+		$this->loadEM();
+
+		return $this->tree->getDefaultMeds();
+	}
+
+	 public function getDrugList(){
+		$this->loadEM();
+
+		return $this->tree->getDrugList();
+	 }
 
 	//Get All Patients
 	public function dashBoardInterface($provider_id){
@@ -172,7 +168,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	public function saveTemplate($provider_id, $post){
 		$this->loadEM();
 
-		$this->tree->saveTemplate($provider_id, $post);
+		return $this->tree->saveTemplate($provider_id, $post);
 	}
 
 	public function acceptRecommendation($patient_details){
@@ -602,6 +598,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			);
 			$q 			= \REDCap::getData($params);
 			$records	= json_decode($q, true);
+
+			$this->emDebug("why wont repeating work with meds then? ", $records);
 
 			$systolic 	= array();
 			$diastolic 	= array();

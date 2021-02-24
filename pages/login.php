@@ -17,7 +17,7 @@ if(isset($_POST["action"])){
             if($verify){
                 if(empty($_SESSION["logged_in_user"]["provider_trees"])){
                     $provider_id    = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
-                    $provider_trees = $module->getProviderTrees($provider_id);
+                    $provider_trees = $module->getDefaultTrees($provider_id);
                     $_SESSION["logged_in_user"]["provider_trees"] = $provider_trees;
                 }
                 

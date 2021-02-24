@@ -68,7 +68,7 @@ $page = "login_reg";
                             <button type="submit" id="login_go" class="btn btn-primary btn-block">Reset Password</button>
                         </div>
                         <div class="more_links pb-3">
-                            <a class="help_link" href="<?=$module->getUrl("/pages/help.php", true, true)?>">Need Help?</a>
+                            <a class="help_link" href="<?=$module->getUrl("pages/help.php", true, true)?>">Need Help?</a>
                         </div>
                     </form>
 

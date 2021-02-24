@@ -579,3 +579,12 @@ var delegate = `
         </div>
     </div>
 `;
+
+
+var tree_dosage = `
+    <div class="input-group col-sm-3">
+        <input type="text" class="form-control" name="" value=""/>
+        <div class="input-group-append">
+            <span class="input-group-text add_on"></span>
+        </div>
+    </div>`;
