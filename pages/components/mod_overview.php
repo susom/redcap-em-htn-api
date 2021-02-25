@@ -15,6 +15,13 @@
     }
 </style>
 <div id="overview" class="container mt-5 mb-0">
+    <?php
+        if(!empty($error)){
+            $greenred   = !empty($error["errors"]) ? "danger" : "success";
+            $msg        = !empty($error["errors"]) ? $error["errors"] : $error["success"];
+            echo "<div class='col-sm-12 mt-5 alert alert-".$greenred."'>".$msg."</div>";
+        }
+    ?>
     <div class="row header">
         <h1 class="mt-5 mb-3 mr-3 ml-3 d-inline-block align-middle">Overview</h1>
         <aside class="float-right mt-5">

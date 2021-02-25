@@ -84,7 +84,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	public function registerProvider($post){
 		$this->loadEM();
 
-		$this->dashboard->registerProvider($post);
+		return $this->dashboard->registerProvider($post);
 	}
 
 	//EDIT PRovider
@@ -561,7 +561,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$records			= json_decode($q, true);
 		$patient 			= current($records);
 
-		$this->emDebug("the fucking patient", $patient);
+		$this->emDebug("the  patient", $patient);
 
 		//GET PATIENT TREE CHANGE STEPS TAKEN (not including the first step 0)
 		// $tree_filter  		= "[ptree_log_ts] != ''";

@@ -14,9 +14,19 @@ if(isset($_REQUEST)){
     
     switch($action){
         case "register_provider": 
-            $account_created = $module->registerProvider($_POST); 
-            header("Location: " . $module->getUrl("pages/dashboard.php", true, true));
-            exit;
+            $module->emDebug("delegate passes through here right?", $_POST);
+            $error = $module->registerProvider($_POST); 
+            if(empty($error["errors"])){
+                if(empty($_POST["record_id"])){
+                    $_SESSION["buffer_alert"] = array("errors" => null , "success" => "Account succesfully created.  Please check your email to verify.");
+                }
+                header("Location: " . $module->getUrl("pages/dashboard.php", true, true));
+                exit;
+            }
+
+            $provider = $_POST;
+            $pf     = "provider_profession_" . $provider["provider_profession"];
+            $$pf    = "checked";
         break;
     
         case "verify":
@@ -24,10 +34,11 @@ if(isset($_REQUEST)){
             if(array_key_exists("errors",$verify_account) && empty($verify_account["errors"])){
                 if(array_key_exists("sponsor_id",$verify_account["provider"]) && !empty($verify_account["provider"]["sponsor_id"])){
                     // stay on reg page, need to complete registration
-                    $edit_email   = $verify_account["provider"]["provider_email"];
-                    $edit_id      = $verify_account["provider"]["record_id"];
+                    $_SESSION["buffer_alert"] = array("errors" => null , "success" => "Please complete your account registration.");
+                    $provider     = $verify_account["provider"];
                 }else{
                     $module->loginProvider($verify_account["provider"]["provider_email"],$verify_account["provider"]["provider_pw"], true);
+                    $_SESSION["buffer_alert"] = array("errors" => null , "success" => "Account verified.  Welcome to HeartEx! ");
                     header("Location: " . $module->getUrl("pages/dashboard.php", true, true));
                     exit;
                 }
@@ -38,12 +49,14 @@ if(isset($_REQUEST)){
     }
 }
 
-if(!empty($_SESSION["logged_in_user"])){
-    $module->emDebug("fucker fucker", $_SESSION["logged_in_user"]);
+//FOR PASSING ALERTS AROUND
+if(isset($_SESSION["buffer_alert"])){
+    $error = $_SESSION["buffer_alert"];
+    unset($_SESSION["buffer_alert"]);
 }
 
 $edit_provider = !empty($_SESSION["logged_in_user"]) ? "show_reg" : "hide_reg";
-$edit_delegate = empty($edit_id) ? "show_del" : "hide_del";
+$edit_delegate = empty($provider["record_id"]) ? "show_del" : "hide_del";
 $page = "login_reg";
 ?>
 <!DOCTYPE html>
@@ -68,64 +81,73 @@ $page = "login_reg";
         <div id="registration" class="container mt-5">
             <div class="row">
                 <div class="col-md-6 offset-md-3 mt-5">
+                <?php
+                    if(!empty($error)){
+                        $greenred   = !empty($error["errors"]) ? "danger" : "success";
+                        $msg        = !empty($error["errors"]) ? $error["errors"] : $error["success"];
+                        echo "<div class='col-sm-12 alert alert-".$greenred."'>".$msg."</div>";
+                    }
+                ?>
                     <h1 class="mt-3 mr-3 ml-3 d-inline-block align-middle">Registration</h1>
+                    <p class="text-muted lead small mx-3">Fields marked with * are required</p>
+
                     <form action=<?=$module->getUrl("pages/registration.php", true, true);?> method="POST" class="mr-3 ml-3">
                         <input type="hidden" name="action" value="register_provider"/>
-                        <input type="hidden" name="record_id" value="<?=$edit_id?>"/>
+                        <input type="hidden" name="record_id" value="<?=$provider["record_id"]?>"/>
                         <h4 class="pt-4 pb-1 mb-4">Create an Account</h4>
                         <aside>
                             <div class="form-group">
-                                <label for="exampleInputEmail1">Email address</label>
-                                <input type="email" class="form-control" id="provider_email" name="provider_email" placeholder="johndoe@stanford.edu" aria-describedby="emailHelp" value="<?=$edit_email?>">
+                                <label for="exampleInputEmail1">Email address*</label>
+                                <input type="email" class="form-control" id="provider_email" name="provider_email" placeholder="johndoe@stanford.edu" aria-describedby="emailHelp" value="<?=$provider["provider_email"]?>">
                             </div>
                             <div class="form-group">
-                                <label for="exampleInputPassword1">Password</label>
+                                <label for="exampleInputPassword1">Password*</label>
                                 <input type="password" class="form-control" id="provider_pw" name="provider_pw" placeholder="secret password" >
                             </div>
                             <div class="form-group">
-                                <label for="exampleInputPassword1">Password Confirmation</label>
+                                <label for="exampleInputPassword1">Password Confirmation*</label>
                                 <input type="password" class="form-control" id="provider_pw2" name="provider_pw2"  placeholder="confirm password" >
                             </div>
                             <div class="form-group">
-                                <label for="exampleInputPassword1">Healthcare Professional</label>
+                                <label for="exampleInputPassword1">Healthcare Professional*</label>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="1"  name="provider_profession"  id="defaultCheck1">
+                                    <input class="form-check-input" type="radio" <?=$provider_profession_1?> value="1"  name="provider_profession"  id="defaultCheck1">
                                     <label class="form-check-label" for="defaultCheck1">Physician (MD,DO)</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="2" name="provider_profession" id="defaultCheck2">
+                                    <input class="form-check-input" type="radio" <?=$provider_profession_2?> value="2" name="provider_profession" id="defaultCheck2">
                                     <label class="form-check-label" for="defaultCheck1">Pharmacist</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="3" name="provider_profession" id="defaultCheck3">
+                                    <input class="form-check-input" type="radio" <?=$provider_profession_3?> value="3" name="provider_profession" id="defaultCheck3">
                                     <label class="form-check-label" for="defaultCheck1">Nurse Practitioner (NP)</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="4" name="provider_profession" id="defaultCheck4">
+                                    <input class="form-check-input" type="radio" <?=$provider_profession_4?> value="4" name="provider_profession" id="defaultCheck4">
                                     <label class="form-check-label" for="defaultCheck1">Physician Assistant</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="5" name="provider_profession" id="defaultCheck5">
+                                    <input class="form-check-input" type="radio" <?=$provider_profession_5?> value="5" name="provider_profession" id="defaultCheck5">
                                     <label class="form-check-label" for="defaultCheck1">Registered Nurse (RN)</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="6" name="provider_profession" id="defaultCheck6">
+                                    <input class="form-check-input" type="radio" <?=$provider_profession_6?> value="6" name="provider_profession" id="defaultCheck6">
                                     <label class="form-check-label" for="defaultCheck1">Medical Intern</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="7" name="provider_profession" id="defaultCheck7">
+                                    <input class="form-check-input" type="radio" <?=$provider_profession_7?> value="7" name="provider_profession" id="defaultCheck7">
                                     <label class="form-check-label" for="defaultCheck1">Pharmacy Technician</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="8" name="provider_profession" id="defaultCheck7">
+                                    <input class="form-check-input" type="radio" <?=$provider_profession_8?> value="8" name="provider_profession" id="defaultCheck7">
                                     <label class="form-check-label" for="defaultCheck1">Medical Assistant</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="9" name="provider_profession" id="defaultCheck8">
+                                    <input class="form-check-input" type="radio" <?=$provider_profession_9?> value="9" name="provider_profession" id="defaultCheck8">
                                     <label class="form-check-label" for="defaultCheck1">Researcher</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="10" name="provider_profession" id="defaultCheck9">
+                                    <input class="form-check-input" type="radio" <?=$provider_profession_10?> value="10" name="provider_profession" id="defaultCheck9">
                                     <label class="form-check-label" for="defaultCheck1">Other</label>
                                 </div>
                             </div>
@@ -135,19 +157,15 @@ $page = "login_reg";
                         <aside>
                             <div class="form-group row">
                                 <label for="exampleInputEmail1" class="col-md-6">First Name<span>*</span></label>
-                                <input type="text" class="form-control col-md-5" id="provider_fname" name="provider_fname" placeholder="First Name"  >
+                                <input type="text" class="form-control col-md-5" id="provider_fname" name="provider_fname" placeholder="First Name" value="<?=$provider["provider_fname"]?>" >
                             </div>
                             <div class="form-group row">
                                 <label for="exampleInputEmail1" class="col-md-6">Middle Name</label>
-                                <input type="text" class="form-control col-md-5" id="provider_mname" name="provider_mname"  placeholder="Middle Name" >
+                                <input type="text" class="form-control col-md-5" id="provider_mname" name="provider_mname"  placeholder="Middle Name" value="<?=$provider["provider_mname"]?>" >
                             </div>
                             <div class="form-group row">
                                 <label for="exampleInputEmail1" class="col-md-6">Last Name<span>*</span></label>
-                                <input type="text" class="form-control col-md-5" id="provider_lname" name="provider_lname" placeholder="Last Name" >
-                            </div>
-                            <div class="form-group row">
-                                <label for="exampleInputEmail1" class="col-md-6">Date of Birth<span>*</span></label>
-                                <input type="text" class="form-control col-md-5" id="provider_dob" name="provider_dob" placeholder="MM/DD/YYYY" >
+                                <input type="text" class="form-control col-md-5" id="provider_lname" name="provider_lname" placeholder="Last Name" value="<?=$provider["provider_lname"]?>">
                             </div>
                         </aside>
 
@@ -211,7 +229,7 @@ $page = "login_reg";
                             <h4 class="pt-4 pb-1 mb-4">Delegate</h4>
                             <aside>
                                 <div class="form-group">
-                                    <label for="exampleInputEmail1">I am a delegate for the following people<span>*</span>:</label>
+                                    <label for="exampleInputEmail1">I am a delegate for the following people<span>**</span>:</label>
                                 </div>
                                 <div class="form-group">
                                     <label for="exampleInputEmail1 d-block ">Email Address</label>
@@ -221,7 +239,7 @@ $page = "login_reg";
                                 </div>
 
                                 <div class="form-group" >
-                                    <label for="exampleInputEmail1">Selected Personnel<span>*</span></label>
+                                    <label for="exampleInputEmail1">Selected Personnel<span>**</span></label>
                                 </div>
                                 <div class="delegates">
                                     
@@ -250,9 +268,7 @@ $(document).ready(function(e){
 
         if(new_email != ""){
             $("#exampleInputEmail1").val("");
-            var new_delegate = $(delegate);
-            new_delegate.find("input").val(new_email);
-            $(".delegates").append(new_delegate);
+            newDelegate(new_email);
         }
     });
 
@@ -260,5 +276,34 @@ $(document).ready(function(e){
         e.preventDefault();
         $(this).closest(".form-group").fadeOut("medium");
     });
+
+    
+    let prefill_delegates;
+    <?php
+        if(!empty($provider["delegates"])){
+            echo "prefill_delegates = " . json_encode($provider["delegates"]) . ";";
+        }
+    ?>
+    if(prefill_delegates.length){
+        for(var i in prefill_delegates){
+            newDelegate(prefill_delegates[i]);
+        }
+    }
+
+    function newDelegate(new_email){
+        var new_delegate = $(delegate);
+        new_delegate.find("input").val(new_email);
+        $(".delegates").append(new_delegate);
+    }
+
+    <?php
+        if(!empty($error)){
+    ?>
+        setTimeout(function(){
+            $(".alert").slideUp("medium");
+        },4000);
+    <?php    
+        }
+    ?>
 });
 </script>

@@ -263,7 +263,7 @@ class HTNdashboard {
             $pw_hash = $pw_input;
         }
 
-        $filter     = "[provider_email] = '" . $salt . "'"; //TODO CHHECKK AGAINST PW TOO HAHAHA
+        $filter     = "[provider_email] = '" . $salt . "' && [verification_ts] <> ''"; //TODO CHHECKK AGAINST PW TOO HAHAHA
         $fields     = array("record_id", "provider_email", "provider_pw", "provider_fname", "provider_mname", "provider_lname", "sponsor_id");
         $params     = array(
             'project_id'    => $this->providers_project,
@@ -294,7 +294,14 @@ class HTNdashboard {
     }
 
     public function registerProvider($post){
-        $this->module->emDebug("register post", $post);
+        $required = array(
+             "provider_email"
+            ,"provider_pw"
+            ,"provider_pw2"
+            ,"provider_fname"
+            ,"provider_lname"
+            ,"provider_profession"
+        );
 
         $_POST          = $post;
         $dict           = $this->getProjectDictionary($this->providers_project);
@@ -303,23 +310,21 @@ class HTNdashboard {
         $provider_email = in_array("provider_email", $dict_keys) ? strtolower(trim(filter_var($_POST["provider_email"], FILTER_SANITIZE_STRING))) : null;
         $provider_pw    = in_array("provider_pw", $dict_keys) ? strtolower(trim(filter_var($_POST["provider_pw"], FILTER_SANITIZE_STRING))) : null;
         $provider_pw2   = in_array("provider_pw", $dict_keys) ? strtolower(trim(filter_var($_POST["provider_pw2"], FILTER_SANITIZE_STRING))) : null;
-
         $edit_id        = empty($_POST["record_id"]) ? null : $_POST["record_id"];
 
-        $errors         = array(); 
-        if(!$provider_email || !$provider_pw || $provider_pw != $provider_pw2){
-            if( !$provider_email ){
-                $errors[] = "Missing Email";
+        $error_str  = "";
+        foreach($required as $req_var){
+            if(empty($_POST[$req_var])){
+                $error_str .= "<li>$req_var is required.</li>";
             }
-            if( !$provider_pw || !$provider_pw2 ){
-                $errors[] = "Missing Password Input";
-            }
-            if( $provider_pw != $provider_pw2 ){
-                $errors[] = "Mismatched Password Inputs";
-            }
-            return array("errors" => $errors);
         }
-        
+        if( $provider_pw != $provider_pw2 ){
+            $error_str .= "<li>passwords dont match.</li>";
+        }
+        if($error_str !== ""){
+            return array("errors" => "<ul>$error_str</ul>");
+        }
+
         if($edit_id){
             $results = null;
         }else{
@@ -334,6 +339,7 @@ class HTNdashboard {
             $raw        = \REDCap::getData($params);
             $results    = json_decode($raw,1);
         }
+        
         if(!empty($results)){
             $errors[] = "Username/Email already in system";
             return array("errors" => $errors);
@@ -396,7 +402,6 @@ class HTNdashboard {
             }
 
             $r  = \REDCap::saveData($this->providers_project, 'json', json_encode($new_account) );
-
             if(empty($edit_id)){
                 $this->module->emDebug("save deligates", $instance_data);
                 $i  = \REDCap::saveData($this->providers_project, 'json', json_encode($instance_data) );
@@ -405,6 +410,7 @@ class HTNdashboard {
                 $this->module->emDebug("send new verification emails", $new_account);
                 $this->newAccountEmail($new_account);
             } else {
+                $_SESSION["buffer_alert"] = array("errors" => null , "success" => "Account verified.  Welcome to HeartEx! ");
                 $this->loginProvider($data["provider_email"], $data["provider_pw"], true);
             }
             return $r;
@@ -528,7 +534,7 @@ class HTNdashboard {
         foreach($providers as $new_account){
             $is_delegate    = array_key_exists("sponsor_id",$new_account);
 
-            $verify_link        = $this->module("pages/registration.php", true, true)."&email=".$new_account["provider_email"]."&verify=".$new_account["verification_token"];
+            $verify_link        = $this->module->getUrl("pages/registration.php", true, true)."&email=".$new_account["provider_email"]."&verify=".$new_account["verification_token"];
             $msg_arr            = array();
             $welcome        = $is_delegate ? "To whom it may concern," : "Dear " . $new_account["provider_fname"] .",";
             $msg_arr[]      = "<p>" . $welcome . "</p>";

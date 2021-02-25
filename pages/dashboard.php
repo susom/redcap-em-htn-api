@@ -4,6 +4,12 @@ namespace Stanford\HTNapi;
 
 include("components/gl_checklogin.php");
 
+//FOR PASSING ALERTS AROUND
+if(isset($_SESSION["buffer_alert"])){
+    $error = $_SESSION["buffer_alert"];
+    unset($_SESSION["buffer_alert"]);
+}
+
 // $module->evaluateOmronBPavg(1);
 $provider_id    = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"]; 
 $page           = "dashboard";
@@ -20,7 +26,6 @@ $home_active    = "active";
 
     <!-- Begin page content -->
     <main role="main" class="flex-shrink-0">
-        
         <?php include("components/mod_overview.php")?>
 
         <?php //include("components/mod_alerts.php")?>
@@ -56,6 +61,16 @@ $(document).ready(function(){
         ,"edit_patient" : '<?=$module->getUrl('pages/add_patient.php', true, true)?>'
         
     };
+
+    <?php
+        if(!empty($error)){
+    ?>
+        setTimeout(function(){
+            $(".alert").slideUp("medium");
+        },4000);
+    <?php    
+        }
+    ?>
 
     var dash = new dashboard(<?=$provider_id?>,urls);
 });

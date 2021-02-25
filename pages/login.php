@@ -17,6 +17,7 @@ if(isset($_POST["action"])){
             if($verify){
                 if(empty($_SESSION["logged_in_user"]["provider_trees"])){
                     $provider_id    = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
+                    
                     $provider_trees = $module->getDefaultTrees($provider_id);
                     $_SESSION["logged_in_user"]["provider_trees"] = $provider_trees;
                 }
@@ -24,14 +25,17 @@ if(isset($_POST["action"])){
                 header("Location: " . $module->getUrl("pages/dashboard.php", true, true));
                 exit;
             }else{
-                $module->emDebug("not verified!");
-                $errors[]   = "Email / Password combination not found";
+                $_SESSION["buffer_alert"]  = array("errors" => "Email / Password combination not found", "success" => null);
             }   
         break;
     }
 }
 
-
+//FOR PASSING ALERTS AROUND
+if(isset($_SESSION["buffer_alert"])){
+    $error = $_SESSION["buffer_alert"];
+    unset($_SESSION["buffer_alert"]);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-100">
@@ -49,15 +53,15 @@ $page = "login_reg";
     <!-- Begin page content -->
     <main role="main" class="flex-shrink-0">
         <div id="login" class="container mt-5">
-            <?php
-                if(!empty($errors)){
-                    echo '<div class="mt-4 row">
-                            <div class="col-md-6 offset-md-3 alert alert-danger">'.$errors[0].'</div>
-                        </div>';
-                }
-            ?>
-
             <div class="row">
+                <?php
+                    if(!empty($error)){
+                        $greenred   = !empty($error["errors"]) ? "danger" : "success";
+                        $msg        = !empty($error["errors"]) ? $error["errors"] : $error["success"];
+                        echo "<div class='offset-sm-3 col-sm-6 alert alert-".$greenred."'>".$msg."</div>";
+                    }
+                ?>
+
                 <div class="col-md-6 offset-md-3 bg-light border rounded mt-5">
                     <h1 class="mt-3 mb-3 mr-3 ml-3 d-inline-block align-middle">Log In</h1>
                     
@@ -135,5 +139,15 @@ $(document).ready(function(){
         localStorage.clear();
         return;
     });
+
+    <?php
+        if(!empty($error)){
+    ?>
+        setTimeout(function(){
+            $(".alert").slideUp("medium");
+        },4000);
+    <?php    
+        }
+    ?>
 });
 </script>
