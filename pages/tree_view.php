@@ -400,6 +400,7 @@ $(document).ready(function(){
                     $("select[name='"+i + "'] option[value='"+raw[i]+"']").attr("selected",true);
                     $("select[name='"+i + "'] option[value='"+raw[i]+"']").data("dosages", doses[med_class]["raw"]);
                     displayDosageSlots($("select[name='"+i + "'] option[value='"+raw[i]+"']"));
+                    console.log("what the fuck is up with spirono", i, raw[i], raw);
                 }
             }
 
@@ -420,16 +421,6 @@ $(document).ready(function(){
         $(".drugs").slideDown("medium");
     });
 
-    <?php
-        if(!empty($error)){
-    ?>
-        setTimeout(function(){
-            $(".alert").slideUp("medium");
-        },5000);
-    <?php    
-        }
-    ?>
-
     function displayDosageSlots(el){
         let dosages     = el.data("dosages");
         let unit        = el.data("unit");
@@ -438,6 +429,9 @@ $(document).ready(function(){
         el.parent().next().empty();
         let unitinp = $("<input>").prop("type","hidden").prop("name",med_class).val(unit);
         el.parent().next().append(unitinp);
+
+
+        console.log("what the fuck up with spirono", med_class, unit, dosages);
         for(let j in dosages){
             let dose    = dosages[j];
             let inp     = $(tree_dosage);
@@ -461,7 +455,15 @@ $(document).ready(function(){
         }
     }
 
-
+    <?php
+        if(!empty($error)){
+    ?>
+        setTimeout(function(){
+            $(".alert").slideUp("medium");
+        },5000);
+    <?php    
+        }
+    ?>
 
     // BUILD TREE SHOULD HAVE EVERY PERMUTATION + NEXT STEP + SIDE-EFFECT BRANCHES
 

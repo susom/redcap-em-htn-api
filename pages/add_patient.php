@@ -250,7 +250,7 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                         
                                         <figcaption class="my-4 col-sm-10 offset-sm-1 row">
                                             <h3 class="col-sm-12">Patient Contact Details</h3>
-                                            <p class="col-sm-12 text-muted lead small">The rest of the Patient's baseline data will be pulled from STARR/Epic databses based on the patient's MRN.  All required fields are marked with a *</p>
+                                            <p class="col-sm-12 text-muted lead small">The rest of the Patient's baseline data will be pulled from STARR/Epic databses based on the patient's MRN. <br> All required fields are marked with a *</p>
 
                                             <div class="form-group col-sm-4">
                                                 <label for="patient_fname"><b>Patient First Name*</b></label>

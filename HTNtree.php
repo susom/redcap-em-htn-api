@@ -241,6 +241,7 @@ class HTNtree  {
 
         $labeled_trees = array();
         foreach($trees as $tree){
+            $this->module->emDebug("what the fuck ", $tree);
             $def_tree = $this->getTemplateDrugs($tree);
             if(!empty($def_tree)){
                 $tree_id = $tree["record_id"];
