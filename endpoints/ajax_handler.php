@@ -101,7 +101,7 @@ if(!empty($_POST)){
             $provider_id                = $_POST["record_id"];
             
             //refresh dashboard INTF
-            $result         = $module->dashBoardInterface($provider_id );
+            $result         = $module->dashBoardInterface($provider_id);
         break;
     }
 

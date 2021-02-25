@@ -270,8 +270,7 @@ $page_hdr       = $is_edit ? "Interactive Tree View" : "Customize Prescription T
                             </div>
 
                             <div class="drugs row p-4">
-                                <p class="text-muted lead small col-sm-12">You may modify the medications or doses and "save as" a custom labeled Prescription Tree for your patients.</p> 
-                                
+                                <p class="text-muted lead small col-sm-12">You may modify the medications or doses and "save as" a custom labeled Prescription Tree for your patients.</p>           
                                 <?php
                                     foreach($druglist as $med_class => $drugs){
                                         $option_str = "";
@@ -430,8 +429,6 @@ $(document).ready(function(){
         let unitinp = $("<input>").prop("type","hidden").prop("name",med_class).val(unit);
         el.parent().next().append(unitinp);
 
-
-        console.log("what the fuck up with spirono", med_class, unit, dosages);
         for(let j in dosages){
             let dose    = dosages[j];
             let inp     = $(tree_dosage);
@@ -477,7 +474,11 @@ $(document).ready(function(){
 
     var patient     = <?= json_encode($patient) ;?>;
     var raw_json    = <?= json_encode($tree_logic) ;?>;
-    var tree        = new treeLogic(raw_json, patient, urls);
-    tree.startAttachTree();
+    if(patient){
+        var tree = new treeLogic(raw_json, patient, urls);
+        tree.startAttachTree();
+    }else{
+        console.log("did i make it work by accident?");
+    }
 });
 </script>

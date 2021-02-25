@@ -59,10 +59,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 		$intf = $this->dashboard->getAllPatients($provider_id);
 
-		$intf["ptree"] = array();
-		$this->emDebug("its this fucking thing right?", $intf);
-
-
+		$intf["ptree"] = $this->treeLogic($provider_id);
 		return $intf;
 	}
 

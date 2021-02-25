@@ -3,11 +3,13 @@ function treeLogic(rawJson, patient, urls){
         this[i] = urls[i];
     }
 
-    console.log(rawJson, patient);
-    this.raw            = rawJson["logicTree"];
-    this.tplname        = rawJson["template_name"];
+    //TODO FUCK ME, MUST CHOSE WHICH ?
     this.patient        = patient;
-    
+    console.log("use the patients tree to pick the logic tree shit", rawJson[this.patient["current_treatment_plan_id"]]);
+
+    this.raw            = rawJson[this.patient["current_treatment_plan_id"]]["logicTree"];
+    this.tplname        = rawJson[this.patient["current_treatment_plan_id"]]["label"];
+ 
     this.steps          = {};
     this.step_order     = [0]; //gets set on init? only update when "makeCurrent()"
     // this.display_order  = [0]; //gets set on init. update when "makeCurrent" with up to 3 previews. 
@@ -29,6 +31,8 @@ function treeLogic(rawJson, patient, urls){
 
     // one time
     this.prepSteps();
+
+    
 }
 treeLogic.prototype.prepSteps = function(){
     for(var i in this.raw){
@@ -38,9 +42,11 @@ treeLogic.prototype.prepSteps = function(){
     return;
 }
 treeLogic.prototype.startAttachTree = function(){
-    if(!this.raw.length){
+
+    if(!this.raw){
         return;
     }
+
     if(this.tplname != ""){
         $(".template_name").text(this.patient["patient_fname"]+ " " + this.patient["patient_mname"] + " " + this.patient["patient_lname"]);
 

@@ -241,7 +241,6 @@ class HTNtree  {
 
         $labeled_trees = array();
         foreach($trees as $tree){
-            $this->module->emDebug("what the fuck ", $tree);
             $def_tree = $this->getTemplateDrugs($tree);
             if(!empty($def_tree)){
                 $tree_id = $tree["record_id"];
@@ -521,1247 +520,1265 @@ class HTNtree  {
 
     public function treeLogic($provider_id){
         //TODO FIX THIS FOR NEW WORKFLOW
-        $provider_tree  = $this->getTemplateDrugs($provider_id);
+        $default_trees      = $this->getDefaultTrees();
+        $provider_trees     = $this->getDefaultTrees($provider_id);
+        $default_trees      = array_merge($default_trees,$provider_trees);
         
-        $logicTree      = array();
+        $provider_logic_trees = array();
+        foreach($default_trees as $tree){
+            $tree_id            = $tree["tree_meta"]["record_id"];
+            $template_name      = $tree["tree_meta"]["template_name"];
+            $template_drugs     = $tree["doses"];
 
-        $template_drugs = $provider_tree["template_drugs"];
-        if(!empty($template_drugs)){
-            $logicTree[]    = array(
-                "step_id"  => 0
-                ,"drugs"    => array($template_drugs["ACEI"][0], $template_drugs["Diuretic"][0])
-                ,"bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 1)
-                ,"note"     => ""
-                ,"side_effects"     => array(
-                    "cough"             => 13,
-                    "elevated_cr"       => 28,
-                    "hyperkalemia"      => 28, 
-                    "slow_hr"           => null, 
-                    "angioedema"        => 41,
-                    "breast_discomfort" => null,
-                    "rash_other"        => "Stop, call doctor",
-                    "asthma"            => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 1,
-                "drugs" => array($template_drugs["ACEI"][1],$template_drugs["Diuretic"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 2),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => 14,
-                    "elevated_cr" => 25,
-                    "hyperkalemia" => 25, 
-                    "slow_hr" => null, 
-                    "angioedema" => 41,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            ); 
-            $logicTree[] = array(
-                "step_id" => 2,
-                "drugs" => array($template_drugs["ACEI"][1],$template_drugs["Diuretic"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 3),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => 15,
-                    "elevated_cr" => 25,
-                    "hyperkalemia" => 25, 
-                    "slow_hr" => null, 
-                    "angioedema" => 41,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 3,
-                "drugs" => array($template_drugs["ACEI"][2],$template_drugs["Diuretic"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 4),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => 15,
-                    "elevated_cr" => 64,
-                    "hyperkalemia" => 25, 
-                    "slow_hr" => null, 
-                    "angioedema" => 41,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 4,
-                "drugs" => array($template_drugs["ACEI"][2],$template_drugs["Diuretic"][1], $template_drugs["CCB"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 5),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => 16,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => array("Uncontrolled, K < 4.5" => 69, "Uncontrolled, K > 4.5" => 65),
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 5,
-                "drugs" => array($template_drugs["ACEI"][2],$template_drugs["Diuretic"][1], $template_drugs["CCB"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 6),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => 17,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => array("Uncontrolled, K < 4.5" => 69, "Uncontrolled, K > 4.5" => 65),
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 6,
-                "drugs" => array($template_drugs["ACEI"][2],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled, K < 4.5" => 7, "Uncontrolled, K > 4.5" => 9),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => 18,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => array("Uncontrolled, K < 4.5" => 69, "Uncontrolled, K > 4.5" => 65),
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 7,
-                "drugs" => array($template_drugs["ACEI"][2],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2], $template_drugs["Spirno"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 8),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => 19,
-                    "elevated_cr" => "Stop, Cr elevatedor hyperkalemia present",
-                    "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present", 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => 56,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 8,
-                "drugs" => array($template_drugs["ACEI"][2],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2], $template_drugs["Spirno"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => 20,
-                    "elevated_cr" => 7,
-                    "hyperkalemia" => 7, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => 56,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 9,
-                "drugs" => array($template_drugs["ACEI"][2],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2], $template_drugs["BB"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 10),
-                "note" => "Before adding/increasing " . $template_drugs["BB"][0] . ", confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => 21,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => "Stop, hyperkalemia present", 
-                    "slow_hr" => "Stop, call doctor", 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 10,
-                "drugs" => array($template_drugs["ACEI"][2],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2], $template_drugs["BB"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 11),
-                "note" => "Before adding/increasing " . $template_drugs["BB"][1] . ", confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => 22,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => 9, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 11,
-                "drugs" => array($template_drugs["ACEI"][2],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2], $template_drugs["BB"][2] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 12),
-                "note" => "Before adding/increasing " . $template_drugs["BB"][2] . ", confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => 23,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => 10, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 12,
-                "drugs" => array($template_drugs["ACEI"][2], $template_drugs["Diuretic"][1], $template_drugs["CCB"][2], $template_drugs["BB"][3] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "Before adding/increasing " . $template_drugs["BB"][3] . ", confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => 24,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => 11, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] =array(
-                "step_id" => 13,
-                "drugs" => array($template_drugs["ARB"][0],$template_drugs["Diuretic"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 14),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 28,
-                    "hyperkalemia" => 28, 
-                    "slow_hr" => null, 
-                    "angioedema" => 41,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 14,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 15),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 31,
-                    "hyperkalemia" => 31, 
-                    "slow_hr" => null, 
-                    "angioedema" => 41,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 15,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 16),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 31,
-                    "hyperkalemia" => 31, 
-                    "slow_hr" => null, 
-                    "angioedema" => 41,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 16,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1], $template_drugs["CCB"][0]  ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 17),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => array("Uncontrolled, K < 4.5" => 71, "Uncontrolled, K > 4.5" => 73),
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 17,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1], $template_drugs["CCB"][1]  ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 18),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => array("Uncontrolled, K < 4.5" => 71, "Uncontrolled, K > 4.5" => 73),
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 18,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled, K < 4.5" => 19, "Uncontrolled, K > 4.5" => 21),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => array("Uncontrolled, K < 4.5" => 71, "Uncontrolled, K > 4.5" => 73),
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 19,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2], $template_drugs["Spirno"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 20),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => "Stop, Cr elevatedor hyperkalemia present",
-                    "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present", 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => 58,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 20,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2], $template_drugs["Spirno"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 19,
-                    "hyperkalemia" => 19, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => 58,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 21,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2], $template_drugs["BB"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 22),
-                "note" => "Before adding/increasing " . $template_drugs["BB"][0] . ", confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => "Stop, hyperkalemia present", 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 22,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2], $template_drugs["BB"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 23),
-                "note" => "Before adding/increasing " . $template_drugs["BB"][1] . ", confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => 21, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 23,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2], $template_drugs["BB"][2] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 24),
-                "note" => "Before adding/increasing " . $template_drugs["BB"][2] . ", confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => 22, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 24,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2], $template_drugs["BB"][3] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "Before adding/increasing " . $template_drugs["BB"][3] . ", confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => 23, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 25,
-                "drugs" => array($template_drugs["ACEI"][0], $template_drugs["Diuretic"][0], $template_drugs["CCB"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 26),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 28,
-                    "hyperkalemia" => 28, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 26,
-                "drugs" => array($template_drugs["ACEI"][0], $template_drugs["Diuretic"][0], $template_drugs["CCB"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 27),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 29,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 27,
-                "drugs" => array($template_drugs["ACEI"][0], $template_drugs["Diuretic"][0], $template_drugs["CCB"][2] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 28),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 28,
-                "drugs" => array($template_drugs["Diuretic"][0], $template_drugs["CCB"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 29),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 38,
-                    "hyperkalemia" => "hyperkalemia still present",
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 29,
-                "drugs" => array($template_drugs["Diuretic"][0], $template_drugs["CCB"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 30),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 28,
-                    "hyperkalemia" => 28, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 30,
-                "drugs" => array($template_drugs["Diuretic"][0], $template_drugs["CCB"][2] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 28,
-                    "hyperkalemia" => 28, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 31,
-                "drugs" => array($template_drugs["ARB"][0],$template_drugs["Diuretic"][0], $template_drugs["CCB"][0]  ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 32),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 28,
-                    "hyperkalemia" => 28, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 32,
-                "drugs" => array($template_drugs["ARB"][0],$template_drugs["Diuretic"][0], $template_drugs["CCB"][1]  ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 33),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 29,
-                    "hyperkalemia" => 29, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 33,
-                "drugs" => array($template_drugs["ARB"][0],$template_drugs["Diuretic"][0], $template_drugs["CCB"][2]  ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 30,
-                    "hyperkalemia" => 30, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 34,
-                "drugs" => array($template_drugs["Diuretic"][1], $template_drugs["CCB"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 35),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 38,
-                    "hyperkalemia" => 38, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 35,
-                "drugs" => array($template_drugs["Diuretic"][2], $template_drugs["CCB"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 36),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 38,
-                    "hyperkalemia" => 38, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 36,
-                "drugs" => array($template_drugs["Diuretic"][2], $template_drugs["CCB"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 37),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 39,
-                    "hyperkalemia" => "hyperkalemia still present", 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 37,
-                "drugs" => array($template_drugs["Diuretic"][2], $template_drugs["CCB"][2] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled, K < 4.5" => 50, "Uncontrolled, K > 4.5" => 52),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 40,
-                    "hyperkalemia" => "hyperkalemia still present", 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 38,
-                "drugs" => array($template_drugs["CCB"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 39),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => "Cr still elevated",
-                    "hyperkalemia" => "hyperkalemia still present", 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 39,
-                "drugs" => array($template_drugs["CCB"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 40),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => "Cr still elevated",
-                    "hyperkalemia" => "hyperkalemia still present", 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 40,
-                "drugs" => array($template_drugs["CCB"][2] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled, K < 4.5" => 44, "Uncontrolled, K > 4.5" => 46),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => "Cr still elevated",
-                    "hyperkalemia" => "hyperkalemia still present", 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 41,
-                "drugs" => array($template_drugs["Diuretic"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 42),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 38,
-                    "hyperkalemia" => 34, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 42,
-                "drugs" => array($template_drugs["Diuretic"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 43),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 38,
-                    "hyperkalemia" => 34, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 43,
-                "drugs" => array($template_drugs["Diuretic"][2] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 35),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 38,
-                    "hyperkalemia" => 34, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 44,
-                "drugs" => array($template_drugs["CCB"][2],  $template_drugs["Spirno"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 45),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => "Stop, Cr elevatedor hyperkalemia present",
-                    "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present", 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => "change to Eplerenone",
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 45,
-                "drugs" => array($template_drugs["CCB"][2], $template_drugs["Spirno"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 44,
-                    "hyperkalemia" => 44, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => "change to Eplerenone",
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 46,
-                "drugs" => array($template_drugs["CCB"][2],  $template_drugs["BB"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 47),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => "Cr still elevated",
-                    "hyperkalemia" => "Stop, hyperkalemia present", 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 47,
-                "drugs" => array($template_drugs["CCB"][2],  $template_drugs["BB"][1]  ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 48),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => "Cr still elevated",
-                    "hyperkalemia" => 46, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 48,
-                "drugs" => array($template_drugs["CCB"][2],  $template_drugs["BB"][2] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 49),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => "Cr still elevated",
-                    "hyperkalemia" => 47, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 49,
-                "drugs" => array($template_drugs["CCB"][2],  $template_drugs["BB"][3] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => "Cr still elevated",
-                    "hyperkalemia" => 48, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 50,
-                "drugs" => array($template_drugs["Diuretic"][2], $template_drugs["CCB"][2] , $template_drugs["Spirno"][0]),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 51),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => "Stop, Cr elevatedor hyperkalemia present",
-                    "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present", 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => 62,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 51,
-                "drugs" => array($template_drugs["Diuretic"][2], $template_drugs["CCB"][2], $template_drugs["Spirno"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 50,
-                    "hyperkalemia" => 50, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => 62,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 52,
-                "drugs" => array($template_drugs["Diuretic"][2], $template_drugs["CCB"][2], $template_drugs["BB"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 53),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 40,
-                    "hyperkalemia" => "Stop, hyperkalemia present", 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 53,
-                "drugs" => array($template_drugs["Diuretic"][2], $template_drugs["CCB"][2], $template_drugs["BB"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 54),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 40,
-                    "hyperkalemia" => 52, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 54,
-                "drugs" => array($template_drugs["Diuretic"][2], $template_drugs["CCB"][2], $template_drugs["BB"][2] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 55),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 40,
-                    "hyperkalemia" => 53, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 55,
-                "drugs" => array($template_drugs["Diuretic"][2], $template_drugs["CCB"][2], $template_drugs["BB"][3] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 40,
-                    "hyperkalemia" => 54, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 56,
-                "drugs" => array($template_drugs["ACEI"][2],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2], $template_drugs["Spirno"][2] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 57),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null,
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => "Stop, Call Doctor",
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 57,
-                "drugs" => array($template_drugs["ACEI"][2],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2], $template_drugs["Spirno"][3] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null,
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => "Stop, Call Doctor",
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 58,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2], $template_drugs["Spirno"][2] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 58),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null,
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => "Stop, Call Doctor",
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 59,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1], $template_drugs["CCB"][2], $template_drugs["Spirno"][3] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null,
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => "Stop, Call Doctor",
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 60,
-                "drugs" => array($template_drugs["CCB"][2],  $template_drugs["Spirno"][2] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 61),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null,
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => "Stop, Call Doctor",
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 61,
-                "drugs" => array($template_drugs["CCB"][2],  $template_drugs["Spirno"][3] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null,
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => "Stop, Call Doctor",
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 62,
-                "drugs" => array($template_drugs["Diuretic"][2], $template_drugs["CCB"][2] , $template_drugs["Spirno"][2]),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 63),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => "Stop, Call Doctor",
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 63,
-                "drugs" => array($template_drugs["Diuretic"][2], $template_drugs["CCB"][2] , $template_drugs["Spirno"][3]),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => "Stop, Call Doctor",
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 64,
-                "drugs" => array($template_drugs["ACEI"][1], $template_drugs["Diuretic"][1], $template_drugs["CCB"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 26),
-                "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => 25,
-                    "hyperkalemia" => 25, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 65,
-                "drugs" => array($template_drugs["ACEI"][2],$template_drugs["Diuretic"][1], $template_drugs["BB"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 66),
-                "note" => "Before adding/increasing " . $template_drugs["BB"][0] . ", confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => "Stop, Call Doctor", 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 66,
-                "drugs" => array($template_drugs["ACEI"][2],$template_drugs["Diuretic"][1], $template_drugs["BB"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 67),
-                "note" => "Before adding/increasing " . $template_drugs["BB"][1] . ", confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => 65, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 67,
-                "drugs" => array($template_drugs["ACEI"][2],$template_drugs["Diuretic"][1], $template_drugs["BB"][2] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 68),
-                "note" => "Before adding/increasing " . $template_drugs["BB"][2] . ", confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => 66, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 68,
-                "drugs" => array($template_drugs["ACEI"][2], $template_drugs["Diuretic"][1], $template_drugs["BB"][3] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "Before adding/increasing " . $template_drugs["BB"][3] . ", confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => 67, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 69,
-                "drugs" => array($template_drugs["ACEI"][2],$template_drugs["Diuretic"][1], $template_drugs["Spirno"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 70),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => 56,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 70,
-                "drugs" => array($template_drugs["ACEI"][2],$template_drugs["Diuretic"][1], $template_drugs["Spirno"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => 56,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 71,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1], $template_drugs["Spirno"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 72),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => 58,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 72,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1], $template_drugs["Spirno"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => null, 
-                    "angioedema" => null,
-                    "breast_discomfort" => 58,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => null
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 73,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1],  $template_drugs["BB"][0] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 74),
-                "note" => "Before adding/increasing " . $template_drugs["BB"][0] . ", confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => "Stop, Call Doctor", 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 74,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1], $template_drugs["BB"][1] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 75),
-                "note" => "Before adding/increasing " . $template_drugs["BB"][1] . ", confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => 73, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 75,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1], $template_drugs["BB"][2] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 76),
-                "note" => "Before adding/increasing " . $template_drugs["BB"][2] . ", confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => 74, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
-            $logicTree[] = array(
-                "step_id" => 76,
-                "drugs" => array($template_drugs["ARB"][1],$template_drugs["Diuretic"][1], $template_drugs["BB"][3] ),
-                "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-                "note" => "Before adding/increasing " . $template_drugs["BB"][3] . ", confirm HR > 55bpm",
-                "side_effects" => array(
-                    "cough" => null,
-                    "elevated_cr" => null,
-                    "hyperkalemia" => null, 
-                    "slow_hr" => 75, 
-                    "angioedema" => null,
-                    "breast_discomfort" => null,
-                    "rash_other" => "Stop, call doctor",
-                    "asthma" => "Stop, call doctor"
-                )
-            );
+            $logicTree      = array();
+            if(!empty($template_drugs)){
+                $logicTree = $this->defaultLogicTree1($template_drugs);
+            }
+
+            $tree["logicTree"]  = $logicTree;
+            $provider_logic_trees[$tree_id] = $tree;
         }
+        return $provider_logic_trees;
+    }
 
-        return array( "template_name" => $provider_tree["template_name"] , "logicTree" => $logicTree);
+    public function defaultLogicTree1($template_drugs){
+        // $this->module->emDebug("memory leak? dyslexia? what the fuck?, AH more dose expected than there are... did i lose some?", $template_drugs);
+        //TODO THIS TREE IS EXPECTING MORE DOSES THAN ARE SET... DID I DROP A FEW DOSAGES?
+
+        $logicTree[]    = array(
+            "step_id"  => 0
+            ,"drugs"    => array($template_drugs["ACEI"]["pretty"][0], $template_drugs["DIURETIC"]["pretty"][0])
+            ,"bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 1)
+            ,"note"     => ""
+            ,"side_effects"     => array(
+                "cough"             => 13,
+                "elevated_cr"       => 28,
+                "hyperkalemia"      => 28, 
+                "slow_hr"           => null, 
+                "angioedema"        => 41,
+                "breast_discomfort" => null,
+                "rash_other"        => "Stop, call doctor",
+                "asthma"            => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 1,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 2),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => 14,
+                "elevated_cr" => 25,
+                "hyperkalemia" => 25, 
+                "slow_hr" => null, 
+                "angioedema" => 41,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        ); 
+        $logicTree[] = array(
+            "step_id" => 2,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 3),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => 15,
+                "elevated_cr" => 25,
+                "hyperkalemia" => 25, 
+                "slow_hr" => null, 
+                "angioedema" => 41,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 3,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 4),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => 15,
+                "elevated_cr" => 64,
+                "hyperkalemia" => 25, 
+                "slow_hr" => null, 
+                "angioedema" => 41,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 4,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 5),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => 16,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => array("Uncontrolled, K < 4.5" => 69, "Uncontrolled, K > 4.5" => 65),
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 5,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 6),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => 17,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => array("Uncontrolled, K < 4.5" => 69, "Uncontrolled, K > 4.5" => 65),
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 6,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled, K < 4.5" => 7, "Uncontrolled, K > 4.5" => 9),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => 18,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => array("Uncontrolled, K < 4.5" => 69, "Uncontrolled, K > 4.5" => 65),
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 7,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 8),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => 19,
+                "elevated_cr" => "Stop, Cr elevatedor hyperkalemia present",
+                "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present", 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => 56,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 8,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => 20,
+                "elevated_cr" => 7,
+                "hyperkalemia" => 7, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => 56,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 9,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 10),
+            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][0] . ", confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => 21,
+                "elevated_cr" => null,
+                "hyperkalemia" => "Stop, hyperkalemia present", 
+                "slow_hr" => "Stop, call doctor", 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 10,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 11),
+            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][1] . ", confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => 22,
+                "elevated_cr" => null,
+                "hyperkalemia" => 9, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 11,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][2] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 12),
+            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][2] . ", confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => 23,
+                "elevated_cr" => null,
+                "hyperkalemia" => 10, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 12,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2], $template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][3] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][3] . ", confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => 24,
+                "elevated_cr" => null,
+                "hyperkalemia" => 11, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] =array(
+            "step_id" => 13,
+            "drugs" => array($template_drugs["ARB"]["pretty"][0],$template_drugs["DIURETIC"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 14),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 28,
+                "hyperkalemia" => 28, 
+                "slow_hr" => null, 
+                "angioedema" => 41,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 14,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 15),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 31,
+                "hyperkalemia" => 31, 
+                "slow_hr" => null, 
+                "angioedema" => 41,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 15,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 16),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 31,
+                "hyperkalemia" => 31, 
+                "slow_hr" => null, 
+                "angioedema" => 41,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 16,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][0]  ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 17),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => array("Uncontrolled, K < 4.5" => 71, "Uncontrolled, K > 4.5" => 73),
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 17,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][1]  ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 18),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => array("Uncontrolled, K < 4.5" => 71, "Uncontrolled, K > 4.5" => 73),
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 18,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled, K < 4.5" => 19, "Uncontrolled, K > 4.5" => 21),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => array("Uncontrolled, K < 4.5" => 71, "Uncontrolled, K > 4.5" => 73),
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 19,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 20),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => "Stop, Cr elevatedor hyperkalemia present",
+                "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present", 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => 58,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 20,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 19,
+                "hyperkalemia" => 19, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => 58,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 21,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 22),
+            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][0] . ", confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => "Stop, hyperkalemia present", 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 22,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 23),
+            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][1] . ", confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => 21, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 23,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][2] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 24),
+            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][2] . ", confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => 22, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 24,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][3] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][3] . ", confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => 23, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 25,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][0], $template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 26),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 28,
+                "hyperkalemia" => 28, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 26,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][0], $template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 27),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 29,
+                "hyperkalemia" => null, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 27,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][0], $template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][2] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 28),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 28,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 29),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 38,
+                "hyperkalemia" => "hyperkalemia still present",
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 29,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 30),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 28,
+                "hyperkalemia" => 28, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 30,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][2] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 28,
+                "hyperkalemia" => 28, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 31,
+            "drugs" => array($template_drugs["ARB"]["pretty"][0],$template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][0]  ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 32),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 28,
+                "hyperkalemia" => 28, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 32,
+            "drugs" => array($template_drugs["ARB"]["pretty"][0],$template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][1]  ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 33),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 29,
+                "hyperkalemia" => 29, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 33,
+            "drugs" => array($template_drugs["ARB"]["pretty"][0],$template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][2]  ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 30,
+                "hyperkalemia" => 30, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 34,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 35),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 38,
+                "hyperkalemia" => 38, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 35,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 36),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 38,
+                "hyperkalemia" => 38, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 36,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 37),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 39,
+                "hyperkalemia" => "hyperkalemia still present", 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 37,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled, K < 4.5" => 50, "Uncontrolled, K > 4.5" => 52),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 40,
+                "hyperkalemia" => "hyperkalemia still present", 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 38,
+            "drugs" => array($template_drugs["CCB"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 39),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => "Cr still elevated",
+                "hyperkalemia" => "hyperkalemia still present", 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 39,
+            "drugs" => array($template_drugs["CCB"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 40),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => "Cr still elevated",
+                "hyperkalemia" => "hyperkalemia still present", 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 40,
+            "drugs" => array($template_drugs["CCB"]["pretty"][2] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled, K < 4.5" => 44, "Uncontrolled, K > 4.5" => 46),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => "Cr still elevated",
+                "hyperkalemia" => "hyperkalemia still present", 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 41,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 42),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 38,
+                "hyperkalemia" => 34, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 42,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 43),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 38,
+                "hyperkalemia" => 34, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 43,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 35),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 38,
+                "hyperkalemia" => 34, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 44,
+            "drugs" => array($template_drugs["CCB"]["pretty"][2],  $template_drugs["SPIRNO"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 45),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => "Stop, Cr elevatedor hyperkalemia present",
+                "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present", 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => "change to Eplerenone",
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 45,
+            "drugs" => array($template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 44,
+                "hyperkalemia" => 44, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => "change to Eplerenone",
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 46,
+            "drugs" => array($template_drugs["CCB"]["pretty"][2],  $template_drugs["BB"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 47),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => "Cr still elevated",
+                "hyperkalemia" => "Stop, hyperkalemia present", 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 47,
+            "drugs" => array($template_drugs["CCB"]["pretty"][2],  $template_drugs["BB"]["pretty"][1]  ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 48),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => "Cr still elevated",
+                "hyperkalemia" => 46, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 48,
+            "drugs" => array($template_drugs["CCB"]["pretty"][2],  $template_drugs["BB"]["pretty"][2] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 49),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => "Cr still elevated",
+                "hyperkalemia" => 47, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 49,
+            "drugs" => array($template_drugs["CCB"]["pretty"][2],  $template_drugs["BB"]["pretty"][3] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => "Cr still elevated",
+                "hyperkalemia" => 48, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 50,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2] , $template_drugs["SPIRNO"]["pretty"][0]),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 51),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => "Stop, Cr elevatedor hyperkalemia present",
+                "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present", 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => 62,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 51,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 50,
+                "hyperkalemia" => 50, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => 62,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 52,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 53),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 40,
+                "hyperkalemia" => "Stop, hyperkalemia present", 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 53,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 54),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 40,
+                "hyperkalemia" => 52, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 54,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][2] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 55),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 40,
+                "hyperkalemia" => 53, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 55,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][3] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 40,
+                "hyperkalemia" => 54, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 56,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][2] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 57),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => "Stop, Call Doctor",
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 57,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][3] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => "Stop, Call Doctor",
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 58,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][2] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 58),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => "Stop, Call Doctor",
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 59,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][3] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => "Stop, Call Doctor",
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 60,
+            "drugs" => array($template_drugs["CCB"]["pretty"][2],  $template_drugs["SPIRNO"]["pretty"][2] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 61),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => "Stop, Call Doctor",
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 61,
+            "drugs" => array($template_drugs["CCB"]["pretty"][2],  $template_drugs["SPIRNO"]["pretty"][3] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => "Stop, Call Doctor",
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 62,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2] , $template_drugs["SPIRNO"]["pretty"][2]),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 63),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => "Stop, Call Doctor",
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 63,
+            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2] , $template_drugs["SPIRNO"]["pretty"][3]),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => "Stop, Call Doctor",
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 64,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][1], $template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 26),
+            "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => 25,
+                "hyperkalemia" => 25, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 65,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["BB"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 66),
+            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][0] . ", confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => "Stop, Call Doctor", 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 66,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["BB"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 67),
+            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][1] . ", confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => 65, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 67,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["BB"]["pretty"][2] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 68),
+            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][2] . ", confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => 66, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 68,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2], $template_drugs["DIURETIC"]["pretty"][1], $template_drugs["BB"]["pretty"][3] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][3] . ", confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => 67, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 69,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["SPIRNO"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 70),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => 56,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 70,
+            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["SPIRNO"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => 56,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 71,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["SPIRNO"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 72),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => 58,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 72,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["SPIRNO"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => null, 
+                "angioedema" => null,
+                "breast_discomfort" => 58,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => null
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 73,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1],  $template_drugs["BB"]["pretty"][0] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 74),
+            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][0] . ", confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => "Stop, Call Doctor", 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 74,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["BB"]["pretty"][1] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 75),
+            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][1] . ", confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => 73, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 75,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["BB"]["pretty"][2] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 76),
+            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][2] . ", confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => 74, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+        $logicTree[] = array(
+            "step_id" => 76,
+            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["BB"]["pretty"][3] ),
+            "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
+            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][3] . ", confirm HR > 55bpm",
+            "side_effects" => array(
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null, 
+                "slow_hr" => 75, 
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "rash_other" => "Stop, call doctor",
+                "asthma" => "Stop, call doctor"
+            )
+        );
+
+        return $logicTree;
     }
 }
 

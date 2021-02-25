@@ -75,7 +75,7 @@ dashboard.prototype.updateOverview = function(){
     var intf            = this.intf;
     var patients        = intf["patients"];
     var rx_change       = intf["rx_change"];
-    var labs_needed  = intf["labs_needed"]; 
+    var labs_needed     = intf["labs_needed"]; 
     var data_needed     = intf["data_needed"];
     var alerts          = intf["messages"];
     var _this           = this;
@@ -444,12 +444,15 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             });
 
         });
-/*
+
         // PTREE LOG
+        var patient_tree_id = patient["current_treatment_plan_id"];
+        console.log("goddamn man what did i do", this.intf["ptree"][patient_tree_id]["logicTree"]);
+
         var json_tree_logs = patient["tree_log"];
         //Always add the first free step
         json_tree_logs.unshift({
-            "ptree_current_meds": this.intf["ptree"]["logicTree"][0]["drugs"].join(", "),
+            "ptree_current_meds": this.intf["ptree"][patient_tree_id]["logicTree"][0]["drugs"].join(", "),
             "ptree_log_ts": patient["patient_add_ts"]
         });
         tpl.find(".presription_tree .content").empty();
@@ -488,7 +491,8 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             location.href = _this["ptree_url"]+"&patient="+record_id;
         });
         tpl.find(".presription_tree .content").append(log_step);
-*/
+
+
         //BP READINGS GRAPH
         if(patient["bp_readings"].length){
             // generateBpGraph(patient["bp_readings"]);
@@ -516,17 +520,20 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
 
         });
-/*
-TODO FIX PTREE
+
+        // TODO FIX PTREE
         if(patient["filter"] == "rx_change"){
             var rec = $(recommendation);
             var patient_id          = record_id;  
             var cur_tree_step_idx   = parseInt(patient["patient_treatment_status"]);
-            var cur_drugs           = _this.intf.ptree["logicTree"][cur_tree_step_idx]["drugs"].join(", ");
+
+            console.log(_this.intf.ptree);
+
+            var cur_drugs           = _this.intf["ptree"][patient["current_treatment_plan_id"]]["logicTree"][cur_tree_step_idx]["drugs"].join(", ");
 
 
             var rec_tree_step_idx   = parseInt(patient["patient_rec_tree_step"]);
-            var rec_drugs           = _this.intf.ptree["logicTree"][rec_tree_step_idx]["drugs"].join(", ");
+            var rec_drugs           = _this.intf["ptree"][patient["current_treatment_plan_id"]]["logicTree"][rec_tree_step_idx]["drugs"].join(", ");
             rec.find("h6").text(rec_drugs);
             
             var sum_bps = 0;
@@ -611,7 +618,7 @@ TODO FIX PTREE
             tpl.find("#recommendations").empty();
             tpl.find("#recommendations").append(rec);
         }
-*/
+
     }else{
         $("#patient_details").addClass("none_selected").addClass("bg-light").addClass("rounded");
         var tpl = $("<h1>No Patient Selected</h1>");
