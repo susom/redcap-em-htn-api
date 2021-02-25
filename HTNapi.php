@@ -116,7 +116,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 		$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data_log)) );
 
-		$this->emDebug("fuck you", $r , $data_log);
+		$this->emDebug("update lab reading", $r , $data_log);
 		return array("errors" => $r["errors"], "data"=> $data_log);
 	}
 
@@ -170,6 +170,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	}
 
 	public function acceptRecommendation($patient_details){
+		$this->loadEM();
+
 		$next_instance_id = $this->getNextInstanceId($patient_details["record_id"], "treatment_status_log", "ptree_log_ts");
 
 		// ONLY UPDATE THIS WHEN IT RXCHANGE ACTUALLY ACCEPTED
@@ -185,6 +187,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			"ptree_log_ts"				=> Date("Y-m-d H:i:s")
 		);
 		$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data_log)) );
+		$this->emDebug("Saving the treatment step log?", $r, $data_log);
 
 		// update the shortcut data in patient baseline
 		$data = array(
@@ -195,13 +198,15 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			"last_update_ts"			=> Date("Y-m-d H:i:s")
 		);
 		// TODO THIS timestamp IS WHEN THE LAST RECOMMENDATION WAS MADE or Accepted, DONT MAKE ANOTHER ONE FOR 2 WEEKS at LEAST 
-
 		$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
-		$this->emDebug("accepting rec rx change", $data_log);
+		$this->emDebug("Accepting rx change", $r , $data);
+
 		return array("rec saved");
 	}
 
 	public function declineRecommendation($patient_details){
+		$this->loadEM();
+		
 		// update the shortcut data in patient baseline
 		$data = array(
 			"record_id"             	=> $patient_details["record_id"],
@@ -439,6 +444,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	
 	// get data via API and recurse if pagination
 	public function recurseSaveOmronApiData($omron_client_id, $since_ts=null, $token_details=array()){
+		$this->loadEM();
+
 		$first_pass = false;
 		if(empty($token_details)){
 			$first_pass = true;
@@ -654,6 +661,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 	// contact patient by email / text if available
 	public function contactPatient($record_id, $subject, $msg){
+		$this->loadEM();
+
 		$result = false;
 
 		$params	= array(
@@ -690,6 +699,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 	// get the next instance id (repeating) in bp_readings_log
 	public function getBPInstanceData($record_id){
+		$this->loadEM();
+
 		$filter	= "[omron_bp_id] != '' ";
 		$fields	= array("record_id","omron_bp_id");
 
@@ -824,6 +835,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 	// cron to refresh omron access tokens expiring within 48 hours
 	public function refreshOmronAccessTokens(){
+		$this->loadEM();
+
 		//GET ALL PATIENTS (REGARDLESS OF PROVIDER) WHO HAVE ACCESS TOKENS AND CHECK ALL EXPIRES
 		//ANYTHING LANDING WITHIN 48 HOURS WILL NEED TO BE REFRESHED WITH THE refresh_token (does this get updated as well?)
 
