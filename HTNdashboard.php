@@ -341,7 +341,7 @@ class HTNdashboard {
         }
         
         if(!empty($results)){
-            $errors[] = "Username/Email already in system";
+            $errors = "<ul><li>Username/Email already in system</li></ul>";
             return array("errors" => $errors);
         }else{
             $data = array();
