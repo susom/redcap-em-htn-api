@@ -447,7 +447,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
         // PTREE LOG
         var patient_tree_id = patient["current_treatment_plan_id"];
-        console.log("goddamn man what did i do", this.intf["ptree"][patient_tree_id]["logicTree"]);
+        patient_tree_id = this.intf["ptree"].hasOwnProperty(patient_tree_id) ? patient_tree_id : 1;
 
         var json_tree_logs = patient["tree_log"];
         //Always add the first free step
