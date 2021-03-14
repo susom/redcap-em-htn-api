@@ -12,6 +12,7 @@ if(isset($_SESSION["buffer_alert"])){
 
 // $module->evaluateOmronBPavg(1);
 $provider_id    = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"]; 
+$sponsored      = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? true : false; 
 $page           = "dashboard";
 $home_active    = "active";
 ?>
@@ -72,7 +73,7 @@ $(document).ready(function(){
         }
     ?>
 
-    var dash = new dashboard(<?=$provider_id?>,urls);
+    var dash = new dashboard(<?=$provider_id?>,urls, <?=$sponsored?>);
 });
 
 function removeA(arr) {

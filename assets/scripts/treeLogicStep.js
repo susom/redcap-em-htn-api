@@ -344,13 +344,18 @@ treeLogicStep.prototype.showRecModal = function(){
         She is intolerant to Lisinopril/Cough.  \
         Her BP Target is "+patient["patient_bp_target_systolic"]+"/"+patient["patient_bp_target_diastolic"]+" and \
         her measured BP is 140/85, 8 out of 10 readings in 2 weeks.";
-    tpl.find(".natural_text").append($("<p>").text(patient_baseline_summ));
+    
+        tpl.find(".natural_text").append($("<p>").text(patient_baseline_summ));
     
     
     if(this.parent.rec_step == this.step_id){
         tpl.find("h3").text("Recommended Step Change");
         var patient_change_rec    = "It is recommended to change medications from <b>\""+this.parent.steps[this.parent.current_step].drugs.join(", ")+"\"</b> to <b><em>\""+this.drugs.join(", ")+"\"</em></b>.";
         tpl.find(".natural_text").append($("<p>").html(patient_change_rec));
+    }
+
+    if(_this.parent.is_sponsored){
+        tpl.find("#provider_comment, div.continue .accept").hide();
     }
 
     //If Reject

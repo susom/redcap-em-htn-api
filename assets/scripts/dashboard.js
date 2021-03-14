@@ -1,8 +1,8 @@
-function dashboard(record_id,urls){
+function dashboard(record_id,urls, is_sponsored=false){
     for(var i in urls){
         this[i] = urls[i];
     }
-
+    this.is_sponsored   = is_sponsored;
     this.provider       = record_id;
     this.patient_detail = {}; //buffer patient details to avoid a roundtrip if already called once in the sessions
 
@@ -555,6 +555,12 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
             if(need_CRK){
                 rec.find(".send_to_pharmacy").prepend($("<b class='mb-2'>* NOTE: check lab test before proceeding</b>"));
+            }
+
+            if(_this.is_sponsored){
+                //remove controls;
+                rec.find("#provider_comment").hide();
+                rec.find(".send_to_pharmacy").hide();
             }
 
             rec.on("click", ".view_edit_tree", function(e){

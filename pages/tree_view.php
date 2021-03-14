@@ -5,6 +5,7 @@ namespace Stanford\HTNapi;
 include("components/gl_checklogin.php");
 
 $provider_id    = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
+$sponsored      = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? true : false;
 
 //SAVE ACTIONS
 if(isset($_POST["action"])){
@@ -475,10 +476,8 @@ $(document).ready(function(){
     var patient     = <?= json_encode($patient) ;?>;
     var raw_json    = <?= json_encode($tree_logic) ;?>;
     if(patient){
-        var tree = new treeLogic(raw_json, patient, urls);
+        var tree = new treeLogic(raw_json, patient, urls, <?=$sponsored?>);
         tree.startAttachTree();
-    }else{
-        console.log("did i make it work by accident?");
     }
 });
 </script>
