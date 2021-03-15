@@ -322,7 +322,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
 
 
-        
+
         tpl.find(".dob").text(patient["patient_birthday"]);
         tpl.find(".age").text(patient["patient_age"]);
         tpl.find(".sex").text(patient["sex"]);
@@ -534,15 +534,13 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         if(patient["filter"] == "rx_change"){
             var rec = $(recommendation);
             var patient_id          = record_id;  
-            var cur_tree_step_idx   = parseInt(patient["patient_treatment_status"]);
-
-            console.log(_this.intf.ptree);
-
-            var cur_drugs           = _this.intf["ptree"][patient["current_treatment_plan_id"]]["logicTree"][cur_tree_step_idx]["drugs"].join(", ");
+            var cur_tree_step_idx   = patient["patient_treatment_status"] ? parseInt(patient["patient_treatment_status"]) : 0;
+            var cur_tree_id         = patient["current_treatment_plan_id"] ? patient["current_treatment_plan_id"] : 1;
+            var cur_drugs           = _this.intf["ptree"][cur_tree_id]["logicTree"][cur_tree_step_idx]["drugs"].join(", ");
 
 
             var rec_tree_step_idx   = parseInt(patient["patient_rec_tree_step"]);
-            var rec_drugs           = _this.intf["ptree"][patient["current_treatment_plan_id"]]["logicTree"][rec_tree_step_idx]["drugs"].join(", ");
+            var rec_drugs           = _this.intf["ptree"][cur_tree_id]["logicTree"][rec_tree_step_idx]["drugs"].join(", ");
             rec.find("h6").text(rec_drugs);
             
             var sum_bps = 0;

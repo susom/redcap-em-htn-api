@@ -684,7 +684,7 @@ class HTNtree  {
             "note" => "",
             "side_effects" => array(
                 "cough" => 19,
-                "elevated_cr" => "Stop, Cr elevatedor hyperkalemia present",
+                "elevated_cr" => "Stop, Cr elevated or hyperkalemia present",
                 "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present", 
                 "slow_hr" => null, 
                 "angioedema" => null,

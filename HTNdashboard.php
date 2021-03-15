@@ -660,7 +660,7 @@ class HTNdashboard {
         $data       = array();
         foreach($required as $req_var){
             if($req_var == "current_treatment_plan_id" && $post[$req_var] == 99){
-                $post[$req_var] = null;
+                $post[$req_var] = 1;
             }
             if(empty($post[$req_var])){
                 $error_str .= "<li>[$req_var] is required</li>";
@@ -682,7 +682,7 @@ class HTNdashboard {
             $data["patient_treatment_status"]   = 0; //always start with the first step of whatever tree
             $data["patient_add_ts"]             = Date("Y-m-d H:i:s"); //always start with the first step of whatever tree
         }
-        $data["current_treatment_plan_id"]  = $post["current_treatment_plan_id"] ?? 1;
+        $data["current_treatment_plan_id"]  = !empty($post["current_treatment_plan_id"]) ? $post["current_treatment_plan_id"] : 1;
         $next_id                            = !empty($post["record_id"]) ? $post["record_id"] : $this->module->getNextAvailableRecordId($this->patients_project);
         $data["record_id"]                  = $next_id;
 
