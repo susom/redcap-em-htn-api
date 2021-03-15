@@ -65,13 +65,23 @@ class HTNdashboard {
         $messages       = array();
 
         foreach($results as $i => $result){
-            $date2          = Date("Y-m-d");
-            $diff           = abs(strtotime($date2)-strtotime($result["patient_birthday"]));
-            $years          = floor($diff / (365*60*60*24));
-            $result["age"]  = "$years yrs old";
-
+            //FIRST DEFAULT VALUES THEN FILL IN
             $result["patient_photo"]    = $this->module->getUrl('assets/images/icon_anon.gif', true, true);
-            $result["patient_name"]     = $result["patient_lname"] . ", " . $result["patient_fname"] . " " . substr($result["patient_mname"],0,1);
+            $result["patient_name"]     = "name n/a";
+            $result["age"]              = "age n/a";
+            $result["sex"]              = empty($result["sex"]) ? "sex n/a" : $result["sex"];
+
+            if(!empty($result["patient_birthday"])){
+                $date2          = Date("Y-m-d");
+                $diff           = abs(strtotime($date2)-strtotime($result["patient_birthday"]));
+                $years          = floor($diff / (365*60*60*24));
+                $result["age"]  = "$years yrs old";
+            }
+            if(!empty($result["patient_lname"]) && !empty($result["patient_fname"])){
+                $result["patient_name"]     = $result["patient_lname"] . ", " . $result["patient_fname"] . " " . substr($result["patient_mname"],0,1);
+            }
+
+            
 
             if(!empty($result["redcap_repeat_instrument"])){
                 if($result["message_read"]){
@@ -179,13 +189,38 @@ class HTNdashboard {
 
         if(!empty($result)){
             $result = current($result);
-            $date2  = Date("Y-m-d");
 
-            $diff   = abs(strtotime($date2)-strtotime($result["patient_birthday"]));
-            $years  = floor($diff / (365*60*60*24));
-            $result["patient_age"]          = "$years yrs old";
+            $result["patient_age"] = "age n/a";
+            if(!empty($result["patient_birthday"])){
+                $date2          = Date("Y-m-d");
+                $diff           = abs(strtotime($date2)-strtotime($result["patient_birthday"]));
+                $years          = floor($diff / (365*60*60*24));
+                $result["patient_age"]  = "$years yrs old";
+            }
             $result["planning_pregnancy"]   = $result["planning_pregnancy"] == "1" ? "Yes" : "No";
             
+
+            
+            $result["patient_mrn"]  = empty($result["patient_mrn"]) ? "n/a" : $result["patient_mrn"];
+            $result["patient_fname"] = empty($result["patient_fname"]) ? "n/a" : $result["patient_fname"];
+            $result["patient_lname"] = empty($result["patient_lname"]) ? "n/a" : $result["patient_lname"];
+            $result["patient_email"] = empty($result["patient_email"]) ? "email n/a" : $result["patient_email"];
+            $result["patient_phone"] = empty($result["patient_phone"]) ? "phone n/a" : $result["patient_phone"];
+            $result["patient_bp_target_pulse"] = empty($result["patient_bp_target_pulse"]) ? "n/a" : $result["patient_bp_target_pulse"];
+            $result["patient_bp_target_systolic"]  = empty($result["patient_bp_target_systolic"]) ? "n/a" : $result["patient_bp_target_systolic"];
+            $result["patient_bp_target_diastolic"] = empty($result["patient_bp_target_diastolic"]) ? "n/a" : $result["patient_bp_target_diastolic"];
+            $result["patient_group"] = empty($result["patient_group"]) ? "n/a" : $result["patient_group"];
+            $result["patient_birthday"] = empty($result["patient_birthday"]) ? "dob n/a" : $result["patient_birthday"];
+            $result["sex"] = empty($result["sex"]) ? "sex n/a" : $result["sex"];
+            $result["weight"] = empty($result["weight"]) ? "weight n/a" : $result["weight"];
+            $result["height"] = empty($result["height"]) ? "height n/a" : $result["height"];
+            $result["bmi"] = empty($result["bmi"]) ? "BMI n/a" : $result["bmi"];
+            $result["ckd"] = empty($result["ckd"]) ? "CKD n/a" : $result["ckd"];
+            $result["comorbidity"] = empty($result["comorbidity"]) ? "comorbidity n/a" : $result["comorbidity"];
+            $result["pharmacy_info"] = empty($result["pharmacy_info"]) ? "pharmacy n/a" : $result["pharmacy_info"];
+            
+
+
             //GET PATIENT BP READINGS DATA OVER LAST 2 WEEKS
             $bp_filter  = "[omron_bp_id] != '' AND [bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-20 weeks')) . "'";
             $bp_params  = array(

@@ -532,6 +532,7 @@ class HTNtree  {
 
             $logicTree      = array();
             if(!empty($template_drugs)){
+                $this->module->emDebug("fucking asshole ngrr");
                 $logicTree = $this->defaultLogicTree1($template_drugs);
             }
 
@@ -543,11 +544,30 @@ class HTNtree  {
 
     public function defaultLogicTree1($template_drugs){
         // $this->module->emDebug("memory leak? dyslexia? what the fuck?, AH more dose expected than there are... did i lose some?", $template_drugs);
-        //TODO THIS TREE IS EXPECTING MORE DOSES THAN ARE SET... DID I DROP A FEW DOSAGES?
+        //TODO - STILL NOT SUPER CLeAR, THIS IS WEIRD 
+        $template_drugs["SPIRNO"]["pretty"] = array_merge($template_drugs["SPIRNO"]["pretty"], $template_drugs["EPLER"]["pretty"]);
+        $drug_classes   = array("ACEI" => 3, "ARB" => 2, "DIURETIC" => 3, "SPIRNO" => 4, "CCB" => 3, "BB" => 4);
+        
+        $ACEI           = array();
+        $ARB            = array();
+        $DIURETIC       = array();
+        $SPIRNO         = array();
+        $CCB            = array();
+        $BB             = array();
+
+        foreach($drug_classes as $drug_class => $expected_count){
+            for($i=0; $i < $expected_count; $i++){
+                if(isset($template_drugs[$drug_class]["pretty"][$i])){
+                    $current_drug = $template_drugs[$drug_class]["pretty"][$i];
+                }
+                array_push($$drug_class, $current_drug);
+            }
+        }
+        $this->module->emDebug("filled out drugs, 3,2,3,4,3,4", $ACEI, $ARB, $DIURETIC, $SPIRNO, $CCB, $BB);
 
         $logicTree[]    = array(
             "step_id"  => 0
-            ,"drugs"    => array($template_drugs["ACEI"]["pretty"][0], $template_drugs["DIURETIC"]["pretty"][0])
+            ,"drugs"    => array($ACEI[0], $DIURETIC[0])
             ,"bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 1)
             ,"note"     => ""
             ,"side_effects"     => array(
@@ -563,7 +583,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 1,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][0] ),
+            "drugs" => array($ACEI[1],$DIURETIC[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 2),
             "note" => "",
             "side_effects" => array(
@@ -579,7 +599,7 @@ class HTNtree  {
         ); 
         $logicTree[] = array(
             "step_id" => 2,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1] ),
+            "drugs" => array($ACEI[1],$DIURETIC[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 3),
             "note" => "",
             "side_effects" => array(
@@ -595,7 +615,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 3,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1] ),
+            "drugs" => array($ACEI[2],$DIURETIC[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 4),
             "note" => "",
             "side_effects" => array(
@@ -611,7 +631,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 4,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][0] ),
+            "drugs" => array($ACEI[2],$DIURETIC[1], $CCB[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 5),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -627,7 +647,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 5,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][1] ),
+            "drugs" => array($ACEI[2],$DIURETIC[1], $CCB[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 6),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -643,7 +663,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 6,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2] ),
+            "drugs" => array($ACEI[2],$DIURETIC[1], $CCB[2] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled, K < 4.5" => 7, "Uncontrolled, K > 4.5" => 9),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -659,7 +679,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 7,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][0] ),
+            "drugs" => array($ACEI[2],$DIURETIC[1], $CCB[2], $SPIRNO[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 8),
             "note" => "",
             "side_effects" => array(
@@ -675,7 +695,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 8,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][1] ),
+            "drugs" => array($ACEI[2],$DIURETIC[1], $CCB[2], $SPIRNO[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
             "note" => "",
             "side_effects" => array(
@@ -691,9 +711,9 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 9,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][0] ),
+            "drugs" => array($ACEI[2],$DIURETIC[1], $CCB[2], $BB[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 10),
-            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][0] . ", confirm HR > 55bpm",
+            "note" => "Before adding/increasing " . $BB[0] . ", confirm HR > 55bpm",
             "side_effects" => array(
                 "cough" => 21,
                 "elevated_cr" => null,
@@ -707,9 +727,9 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 10,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][1] ),
+            "drugs" => array($ACEI[2],$DIURETIC[1], $CCB[2], $BB[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 11),
-            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][1] . ", confirm HR > 55bpm",
+            "note" => "Before adding/increasing " . $BB[1] . ", confirm HR > 55bpm",
             "side_effects" => array(
                 "cough" => 22,
                 "elevated_cr" => null,
@@ -723,9 +743,9 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 11,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][2] ),
+            "drugs" => array($ACEI[2],$DIURETIC[1], $CCB[2], $BB[2] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 12),
-            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][2] . ", confirm HR > 55bpm",
+            "note" => "Before adding/increasing " . $BB[2] . ", confirm HR > 55bpm",
             "side_effects" => array(
                 "cough" => 23,
                 "elevated_cr" => null,
@@ -739,9 +759,9 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 12,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2], $template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][3] ),
+            "drugs" => array($ACEI[2], $DIURETIC[1], $CCB[2], $BB[3] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][3] . ", confirm HR > 55bpm",
+            "note" => "Before adding/increasing " . $BB[3] . ", confirm HR > 55bpm",
             "side_effects" => array(
                 "cough" => 24,
                 "elevated_cr" => null,
@@ -755,7 +775,7 @@ class HTNtree  {
         );
         $logicTree[] =array(
             "step_id" => 13,
-            "drugs" => array($template_drugs["ARB"]["pretty"][0],$template_drugs["DIURETIC"]["pretty"][0] ),
+            "drugs" => array($ARB[0],$DIURETIC[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 14),
             "note" => "",
             "side_effects" => array(
@@ -771,7 +791,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 14,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][0] ),
+            "drugs" => array($ARB[1],$DIURETIC[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 15),
             "note" => "",
             "side_effects" => array(
@@ -787,7 +807,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 15,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1] ),
+            "drugs" => array($ARB[1],$DIURETIC[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 16),
             "note" => "",
             "side_effects" => array(
@@ -803,7 +823,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 16,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][0]  ),
+            "drugs" => array($ARB[1],$DIURETIC[1], $CCB[0]  ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 17),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -819,7 +839,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 17,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][1]  ),
+            "drugs" => array($ARB[1],$DIURETIC[1], $CCB[1]  ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 18),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -835,7 +855,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 18,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2] ),
+            "drugs" => array($ARB[1],$DIURETIC[1], $CCB[2] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled, K < 4.5" => 19, "Uncontrolled, K > 4.5" => 21),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -851,7 +871,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 19,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][0] ),
+            "drugs" => array($ARB[1],$DIURETIC[1], $CCB[2], $SPIRNO[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 20),
             "note" => "",
             "side_effects" => array(
@@ -867,7 +887,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 20,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][1] ),
+            "drugs" => array($ARB[1],$DIURETIC[1], $CCB[2], $SPIRNO[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
             "note" => "",
             "side_effects" => array(
@@ -883,9 +903,9 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 21,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][0] ),
+            "drugs" => array($ARB[1],$DIURETIC[1], $CCB[2], $BB[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 22),
-            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][0] . ", confirm HR > 55bpm",
+            "note" => "Before adding/increasing " . $BB[0] . ", confirm HR > 55bpm",
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
@@ -899,9 +919,9 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 22,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][1] ),
+            "drugs" => array($ARB[1],$DIURETIC[1], $CCB[2], $BB[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 23),
-            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][1] . ", confirm HR > 55bpm",
+            "note" => "Before adding/increasing " . $BB[1] . ", confirm HR > 55bpm",
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
@@ -915,9 +935,9 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 23,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][2] ),
+            "drugs" => array($ARB[1],$DIURETIC[1], $CCB[2], $BB[2] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 24),
-            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][2] . ", confirm HR > 55bpm",
+            "note" => "Before adding/increasing " . $BB[2] . ", confirm HR > 55bpm",
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
@@ -931,9 +951,9 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 24,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][3] ),
+            "drugs" => array($ARB[1],$DIURETIC[1], $CCB[2], $BB[3] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][3] . ", confirm HR > 55bpm",
+            "note" => "Before adding/increasing " . $BB[3] . ", confirm HR > 55bpm",
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
@@ -947,7 +967,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 25,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][0], $template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][0] ),
+            "drugs" => array($ACEI[0], $DIURETIC[0], $CCB[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 26),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -963,7 +983,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 26,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][0], $template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][1] ),
+            "drugs" => array($ACEI[0], $DIURETIC[0], $CCB[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 27),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -979,7 +999,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 27,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][0], $template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][2] ),
+            "drugs" => array($ACEI[0], $DIURETIC[0], $CCB[2] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 28),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -995,7 +1015,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 28,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][0] ),
+            "drugs" => array($DIURETIC[0], $CCB[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 29),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1011,7 +1031,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 29,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][1] ),
+            "drugs" => array($DIURETIC[0], $CCB[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 30),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1027,7 +1047,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 30,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][2] ),
+            "drugs" => array($DIURETIC[0], $CCB[2] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1043,7 +1063,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 31,
-            "drugs" => array($template_drugs["ARB"]["pretty"][0],$template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][0]  ),
+            "drugs" => array($ARB[0],$DIURETIC[0], $CCB[0]  ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 32),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1059,7 +1079,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 32,
-            "drugs" => array($template_drugs["ARB"]["pretty"][0],$template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][1]  ),
+            "drugs" => array($ARB[0],$DIURETIC[0], $CCB[1]  ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 33),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1075,7 +1095,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 33,
-            "drugs" => array($template_drugs["ARB"]["pretty"][0],$template_drugs["DIURETIC"]["pretty"][0], $template_drugs["CCB"]["pretty"][2]  ),
+            "drugs" => array($ARB[0],$DIURETIC[0], $CCB[2]  ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1091,7 +1111,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 34,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][0] ),
+            "drugs" => array($DIURETIC[1], $CCB[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 35),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1107,7 +1127,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 35,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][0] ),
+            "drugs" => array($DIURETIC[2], $CCB[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 36),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1123,7 +1143,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 36,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][1] ),
+            "drugs" => array($DIURETIC[2], $CCB[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 37),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1139,7 +1159,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 37,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2] ),
+            "drugs" => array($DIURETIC[2], $CCB[2] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled, K < 4.5" => 50, "Uncontrolled, K > 4.5" => 52),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1155,7 +1175,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 38,
-            "drugs" => array($template_drugs["CCB"]["pretty"][0] ),
+            "drugs" => array($CCB[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 39),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1171,7 +1191,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 39,
-            "drugs" => array($template_drugs["CCB"]["pretty"][1] ),
+            "drugs" => array($CCB[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 40),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1187,7 +1207,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 40,
-            "drugs" => array($template_drugs["CCB"]["pretty"][2] ),
+            "drugs" => array($CCB[2] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled, K < 4.5" => 44, "Uncontrolled, K > 4.5" => 46),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1203,7 +1223,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 41,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][0] ),
+            "drugs" => array($DIURETIC[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 42),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1219,7 +1239,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 42,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][1] ),
+            "drugs" => array($DIURETIC[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 43),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1235,7 +1255,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 43,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2] ),
+            "drugs" => array($DIURETIC[2] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 35),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1251,7 +1271,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 44,
-            "drugs" => array($template_drugs["CCB"]["pretty"][2],  $template_drugs["SPIRNO"]["pretty"][0] ),
+            "drugs" => array($CCB[2],  $SPIRNO[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 45),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1267,7 +1287,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 45,
-            "drugs" => array($template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][1] ),
+            "drugs" => array($CCB[2], $SPIRNO[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1283,7 +1303,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 46,
-            "drugs" => array($template_drugs["CCB"]["pretty"][2],  $template_drugs["BB"]["pretty"][0] ),
+            "drugs" => array($CCB[2],  $BB[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 47),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1299,7 +1319,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 47,
-            "drugs" => array($template_drugs["CCB"]["pretty"][2],  $template_drugs["BB"]["pretty"][1]  ),
+            "drugs" => array($CCB[2],  $BB[1]  ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 48),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1315,7 +1335,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 48,
-            "drugs" => array($template_drugs["CCB"]["pretty"][2],  $template_drugs["BB"]["pretty"][2] ),
+            "drugs" => array($CCB[2],  $BB[2] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 49),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1331,7 +1351,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 49,
-            "drugs" => array($template_drugs["CCB"]["pretty"][2],  $template_drugs["BB"]["pretty"][3] ),
+            "drugs" => array($CCB[2],  $BB[3] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1347,7 +1367,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 50,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2] , $template_drugs["SPIRNO"]["pretty"][0]),
+            "drugs" => array($DIURETIC[2], $CCB[2] , $SPIRNO[0]),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 51),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1363,7 +1383,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 51,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][1] ),
+            "drugs" => array($DIURETIC[2], $CCB[2], $SPIRNO[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1379,7 +1399,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 52,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][0] ),
+            "drugs" => array($DIURETIC[2], $CCB[2], $BB[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 53),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1395,7 +1415,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 53,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][1] ),
+            "drugs" => array($DIURETIC[2], $CCB[2], $BB[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 54),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1411,7 +1431,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 54,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][2] ),
+            "drugs" => array($DIURETIC[2], $CCB[2], $BB[2] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 55),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1427,7 +1447,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 55,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2], $template_drugs["BB"]["pretty"][3] ),
+            "drugs" => array($DIURETIC[2], $CCB[2], $BB[3] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1443,7 +1463,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 56,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][2] ),
+            "drugs" => array($ACEI[2],$DIURETIC[1], $CCB[2], $SPIRNO[2] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 57),
             "note" => "",
             "side_effects" => array(
@@ -1459,7 +1479,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 57,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][3] ),
+            "drugs" => array($ACEI[2],$DIURETIC[1], $CCB[2], $SPIRNO[3] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
             "note" => "",
             "side_effects" => array(
@@ -1475,7 +1495,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 58,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][2] ),
+            "drugs" => array($ARB[1],$DIURETIC[1], $CCB[2], $SPIRNO[2] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 58),
             "note" => "",
             "side_effects" => array(
@@ -1491,7 +1511,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 59,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][2], $template_drugs["SPIRNO"]["pretty"][3] ),
+            "drugs" => array($ARB[1],$DIURETIC[1], $CCB[2], $SPIRNO[3] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
             "note" => "",
             "side_effects" => array(
@@ -1507,7 +1527,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 60,
-            "drugs" => array($template_drugs["CCB"]["pretty"][2],  $template_drugs["SPIRNO"]["pretty"][2] ),
+            "drugs" => array($CCB[2],  $SPIRNO[2] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 61),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1523,7 +1543,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 61,
-            "drugs" => array($template_drugs["CCB"]["pretty"][2],  $template_drugs["SPIRNO"]["pretty"][3] ),
+            "drugs" => array($CCB[2],  $SPIRNO[3] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1539,7 +1559,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 62,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2] , $template_drugs["SPIRNO"]["pretty"][2]),
+            "drugs" => array($DIURETIC[2], $CCB[2] , $SPIRNO[2]),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 63),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1555,7 +1575,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 63,
-            "drugs" => array($template_drugs["DIURETIC"]["pretty"][2], $template_drugs["CCB"]["pretty"][2] , $template_drugs["SPIRNO"]["pretty"][3]),
+            "drugs" => array($DIURETIC[2], $CCB[2] , $SPIRNO[3]),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1571,7 +1591,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 64,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][1], $template_drugs["DIURETIC"]["pretty"][1], $template_drugs["CCB"]["pretty"][0] ),
+            "drugs" => array($ACEI[1], $DIURETIC[1], $CCB[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 26),
             "note" => "Before adding/increasing Diltiazem or Verapamil, confirm HR > 55bpm",
             "side_effects" => array(
@@ -1587,9 +1607,9 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 65,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["BB"]["pretty"][0] ),
+            "drugs" => array($ACEI[2],$DIURETIC[1], $BB[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 66),
-            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][0] . ", confirm HR > 55bpm",
+            "note" => "Before adding/increasing " . $BB[0] . ", confirm HR > 55bpm",
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
@@ -1603,9 +1623,9 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 66,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["BB"]["pretty"][1] ),
+            "drugs" => array($ACEI[2],$DIURETIC[1], $BB[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 67),
-            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][1] . ", confirm HR > 55bpm",
+            "note" => "Before adding/increasing " . $BB[1] . ", confirm HR > 55bpm",
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
@@ -1619,9 +1639,9 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 67,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["BB"]["pretty"][2] ),
+            "drugs" => array($ACEI[2],$DIURETIC[1], $BB[2] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 68),
-            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][2] . ", confirm HR > 55bpm",
+            "note" => "Before adding/increasing " . $BB[2] . ", confirm HR > 55bpm",
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
@@ -1635,9 +1655,9 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 68,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2], $template_drugs["DIURETIC"]["pretty"][1], $template_drugs["BB"]["pretty"][3] ),
+            "drugs" => array($ACEI[2], $DIURETIC[1], $BB[3] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][3] . ", confirm HR > 55bpm",
+            "note" => "Before adding/increasing " . $BB[3] . ", confirm HR > 55bpm",
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
@@ -1651,7 +1671,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 69,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["SPIRNO"]["pretty"][0] ),
+            "drugs" => array($ACEI[2],$DIURETIC[1], $SPIRNO[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 70),
             "note" => "",
             "side_effects" => array(
@@ -1667,7 +1687,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 70,
-            "drugs" => array($template_drugs["ACEI"]["pretty"][2],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["SPIRNO"]["pretty"][1] ),
+            "drugs" => array($ACEI[2],$DIURETIC[1], $SPIRNO[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
             "note" => "",
             "side_effects" => array(
@@ -1683,7 +1703,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 71,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["SPIRNO"]["pretty"][0] ),
+            "drugs" => array($ARB[1],$DIURETIC[1], $SPIRNO[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 72),
             "note" => "",
             "side_effects" => array(
@@ -1699,7 +1719,7 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 72,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["SPIRNO"]["pretty"][1] ),
+            "drugs" => array($ARB[1],$DIURETIC[1], $SPIRNO[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
             "note" => "",
             "side_effects" => array(
@@ -1715,9 +1735,9 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 73,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1],  $template_drugs["BB"]["pretty"][0] ),
+            "drugs" => array($ARB[1],$DIURETIC[1],  $BB[0] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 74),
-            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][0] . ", confirm HR > 55bpm",
+            "note" => "Before adding/increasing " . $BB[0] . ", confirm HR > 55bpm",
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
@@ -1731,9 +1751,9 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 74,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["BB"]["pretty"][1] ),
+            "drugs" => array($ARB[1],$DIURETIC[1], $BB[1] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 75),
-            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][1] . ", confirm HR > 55bpm",
+            "note" => "Before adding/increasing " . $BB[1] . ", confirm HR > 55bpm",
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
@@ -1747,9 +1767,9 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 75,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["BB"]["pretty"][2] ),
+            "drugs" => array($ARB[1],$DIURETIC[1], $BB[2] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => 76),
-            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][2] . ", confirm HR > 55bpm",
+            "note" => "Before adding/increasing " . $BB[2] . ", confirm HR > 55bpm",
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
@@ -1763,9 +1783,9 @@ class HTNtree  {
         );
         $logicTree[] = array(
             "step_id" => 76,
-            "drugs" => array($template_drugs["ARB"]["pretty"][1],$template_drugs["DIURETIC"]["pretty"][1], $template_drugs["BB"]["pretty"][3] ),
+            "drugs" => array($ARB[1],$DIURETIC[1], $BB[3] ),
             "bp_status" => array("Controlled"=> "Continue current step", "Uncontrolled" => "End of protocol"),
-            "note" => "Before adding/increasing " . $template_drugs["BB"]["pretty"][3] . ", confirm HR > 55bpm",
+            "note" => "Before adding/increasing " . $BB[3] . ", confirm HR > 55bpm",
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
@@ -1778,6 +1798,7 @@ class HTNtree  {
             )
         );
 
+        $this->module->emDebug("logictredd", $logicTree);
         return $logicTree;
     }
 }

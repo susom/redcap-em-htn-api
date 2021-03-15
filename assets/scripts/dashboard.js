@@ -314,6 +314,15 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         var _this   = this;
         console.log("patient info", patient);
 
+
+
+
+
+
+
+
+
+        
         tpl.find(".dob").text(patient["patient_birthday"]);
         tpl.find(".age").text(patient["patient_age"]);
         tpl.find(".sex").text(patient["sex"]);
