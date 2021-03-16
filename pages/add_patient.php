@@ -247,7 +247,7 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                 <div class="patient_name mb-5">
                                     <fig class="patient_profile d-block mx-auto row">
                                         <!-- <figure class="text-center "><a href="#" class="rounded-circle add_photo d-inline-block">Add Photo</a></figure> -->
-                                        
+                                        <!-- TODO NEED TO HIDE EVERYTHING BUT MRN AND EMAIL IN STRAIGHT ADd, on EDIT REVEAL EVERYTHING!--> 
                                         <figcaption class="my-4 col-sm-10 offset-sm-1 row">
                                             <h3 class="col-sm-12">Patient Contact Details</h3>
                                             <p class="col-sm-12 text-muted lead small">The rest of the Patient's baseline data will be pulled from STARR/Epic databses based on the patient's MRN. <br> All required fields are marked with a *</p>

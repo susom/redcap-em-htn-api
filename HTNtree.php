@@ -538,7 +538,7 @@ class HTNtree  {
             $tree["logicTree"]  = $logicTree;
             $provider_logic_trees[$tree_id] = $tree;
         }
-        $this->module->emDebug("im too stupid to exist");
+        $this->module->emDebug("This Providers custom Logic trees, including the default ones");
 
         return $provider_logic_trees;
     }
