@@ -660,7 +660,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 					//UNCONTROLLED STEP HAS A LAB CHECK (K) OR a POSSIBLE ELEVATED CR Side EFFECT
 					//NEED RECENT LABS ( 2 weeks )
 
-					$filter = "[lab_ts] > '" . date("n/j/y", strtotime('-4 weeks')) . "'";
+					$filter = "[lab_ts] > '" . date("n/j/y", strtotime('-2 weeks')) . "'";
 					$params	= array(
 						'project_id'	=> $this->enabledProjects["patients"]["pid"],
 						'records' 		=> array($record_id),
