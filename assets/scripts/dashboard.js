@@ -405,7 +405,6 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         tpl.find(".delete_patient").click(function(e){
             e.preventDefault();
             if (window.confirm("Please confirm deletion of patient [" + $(this).data("patient_name") +"]" )) {
-                //AJAX motherfucker 
                 $.ajax({
                     url : _this["ajax_endpoint"],
                     method: 'POST',
@@ -646,6 +645,8 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
             tpl.find("#recommendations").empty();
             tpl.find("#recommendations").append(rec);
+        }else if((patient["filter"] == "rx_change")){
+            console.log("LAB NEEEDED FOO")
         }
 
     }else{

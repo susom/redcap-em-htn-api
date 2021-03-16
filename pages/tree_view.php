@@ -400,7 +400,7 @@ $(document).ready(function(){
                     $("select[name='"+i + "'] option[value='"+raw[i]+"']").attr("selected",true);
                     $("select[name='"+i + "'] option[value='"+raw[i]+"']").data("dosages", doses[med_class]["raw"]);
                     displayDosageSlots($("select[name='"+i + "'] option[value='"+raw[i]+"']"));
-                    console.log("what the fuck is up with spirono", i, raw[i], raw);
+                    console.log("what is up with spirono", i, raw[i], raw);
                 }
             }
 

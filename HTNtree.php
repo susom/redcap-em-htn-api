@@ -532,18 +532,18 @@ class HTNtree  {
 
             $logicTree      = array();
             if(!empty($template_drugs)){
-                $this->module->emDebug("fucking asshole ngrr");
                 $logicTree = $this->defaultLogicTree1($template_drugs);
             }
 
             $tree["logicTree"]  = $logicTree;
             $provider_logic_trees[$tree_id] = $tree;
         }
+        $this->module->emDebug("im too stupid to exist");
+
         return $provider_logic_trees;
     }
 
     public function defaultLogicTree1($template_drugs){
-        // $this->module->emDebug("memory leak? dyslexia? what the fuck?, AH more dose expected than there are... did i lose some?", $template_drugs);
         //TODO - STILL NOT SUPER CLeAR, THIS IS WEIRD 
         $template_drugs["SPIRNO"]["pretty"] = array_merge($template_drugs["SPIRNO"]["pretty"], $template_drugs["EPLER"]["pretty"]);
         $drug_classes   = array("ACEI" => 3, "ARB" => 2, "DIURETIC" => 3, "SPIRNO" => 4, "CCB" => 3, "BB" => 4);
@@ -563,7 +563,6 @@ class HTNtree  {
                 array_push($$drug_class, $current_drug);
             }
         }
-        $this->module->emDebug("filled out drugs, 3,2,3,4,3,4", $ACEI, $ARB, $DIURETIC, $SPIRNO, $CCB, $BB);
 
         $logicTree[]    = array(
             "step_id"  => 0
@@ -1798,7 +1797,7 @@ class HTNtree  {
             )
         );
 
-        $this->module->emDebug("logictredd", $logicTree);
+        // $this->module->emDebug("logictredd", $logicTree);
         return $logicTree;
     }
 }

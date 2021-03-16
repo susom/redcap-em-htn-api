@@ -528,7 +528,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 					$bp_reading_today  	= date("Y-m-d", strtotime($reading["dateTime"]));
 					$todate 			= date("Y-m-d");
 					if($bp_reading_today == $todate && $bp_systolic > 180){
-						$this->contactPatient($record_id, "Warning : Abnormal Blood Pressure Reading Detected", "<p>We received your blood pressure cuff data from Omron.</p><p>The reading is at a dangerously high level : $bp_systolic/$bp_diastolic.</p><p>Please call 911 or Go to Urgent Care.</p>");
+						$this->emDebug("woops patient bp reading too dang high");
+						// $this->contactPatient($record_id, "Warning : Abnormal Blood Pressure Reading Detected", "<p>We received your blood pressure cuff data from Omron.</p><p>The reading is at a dangerously high level : $bp_systolic/$bp_diastolic.</p><p>Please call 911 or Go to Urgent Care.</p>");
 					}
 				}
 			
@@ -567,7 +568,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			'project_id'	=> $this->enabledProjects["patients"]["pid"],
 			'records' 		=> array($record_id),
 			'return_format' => 'json',
-			'fields'        => array("record_id", "filter", "patient_bp_target_systolic", "patient_bp_target_diastolic", "patient_bp_target_pulse","current_treatment_plan_id", "patient_treatment_status", "last_update_ts"),
+			'fields'        => array("record_id", "filter", "patient_bp_target_systolic", "patient_bp_target_diastolic", "patient_bp_target_pulse","current_treatment_plan_id", "patient_treatment_status", "patient_physician_id", "last_update_ts"),
 			'filterLogic' 	=> $filter
 		);
 		$q 					= \REDCap::getData($params);
@@ -576,21 +577,11 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 		$this->emDebug("the  patient", $patient);
 
-		//GET PATIENT TREE CHANGE STEPS TAKEN (not including the first step 0)
-		// $tree_filter  		= "[ptree_log_ts] != ''";
-		// $tree_params  		= array(
-		// 	"records"       => array($record_id),
-		// 	"fields"        => array("record_id", "ptree_log_ts", "ptree_log_prev_step" , "ptree_log_current_step", "ptree_current_meds", "ptree_log_comment"),
-		// 	'return_format' => 'json',
-		// 	'filterLogic'   => $tree_filter
-		// );
-		// $tree_raw         	= \REDCap::getData($tree_params);
-		// $tree_results     	= json_decode($tree_raw,1);
-
 		$target_pulse 		= $patient["patient_bp_target_pulse"];
 		$target_systolic 	= $patient["patient_bp_target_systolic"];
 		$target_diastolic 	= $patient["patient_bp_target_diastolic"];
 		
+		$provider_id 		= $patient["patient_physician_id"];
 		$current_tree 		= $patient["current_treatment_plan_id"];
 		$current_step 		= $patient["patient_treatment_status"]; 
 		$rec_step 			= $patient["patient_rec_tree_step"];
@@ -645,23 +636,71 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$this->emDebug("systolic_mean / target_systolic / sys_uncontrolled / current step" ,$systolic, $systolic_mean,  $target_systolic, $sys_uncontrolled, $current_step);
 			$this->emDebug("current dash filter" , $dash_filter);
 			if(!empty($systolic) && $sys_uncontrolled){
-				$treelogic 				= $this->tree->treeLogic(1);
+				$provider_trees 		= $this->tree->treeLogic($provider_id);
+				$treelogic 				= $provider_trees[$current_tree];
+
 				$current_tree_step 		= $treelogic["logicTree"][$current_step];
-				$uncontrolled_next_step = $current_tree_step["bp_status"]["Uncontrolled"];
-				$this->emDebug("rx change recommendation, Use current tree, find the uncontrolled next step", $current_tree_step, $treelogic["logicTree"][$uncontrolled_next_step]);
 				
+				$uncontrolled_next_step 		= array_key_exists("Uncontrolled", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled"] : null;
+				$uncontrolled_Kplus_next_step 	= array_key_exists("Uncontrolled, K > 4.5", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled, K > 4.5"] : null;
+				$uncontrolled_Kminus_next_step 	= array_key_exists("Uncontrolled, K < 4.5", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled, K < 4.5"] : null;
+				
+				$cr_sideeffect 			= $current_tree_step["side_effects"]["elevated_cr"];
+
+				//NEED TO CHECK IF THIS STEP HAS AN "elevated_cr" Side FX or a "K < or K >" check
+				$this->emDebug("rx change recommendation, Use current tree, find the uncontrolled next step", $current_tree_step, $uncontrolled_next_step);
+				$this->emDebug("BUT BEFORE THAT NEED TO CHECK FOR cr or K", $current_tree_step, $uncontrolled_next_step, $cr_sideeffect);
+
 				//TODO PULL IN TREE INFO AND SEE WHAT NEXT STEP IS FOR "uncontrolled"
 				$current_update_ts		= date("Y-m-d H:i:s");
-				
-				// Recommended RX change
+				$lab_values 			= array();
+				$need_lab 				= false;
+
+				if(!$uncontrolled_next_step || is_int($cr_sideffect)){ 
+					//UNCONTROLLED STEP HAS A LAB CHECK (K) OR a POSSIBLE ELEVATED CR Side EFFECT
+					//NEED RECENT LABS ( 2 weeks )
+
+					$filter = "[lab_ts] > '" . date("n/j/y", strtotime('-4 weeks')) . "'";
+					$params	= array(
+						'project_id'	=> $this->enabledProjects["patients"]["pid"],
+						'records' 		=> array($record_id),
+						'return_format' => 'json',
+						'fields'        => array("record_id", "lab_name", "lab_value", "lab_ts"),
+						'filterLogic' 	=> $filter
+					);
+					$q 		= \REDCap::getData($params);
+					$labs	= json_decode($q, true);
+					if(!empty($labs)){
+						foreach($labs as $lab){
+							$lab_values[$lab["lab_name"]] = $lab["lab_value"];
+						}
+					}
+					$this->emDebug("recent labs needed foo!", $lab_values);
+
+					if(!$uncontrolled_next_step){
+						//if not normal "uncontrolled", then it has a K check
+						//then set the uncontrolled_next_step
+						$this->emdebug("this is K check step, if have K, then use that as recommended step");
+						if(isset($lab_values["k"])){
+							$uncontrolled_next_step = $lab_values["k"] > 4.5 ? $uncontrolled_Kplus_next_step : $uncontrolled_Kminus_next_step;
+						}else{
+							$need_lab = true;
+						}
+ 					}
+					
+					if(is_int($cr_sideffect) && !isset($lab_values["cr"])){
+						$need_lab = true;
+					}
+				}
+
+				$filter_tag = $need_lab ? "labs_needed" : "rx_change";
 				$data = array(
 					"record_id"             	=> $record_id,
 					"patient_rec_tree_step" 	=> $uncontrolled_next_step,
 					"last_update_ts"			=> $current_update_ts,
-					"filter"      				=> "rx_change",
+					"filter"      				=> $filter_tag,
 				);
-				$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)) );
-				$this->emDebug("for saves too?" , $r);
+				$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
 			}
 		}
 
