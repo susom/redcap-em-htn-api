@@ -60,6 +60,13 @@ if(!empty($_POST)){
             $result     = $module->getPatientDetails($record_id);
         break;
 
+        case "delete_patient":
+            //refresh dashboard INTF
+            $record_id  = $_POST["record_id"] ?? null;
+            $result     = $module->flagPatientForDeletion($record_id);
+        break;
+
+
         case "example_in_data_var":
             //refresh dashboard INTF
             $upcscan        = $_POST["upcscan"] ?? null;

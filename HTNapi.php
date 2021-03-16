@@ -97,6 +97,15 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		return $this->dashboard->getProvider($provider_id);
 	}
 
+
+	public function flagPatientForDeletion($patient_record_id){
+		$this->loadEM();
+
+		return $this->dashboard->flagPatientForDeletion($patient_record_id);
+	}
+
+
+
 	//EDIT LAB READING
 	public function updateLabReading($record_id, $lab, $reading){
 		$this->loadEM();

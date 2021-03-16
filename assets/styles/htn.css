@@ -329,11 +329,16 @@ label + em{
     position:absolute;
     top:0;
 }
-.edit_patient{
+.edit_patient, .delete_patient{
     position:absolute;
     top:0;
     right:15px;
     padding-left:25px;
+}
+.delete_patient{
+    right:80px;
+    width:20px; 
+    height:20px; 
 }
 .add_photo{
     width:185px; height:185px; line-height:185px;

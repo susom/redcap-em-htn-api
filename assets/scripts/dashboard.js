@@ -63,7 +63,6 @@ dashboard.prototype.refreshData = function(){
         data: { "action" : "refresh" , "record_id" : record_id},
         dataType: 'json'
     }).done(function (result) {
-        console.log("refreshed data");
         _this.intf = result;
         _this.updateOverview();
         // _this.updateAlerts();
@@ -315,14 +314,6 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         console.log("patient info", patient);
 
 
-
-
-
-
-
-
-
-
         tpl.find(".dob").text(patient["patient_birthday"]);
         tpl.find(".age").text(patient["patient_age"]);
         tpl.find(".sex").text(patient["sex"]);
@@ -385,6 +376,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         tpl.find(".patient_profile figcaption").text(patient["patient_fname"] + " " + patient["patient_mname"] + " " + patient["patient_lname"]);
         
         tpl.find(".edit_patient").attr("href", _this["edit_patient"]).data("patient",patient["record_id"]);
+        tpl.find(".delete_patient").data("patient",patient["record_id"]).data("patient_name",patient["patient_fname"] + " " + patient["patient_mname"] + " " + patient["patient_lname"]);
 
         tpl.find(".nav-link").click(function(e){
             e.preventDefault();
@@ -408,6 +400,30 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         tpl.find(".edit_patient").click(function(e){
             e.preventDefault();
             location.href=$(this).attr("href")+"&patient="+$(this).data("patient");
+        });
+
+        tpl.find(".delete_patient").click(function(e){
+            e.preventDefault();
+            if (window.confirm("Please confirm deletion of patient [" + $(this).data("patient_name") +"]" )) {
+                //AJAX motherfucker 
+                $.ajax({
+                    url : _this["ajax_endpoint"],
+                    method: 'POST',
+                    data: { "action" : "delete_patient" , "record_id" : $(this).data("patient")},
+                    dataType: 'json'
+                }).done(function (result) {
+                    if(!result["errors"].length){
+                        //NEED TO IMMEDIELTY REFRESH DASHBOARD NOW!
+                        _this.refreshData();
+
+                        $("#patient_details").empty().addClass("none_selected").addClass("bg-light").addClass("rounded");
+                        var tpl = $("<h1>No Patient Selected</h1>");
+                        $("#patient_details").append(tpl);
+                    }
+                }).fail(function () {
+                    console.log("something failed");
+                });
+            }
         });
 
         tpl.find(".cr_reading").change(function(e){

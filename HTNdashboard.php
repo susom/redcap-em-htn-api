@@ -47,7 +47,7 @@ class HTNdashboard {
     public function getAllPatients($provider_id){
         // $this->getProviderbyId($provider_id)
 
-        $filter	= "[patient_physician_id] = '$provider_id'";
+        $filter	= "[patient_physician_id] = '$provider_id' && ([patient_remove_flag] = '' || [patient_remove_flag] = 0)";
         $fields	= array("record_id", "patient_fname", "patient_lname" , "patient_birthday", "sex", "patient_photo", "filter");
 		$params	= array(
             'project_id'    => $this->patients_project,
@@ -688,6 +688,15 @@ class HTNdashboard {
 
         $r    = \REDCap::saveData($this->patients_project, 'json', json_encode(array($data)) );
         $this->module->emDebug("patient added or edited or what?", $r, $data);
+        return $r;
+    }
+
+    public function flagPatientForDeletion($record_id){
+        $data   = array(
+            "record_id"             => $record_id,
+            "patient_remove_flag"   => 1
+        );
+        $r      = \REDCap::saveData($this->patients_project, 'json', json_encode(array($data)) );
         return $r;
     }
 

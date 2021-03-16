@@ -352,7 +352,11 @@ var patient_details = `
                     <figure><img src='' class="rounded-circle"/></figure>
                     <figcaption class='h1'></figcaption>
                 </fig>
-                <a href="#" class="edit_patient float-right">Edit</a>
+                <div class="float-right">
+                    <a href="#" class="edit_patient ">Edit</a>
+                    <a href="#" class="delete_patient "></a>
+                </div>
+                
             </div>
 
             <div class="patient_details row mb-5">

@@ -42,6 +42,10 @@
         background:url(<?= $module->getUrl('assets/images/icon_edit.png', true, true) ?>) no-repeat;
         background-size:20px 20px;
     }
+    .delete_patient{
+        background:url(<?= $module->getUrl('assets/images/icon_trash.png', true, true) ?>) 50% no-repeat;
+        background-size:contain;
+    }
 
     .patient_status b{
         display:inline-block;
