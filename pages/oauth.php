@@ -5,6 +5,14 @@ namespace Stanford\HTNapi;
 //Build the OMRON generic OAUTH URL
 $record_id      = $_REQUEST["state"] ?? null;
 $oauth_url      = $module->getOAUTHurl($record_id);
+
+$client_id      = $module->getProjectSetting("omron-client-id");
+$oauth_url      = $module->getProjectSetting("omron-auth-url");
+$oauth_postback = $module->getProjectSetting("omron-postback");
+$oauth_scope    = $module->getProjectSetting("omron-auth-scope");
+
+$hmm = $module->getOAUTHurl(1);
+$module->emDebug("oauth_url", $oauth_url, $hmm);
 ?>
 <html lang="en" >
 <head>
