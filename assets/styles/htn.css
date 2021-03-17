@@ -433,7 +433,7 @@ section h3{
 }
 #filters.hide,
 .hide{
-    /* display:none; */
+    display:none;
 }
 
 .recommendation .accept .btn{

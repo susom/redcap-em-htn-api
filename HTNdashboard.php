@@ -48,7 +48,7 @@ class HTNdashboard {
         // $this->getProviderbyId($provider_id)
 
         $filter	= "[patient_physician_id] = '$provider_id' && ([patient_remove_flag] = '' || [patient_remove_flag] = 0)";
-        $fields	= array("record_id", "patient_fname", "patient_lname" , "patient_birthday", "sex", "patient_photo", "filter");
+        $fields	= array("record_id", "patient_fname", "patient_lname" , "patient_email", "patient_birthday", "sex", "patient_photo", "filter");
 		$params	= array(
             'project_id'    => $this->patients_project,
 			'return_format' => 'json',
@@ -57,6 +57,7 @@ class HTNdashboard {
 		);
 		$q 			= \REDCap::getData($params);
         $results 	= json_decode($q, true);
+        $this->module->emDebug("what the fuck ", $results);
         
         $patients       = array();
         $rx_change      = array();
@@ -77,11 +78,12 @@ class HTNdashboard {
                 $years          = floor($diff / (365*60*60*24));
                 $result["age"]  = "$years yrs old";
             }
+            if(!empty($result["patient_email"]) ){
+                $result["patient_name"]     = $result["patient_email"] ;
+            }
             if(!empty($result["patient_lname"]) && !empty($result["patient_fname"])){
                 $result["patient_name"]     = $result["patient_lname"] . ", " . $result["patient_fname"] . " " . substr($result["patient_mname"],0,1);
             }
-
-            
 
             if(!empty($result["redcap_repeat_instrument"])){
                 if($result["message_read"]){
@@ -639,12 +641,8 @@ class HTNdashboard {
     public function addPatient($post){
         $script_fieldnames = $this->module->getPatientBaselineFields(); //\REDCap::getFieldNames("patient_baseline");
         $required = array(
-            "current_treatment_plan_id"
-            ,"patient_fname"
-            ,"patient_lname"
-            ,"patient_mrn"
+             "patient_mrn"
             ,"patient_email"
-            ,"patient_phone"
             ,"patient_bp_target_systolic"
             ,"patient_bp_target_diastolic"
             ,"patient_bp_target_pulse"
@@ -682,7 +680,7 @@ class HTNdashboard {
             $data["patient_treatment_status"]   = 0; //always start with the first step of whatever tree
             $data["patient_add_ts"]             = Date("Y-m-d H:i:s"); //always start with the first step of whatever tree
         }
-        $data["current_treatment_plan_id"]  = !empty($post["current_treatment_plan_id"]) ? $post["current_treatment_plan_id"] : 1;
+        $data["current_treatment_plan_id"]  = 1; //default to 1
         $next_id                            = !empty($post["record_id"]) ? $post["record_id"] : $this->module->getNextAvailableRecordId($this->patients_project);
         $data["record_id"]                  = $next_id;
 
