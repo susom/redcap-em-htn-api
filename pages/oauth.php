@@ -33,7 +33,7 @@ $oauth_url      = $module->getOAUTHurl($record_id);
         .container{
             width:100%; 
             margin:0 auto;
-            padding:20px; 
+            padding:20px 0; 
             overflow:hidden;
         }
         #main { margin-bottom:55px; }
@@ -47,6 +47,10 @@ $oauth_url      = $module->getOAUTHurl($record_id);
             border-right:1px solid #fff;
             padding-right:20px;
             margin-right:20px; 
+            margin-left:20px;
+        }
+        copyright{
+            margin-left:20px;
         }
         .heartex_logo{
             float:left;
