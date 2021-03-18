@@ -57,7 +57,6 @@ class HTNdashboard {
 		);
 		$q 			= \REDCap::getData($params);
         $results 	= json_decode($q, true);
-        $this->module->emDebug("what the fuck ", $results);
         
         $patients       = array();
         $rx_change      = array();

@@ -31,7 +31,7 @@ $oauth_url      = $module->getOAUTHurl($record_id);
             color:#fff;
         }
         .container{
-            width:1140px; 
+            width:100%; 
             margin:0 auto;
             padding:20px; 
             overflow:hidden;
@@ -58,11 +58,13 @@ $oauth_url      = $module->getOAUTHurl($record_id);
 
         .well{
             width:50%;
+            min-width:320px;
+            max-width:640px; 
             margin:0 auto;
             border-radius:3px;
             border:1px solid #ddd;
             margin-top:50px; 
-            padding-bottom:40px; 
+            padding-bottom:40px;  
         }
 
         .well h3{
@@ -88,6 +90,7 @@ $oauth_url      = $module->getOAUTHurl($record_id);
             border-radius:3px;
             color:#fff; 
             text-decoration:none; 
+            text-align:center;
         }
     </style>
 </head>
@@ -101,7 +104,7 @@ $oauth_url      = $module->getOAUTHurl($record_id);
     </header>
     <div id="main">
         <div class="container">
-            <div class="well">
+            <div class="well col-sm-6 offset-sm-3">
                 <h3>Omron + Heartex Study : Data Use Authorization</h3>
                 <?php
                     if($record_id){

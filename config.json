@@ -78,7 +78,8 @@
 		"pages/tree_view",
 		"pages/provider",
 		"pages/reset_password",
-		"pages/treatment_plans"
+		"pages/treatment_plans",
+		"pages/refresh_session"
 	],
 
 	"project-settings": [
