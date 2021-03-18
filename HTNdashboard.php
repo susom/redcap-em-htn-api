@@ -337,6 +337,7 @@ class HTNdashboard {
             ,"provider_fname"
             ,"provider_lname"
             ,"provider_profession"
+            ,"provider_cell"
         );
 
         $_POST          = $post;

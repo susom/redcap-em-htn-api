@@ -38,6 +38,7 @@ $employer_city      = $provider["employer_city"];
 $employer_state     = $provider["employer_state"];
 $employer_zip       = $provider["employer_zip"];
 $employer_phone     = $provider["employer_phone"];
+$provider_cell      = $provider["provider_cell"];
 $employer_med_dispense  = $provider["employer_med_dispense"];
 $provider_profession    = null;
 for($i=1; $i<11; $i++){
@@ -142,10 +143,6 @@ $page = "login_reg";
                                     <input class="form-check-input" <?= ($provider_profession == 9) ? "checked" : "" ?> type="checkbox" value="9" name="provider_profession" id="defaultCheck8">
                                     <label class="form-check-label" for="defaultCheck1">Researcher</label>
                                 </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" <?= ($provider_profession == 10) ? "checked" : "" ?> type="checkbox" value="10" name="provider_profession" id="defaultCheck9">
-                                    <label class="form-check-label" for="defaultCheck1">Other</label>
-                                </div>
                             </div>
                         </aside>
 
@@ -166,6 +163,10 @@ $page = "login_reg";
                             <div class="form-group row">
                                 <label for="exampleInputEmail1" class="col-md-6">Date of Birth<span>*</span></label>
                                 <input type="text" class="form-control col-md-5" id="provider_dob" name="provider_dob" placeholder="MM/DD/YYYY" value="<?=$provider_dob?>">
+                            </div>
+                            <div class="form-group row">
+                                <label for="exampleInputEmail1" class="col-md-6">Cell Number<span>*</span></label>
+                                <input type="text" class="form-control col-md-5" id="provider_cell" name="provider_cell" placeholder="5553339999" value="<?=$provider_cell?>">
                             </div>
                         </aside>
 

@@ -146,10 +146,6 @@ $page = "login_reg";
                                     <input class="form-check-input" type="radio" <?=$provider_profession_9?> value="9" name="provider_profession" id="defaultCheck8">
                                     <label class="form-check-label" for="defaultCheck1">Researcher</label>
                                 </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" <?=$provider_profession_10?> value="10" name="provider_profession" id="defaultCheck9">
-                                    <label class="form-check-label" for="defaultCheck1">Other</label>
-                                </div>
                             </div>
                         </aside>
 
@@ -166,6 +162,10 @@ $page = "login_reg";
                             <div class="form-group row">
                                 <label for="exampleInputEmail1" class="col-md-6">Last Name<span>*</span></label>
                                 <input type="text" class="form-control col-md-5" id="provider_lname" name="provider_lname" placeholder="Last Name" value="<?=$provider["provider_lname"]?>">
+                            </div>
+                            <div class="form-group row">
+                                <label for="exampleInputEmail1" class="col-md-6">Cell Number (for text alerts)<span>*</span></label>
+                                <input type="text" class="form-control col-md-5" id="provider_cell" name="provider_cell" placeholder="" value="<?=$provider["provider_cell"]?>">
                             </div>
                         </aside>
 
