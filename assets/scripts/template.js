@@ -448,7 +448,7 @@ var patient_details = `
             </section>
 
             <section class="presription_tree">
-                <h3 class="text-center p-3">Prescription Log</h3>
+                <h3 class="text-center p-3">Medication Log</h3>
                 <div class="content bg-light mh-10 mx-1">
                     
                 </div>
@@ -461,6 +461,13 @@ var patient_details = `
                     <div class="instep" style="text-align: center; padding: 0px 20px 20px;">
                         <button id="run_bp_eval" class="btn btn-info btn-large">Manually Execute BP Data Eval</button>
                     </div>
+                </div>
+            </section>
+
+            <section class="recs_log">
+                <h3 class="text-center p-3">Recommendations Log</h3>
+                <div class="content bg-light p-3 pb-5 rounded">
+                    
                 </div>
             </section>
         </div>
@@ -525,12 +532,40 @@ var patient_details = `
     </div>
 `;
 
+var rec_log_step = `
+    <div class="rec_log row col-sm-10 offset-sm-1 px-0 mt-3 border rounded">
+        <div class="col-sm-8 border-right">
+            <h4 class="pt-2">Notes</h4>
+            <div class="rec_summaries">
+            
+            </div>
+        </div>
+        <div class="col-sm-4 pr-0 row">
+            <div class="col-sm-12 border-bottom rec_status">
+                <h5>Status</h5>
+                <b></b>
+            </div>
+            <div class="col-sm-12 border-bottom rec_action">
+                <h5>Action</h5>
+                <b></b>
+            </div>
+            <div class="col-sm-12 rec_ts">
+                <h5>Date Generated</h5>
+                <b></b>
+            </div>
+        </div>
+    </div>
+`;
+
 var tree_log_step = `
     <div class="step">
         <div class="instep">
             <ul>
                 <li class="ts"><h5></h5><em></em></li>
-                <li class="meds"><em>Meds</em><h6></h6></li>
+                <li class="meds">
+                    <div><em>Meds</em><h6></h6></div>
+                    <div class="intolerances"><em>Intolerances : </em><span></span></div>
+                </li>
                 <li class="note">Note</li>
                 <p class="comment"><b>Notes:</b> <span></span></p>
             </ul>
@@ -559,7 +594,7 @@ var recommendation = `
         <textarea id="provider_comment" placeholder="Provider Comments"></textarea>
         <div class="send_to_pharmacy btns pt-4 pb-2">
             <button class="btn btn-danger decline_rec">Decline</button>
-            <button class="btn btn-info send_and_accept">Accept & Send to <span>Pharmacist</span></button>
+            <button class="btn btn-info send_and_accept">Accept Recommendation</button>
         </div>
     </section>
     </div>

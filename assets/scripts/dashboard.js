@@ -489,6 +489,12 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             log_step.find(".ts em").html(ts_temp[1]);
             log_step.find(".meds h6").html(log["ptree_current_meds"]);
             
+            if(log.hasOwnProperty("ptree_step_intolerances") && log["ptree_step_intolerances"].length){
+                log_step.find(".intolerances span").html(log["ptree_step_intolerances "]);
+            }else{
+                log_step.find(".intolerances").remove();
+            }
+
             if(log.hasOwnProperty("ptree_log_comment") && log["ptree_log_comment"].length){
                 log_step.find(".comment span").html(log["ptree_log_comment"]);
                 log_step.find(".comment").hide();
@@ -516,6 +522,41 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         });
         tpl.find(".presription_tree .content").append(log_step);
 
+        //REC LOG
+        tpl.find(".recs_log .content").empty();
+        var rec_logs = patient["rec_logs"];
+        if(rec_logs.length){
+            for(var i in rec_logs){
+                var rec_log     = rec_logs[i];
+                var log_step    = $(rec_log_step);
+
+                var cur_drugs       = rec_log["cur_drugs"];
+                var rec_drugs       = rec_log["rec_drugs"];
+                var bp_units        = rec_log["bp_units"];
+                var mean_systolic   = rec_log["mean_systolic"];
+                var target_systolic = rec_log["target_systolic"];
+                var diff_systolic   = mean_systolic - target_systolic;
+                var rec_status      = rec_log["rec_status"]; //Accepted / No change
+                var rec_action      = rec_log["rec_action"]; //Sent to Pharmacy / None
+                var rec_ts          = rec_log["rec_ts"];
+
+                var rec_p = $("<p>").addClass("summary").html(patient["patient_fname"]+"'s mean systolic reading over the last 2 weeks was <b>"+mean_systolic+bp_units+"</b>. " + diff_systolic + bp_units + " over their goal of <b>" + target_systolic + bp_units + "</b>.");
+                log_step.find(".rec_summaries").append(rec_p);
+                var rec_p = $("<p>").addClass("summary").html(patient["patient_fname"] + " is currently taking <b>" +cur_drugs + "</b>.  It is recommended that they move on to next step and use the new course of medications : <b>"+rec_drugs+"</b>");
+                log_step.find(".rec_summaries").append(rec_p);
+
+                log_step.find(".rec_status b").append(rec_status);
+                log_step.find(".rec_action b").append(rec_action);
+                log_step.find(".rec_ts b").append(rec_ts);
+
+                tpl.find(".recs_log .content").append(log_step);
+            }
+        }else{
+            var none_msg = $("<em>").addClass("none_msg").text("No recommendations have been generated yet.");
+            tpl.find(".recs_log .content").append(none_msg);
+        }
+        
+   
 
         //BP READINGS GRAPH
         if(patient["bp_readings"].length){

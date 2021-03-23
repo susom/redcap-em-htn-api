@@ -262,6 +262,35 @@ class HTNdashboard {
             $tree_results     = json_decode($tree_raw,1);
             // $this->module->emDebug("tree log", $tree_results);
             $result["tree_log"] = $tree_results;
+
+            //GET PATIENT RECOMMENDATION LOGS WHETHER STEP TAKEN OR NOT
+            $tree_filter  = "[rec_ts] != ''";
+            $tree_params  = array(
+                'project_id'    => $this->patients_project,
+                "records"       => array($result["record_id"]),
+                "fields"        => array("record_id", "rec_ts", "rec_accepted" , "rec_current_meds", "rec_meds", "rec_status", "rec_mean_systolic"),
+                'return_format' => 'json',
+                'filterLogic'   => $tree_filter
+            );
+            $rec_raw            = \REDCap::getData($tree_params);
+            $rec_results        = json_decode($rec_raw,1);
+            
+            $pretty_rec_logs    = array();
+            $bp_units           = isset($result["bp_readings"][0]) ? $result["bp_readings"][0]["bp_units"] : "mmHg";
+            $target_systolic    = $result["patient_bp_target_systolic"];
+            foreach($rec_results as $rec_result){
+                array_push($pretty_rec_logs, array(
+                    "cur_drugs"    => $rec_result["rec_current_meds"]
+                   ,"rec_drugs"    => $rec_result["rec_meds"]
+                   ,"bp_units"     => $bp_units 
+                   ,"rec_status"   => empty($rec_result["rec_accepted"]) ? "No Change" : "Accepted"
+                   ,"rec_action"   => empty($rec_result["rec_accepted"]) ? "None" : "Sent to Pharmacy??"
+                   ,"rec_ts"       => $rec_result["rec_ts"]
+                   ,"mean_systolic"    => $rec_result["rec_mean_systolic"]
+                   ,"target_systolic"  => $target_systolic
+                ));
+            }
+            $result["rec_logs"] = $pretty_rec_logs;
         }
         // $this->module->emDebug("patient_detail", $result);
         return $result;
@@ -646,6 +675,7 @@ class HTNdashboard {
             ,"patient_bp_target_systolic"
             ,"patient_bp_target_diastolic"
             ,"patient_bp_target_pulse"
+            ,"current_treatment_plan_id"
         );
 
 
@@ -711,4 +741,4 @@ class HTNdashboard {
         }
     }
 }
-?>
+?> 

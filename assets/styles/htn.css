@@ -436,6 +436,31 @@ section h3{
     display:none;
 }
 
+.recs_log .content{
+    color: #a65c43;
+    font-size: 85%;
+    line-height: 108%;
+}
+
+.rec_log h4, .rec_log h5{
+    color:#435F72;
+    font-family:inherit; 
+    font-size:92%;
+    margin:5px 0 ; 
+}
+.rec_log h5{
+    font-weight:normal;
+}
+.rec_status, .rec_action, .rec_ts{
+    margin-left: 8px;
+}
+.none_msg{
+    display:block;
+    text-align:center;
+    color:#ccc;
+    padding:20px;
+}
+
 .recommendation .accept .btn{
     font-size:77%;
 }
@@ -546,10 +571,13 @@ i.email.sent{
     padding:0 20px;
     position:relative;
 }
-.step li em{
+.step li em, .step li span{
     color:#bbb; 
     font-style:normal; 
     font-size:77%
+}
+.step li span{
+    color:#333;
 }
 .step li h5, .step li h6{
     font-family:inherit;

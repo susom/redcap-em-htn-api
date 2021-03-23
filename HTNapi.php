@@ -675,7 +675,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 							$lab_values[$lab["lab_name"]] = $lab["lab_value"];
 						}
 					}
-					$this->emDebug("recent labs needed foo!", $lab_values);
+					// $this->emDebug("recent labs needed foo!", $lab_values);
 
 					if(!$uncontrolled_next_step){
 						//if not normal "uncontrolled", then it has a K check
@@ -701,6 +701,27 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 					"filter"      				=> $filter_tag,
 				);
 				$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
+			
+				//SAVE THE RECOMMENDATION STEP WHETHER IT WILL BE ACCEPTED OR NOT
+				if($filter_tag == "rx_change"){
+					$current_meds 	= implode(", ",$current_tree_step["drugs"]);
+					$next_tree_step = $treelogic["logicTree"][$uncontrolled_next_step];
+					$rec_meds 		= implode(", ",$next_tree_step["drugs"]);
+
+					$next_instance_id 				= $this->getNextInstanceId($record_id, "recommendations_log", "rec_ts");
+					$data = array(
+						"record_id"             	=> $record_id,
+						"redcap_repeat_instance" 	=> $next_instance_id,
+						"redcap_repeat_instrument" 	=> "recommendations_log",
+						"rec_current_meds" 			=> $current_meds,
+						"rec_meds" 					=> $rec_meds,
+						"rec_accepted"				=> 0,
+						"rec_mean_systolic"			=> $systolic_mean,
+						"rec_ts"					=> $current_update_ts
+					);
+					$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
+					// $this->emDebug("store a recommendation log!",  $data);
+				}
 			}
 		}
 

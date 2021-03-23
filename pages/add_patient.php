@@ -25,7 +25,7 @@ if(!empty($_POST)){
         break;
 
         case "add":
-
+            
         break;
 
         default :
@@ -74,7 +74,7 @@ $pharmacy_info      = $patient["pharmacy_info"] == "pharmacy n/a" ? "" : $patien
 
 
 $add_edit_btn_text  = !empty($patient) ? "Edit Patient $patient_fname's Data" : "Add New Patient";
-$action             = !empty($patient) ? "edit" : "add";
+$action             = !empty($patient) && empty($action) ? "edit" : "add";
 
 //First Get the Pre made DEFAULT Trees
 $default_trees  = $module->getDefaultTrees();
@@ -126,6 +126,20 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                             echo "<div class='col-sm-12 alert alert-".$greenred."'>".$msg."</div>";
                                         }
                                     ?>
+                                    <div class="form-group col-sm-12 mb-5">
+                                        <h3 >Patient Prescription Tree</h3>
+                                        <p class="text-muted lead small">When adding a new patient, please start them off with a preselected Prescription Tree</p>
+
+                                        <select class="form-control" id="current_treatment_plan_id" name="current_treatment_plan_id">
+                                            <?php
+                                                foreach($default_trees as $idx => $ptree){
+                                                    $tree_id    = $ptree["tree_meta"]["record_id"];
+                                                    $selected   = $current_treatment_plan_id == $tree_id ? "selected" : "";
+                                                    echo "<option value='".$tree_id."' $selected>".$ptree["label"]."</option>";
+                                                }
+                                            ?>
+                                        </select>
+                                    </div>
                                     <fig class="patient_profile d-block mx-auto mb-3">
                                         <!-- <figure class="text-center "><a href="#" class="rounded-circle add_photo d-inline-block">Add Photo</a></figure> -->
                                         <figcaption class="col-sm-12 row">
@@ -163,23 +177,7 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                     </fig>
                                 </div>
                                 
-                                <div class="patient_details col-sm-10 offset-sm-1 mb-3 row <?= $action == "edit" ? "show" : "hide"?>">
-                                    <div class="form-group col-sm-12 mb-5">
-                                        <h3 >Patient Prescription Tree</h3>
-                                        <p class="text-muted lead small">When adding a new patient, please start them off with a preselected Prescription Tree</p>
-
-                                        <select class="form-control" id="current_treatment_plan_id" name="current_treatment_plan_id">
-                                            <option value="99">Select Prescription Tree</option>
-                                            <?php
-                                                foreach($default_trees as $idx => $ptree){
-                                                    $tree_id    = $ptree["tree_meta"]["record_id"];
-                                                    $selected   = $current_treatment_plan_id == $tree_id ? "selected" : "";
-                                                    echo "<option value='".$tree_id."' $selected>".$ptree["label"]."</option>";
-                                                }
-                                            ?>
-                                        </select>
-                                    </div>
-                                                
+                                <div class="patient_details col-sm-10 offset-sm-1 mb-3 row <?= $action == "edit" ? "show" : "hide"?>">            
                                     <h3 class="col-sm-12">Patient Details</h3>
                                     <em class="col-sm-12 mb-3">Much of this will be pulled and automatically refreshed from STARR/EPIC</em>
                                     <div class="form-group col-sm-4">
