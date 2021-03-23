@@ -321,7 +321,15 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         tpl.find(".height").text(patient["height"]);
         tpl.find(".bmi").text(patient["bmi"]);
         tpl.find(".demographic").text(patient["patient_group"]);
-        tpl.find(".comorbidity").text(patient["comorbidity"]);
+
+        var temp_comorbid = patient["comorbidity"].split(";");
+        var comorbid_list = [];
+        for(var i in temp_comorbid){
+            var cm = temp_comorbid[i];
+            comorbid_list.push("<li>"+cm.trim()+"</li>");
+        }
+
+        tpl.find(".comorbidity").html(comorbid_list.join("\r\n"));
         
         var need_CRK    = patient["crk_readings"].length ? false : true;
         if(!need_CRK){

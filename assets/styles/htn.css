@@ -366,7 +366,11 @@ label + em{
 }
 #patient_details dl dt { min-width:155px; vertical-align: top; }
 #patient_details dl dd { color:#a65c43; font-weight:bold; white-space: nowrap; }
-#patient_details dl dd i{ font-size:65%; }
+#patient_details dl dd i,
+#patient_details .comorbidity,
+#patient_details .pharmacy_info{
+    font-size:65%;
+}
 
 .none_selected h1{
     text-align:center;
