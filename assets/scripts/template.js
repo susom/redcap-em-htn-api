@@ -351,6 +351,7 @@ var patient_details = `
                 <fig class="patient_profile d-block text-center mx-auto">
                     <figure><img src='' class="rounded-circle"/></figure>
                     <figcaption class='h1'></figcaption>
+                    <figcaption class="contact"></figcaption>
                 </fig>
                 <div class="float-right">
                     <a href="#" class="edit_patient ">Edit</a>
@@ -448,7 +449,7 @@ var patient_details = `
             </section>
 
             <section class="presription_tree">
-                <h3 class="text-center p-3">Medication Log</h3>
+                <h3 class="text-center p-3">Medication Log <em>Current Tree : <b></b></em></h3>
                 <div class="content bg-light mh-10 mx-1">
                     
                 </div>

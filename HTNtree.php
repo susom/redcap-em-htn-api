@@ -393,7 +393,7 @@ class HTNtree  {
     public function getDrugList(){
         return array(
             
-            "ACEI" => array("label" => "ACE Inhibtor" , "drugs" => array(
+            "ACEI" => array("label" => "ACE Inhibitor" , "drugs" => array(
                      array( "name" => "Lisinopril" , "unit" => "mg" , "common_dosage" => array(10,20,30,40) , "note" => "" )
                     ,array( "name" => "Benazaril" , "unit" => "mg" , "common_dosage" => array(5,10,20,40) , "note" => "" )
                     ,array( "name" => "Fosinopril" , "unit" => "mg" , "common_dosage" => array(10,20,40) , "note" => "" )

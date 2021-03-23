@@ -534,6 +534,12 @@ i.email.sent{
     color:red;
 }
 
+.presription_tree h3 em{
+    display: block;
+    color: #666;
+    font-style: normal;
+    font-size: 65%;
+}
 
 .step {
     padding-left:30px;

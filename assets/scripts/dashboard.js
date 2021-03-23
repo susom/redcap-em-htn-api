@@ -373,8 +373,8 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         tpl.find(".diastolic_goal span").text(patient["patient_bp_target_diastolic"]);
 
         tpl.find(".patient_profile img").attr("src",this.anon_profile_src);
-        tpl.find(".patient_profile figcaption").text(patient["patient_fname"] + " " + patient["patient_mname"] + " " + patient["patient_lname"]);
-        
+        tpl.find(".patient_profile figcaption.h1").text(patient["patient_fname"] + " " + patient["patient_mname"] + " " + patient["patient_lname"]);
+        tpl.find(".patient_profile figcaption.contact").html("<b>Email:</b> " + patient["patient_email"] + " <span class='mx-2'>|</span> <b>Cel:</b> " + patient["patient_phone"])
         tpl.find(".edit_patient").attr("href", _this["edit_patient"]).data("patient",patient["record_id"]);
         tpl.find(".delete_patient").data("patient",patient["record_id"]).data("patient_name",patient["patient_fname"] + " " + patient["patient_mname"] + " " + patient["patient_lname"]);
 
@@ -520,6 +520,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             e.preventDefault();
             location.href = _this["ptree_url"]+"&patient="+record_id;
         });
+        tpl.find(".presription_tree h3 em b").text(this.intf["ptree"][patient_tree_id]["label"]);
         tpl.find(".presription_tree .content").append(log_step);
 
         //REC LOG
