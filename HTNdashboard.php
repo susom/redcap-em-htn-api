@@ -178,6 +178,7 @@ class HTNdashboard {
                         ,"pharmacy_info"
                         ,"patient_email"
                         ,"omron_client_id"
+                        ,"omron_auth_request_ts"
                        );
         $params = array(
             'project_id'    => $this->patients_project,

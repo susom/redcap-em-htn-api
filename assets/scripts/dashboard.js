@@ -339,9 +339,12 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
         var cuff_type   = patient["bp_readings"].length ? "<b>" + patient["bp_readings"][0]["bp_device_type"] + "</b>" : "N/A";
         if(patient["omron_client_id"] == ""){
-            var emaillink = $("<i>").text("Request Data Authorization");
+            var request_auth_text = patient["omron_auth_request_ts"] != "" ? "Authorization Request Sent, Send Again?" : "Request Data Authorization";
+            var emaillink = $("<i>").text(request_auth_text);
             emaillink.addClass("email");
             emaillink.click(function(e){
+                $(this).text("Sending Authorization Request ...");
+                
                 e.preventDefault();
                 var _el = $(this);
                 $.ajax({
@@ -350,10 +353,11 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                     data: { "action" : "sendAuth", "patient" : patient},
                     dataType: 'json'
                 }).done(function (result) {
-                    console.log("whats wrong now?", result);
                     if(result){
-                        _el.addClass("sent");
-                        _el.text("Authorization Request Sent");
+                        setTimeout(function(){
+                            _el.addClass("sent");
+                            _el.text("Authorization Request Sent, Send Again?");
+                        }, 1000);
                     }else{
                         _el.text("Error - Try Clicking Again");
                     }

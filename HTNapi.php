@@ -298,6 +298,14 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$fromName	= "Stanford Hypertension Study Team";
 
 			$result = \REDCap::email($to, $from, $subject, $message);
+			if($result){
+				$data = array(
+					"record_id" => $patient["record_id"],
+					"omron_auth_request_ts" => date("Y-m-d H:i:s")
+				);
+				$r = \REDCap::saveData("json", json_encode(array($data)) );
+			}
+			// $this->emDebug("emailing patient", $result,$this->enabledProjects["patients"]["pid"], $r);
 		}
 		return $result;
 	}
