@@ -196,7 +196,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			"ptree_log_ts"				=> Date("Y-m-d H:i:s")
 		);
 		$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data_log)) );
-		$this->emDebug("Saving the treatment step log?", $r, $data_log);
+		// $this->emDebug("Saving the treatment step log?", $data_log);
 
 		// update the shortcut data in patient baseline
 		$data = array(
@@ -208,8 +208,9 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		);
 		// TODO THIS timestamp IS WHEN THE LAST RECOMMENDATION WAS MADE or Accepted, DONT MAKE ANOTHER ONE FOR 2 WEEKS at LEAST 
 		$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
-		$this->emDebug("Accepting rx change", $r , $data);
+		// $this->emDebug("Accepting rx change", $data);
 
+		$this->updateRecLog($patient_details["record_id"], $patient_details["patient_rec_tree_step"]);
 		return array("rec saved");
 	}
 
@@ -223,7 +224,39 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			"filter" 					=> ''
 		);
 		$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
+		
+		$this->updateRecLog($patient_details["record_id"], $step_id, true);
 		return array("rec declined");
+	}
+
+	public function updateRecLog($record_id, $step_id , $reject=false){
+		$this->emDebug("updateing a recLog", $record_id, $step_id, $reject);
+		if(!empty($step_id)){
+			$fields = array("record_id", "rec_step");
+			$filter = "[rec_step] = $step_id and [record_id] = $record_id";
+			$params	= array(
+				'return_format' => 'json',
+				'fields'        => $fields,
+				'filterLogic'   => $filter 
+			);
+			$q 		= \REDCap::getData($params);
+			$rows 	= json_decode($q,1);			
+
+			foreach($rows as $row){
+				if($row["redcap_repeat_instrument"] == "recommendations_log"){
+					$instance_id = $row["redcap_repeat_instance"];
+					$temp = array(
+						"redcap_repeat_instance" 	=> $instance_id,
+						"redcap_repeat_instrument" 	=> "recommendations_log",
+						"record_id"             	=> $record_id,
+						"rec_accepted"           	=> ($reject ? "0" : "1"),
+					);
+					$data[] = $temp;
+					$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode($data) );
+					// $this->emDebug("accept/reject recommendtation", $data, $r);
+				}
+			}			
+		}
 	}
 
 	public function getPatientBaselineFields(){
@@ -234,7 +267,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 	public function sendToPharmacy($patient){
 		//TODO, FIGURE OUT PHARMACY API
-		$this->emDebug("SEND TO PHARMACY FOR patient", $patient);
+		$this->emDebug("SEND TO PHARMACY FOR patient, NONE FOR NOW, IRB ISSUES");
 		return;
 	}
 	public function verifyAccount($verification_email,$verification_token){
@@ -722,13 +755,14 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 						"redcap_repeat_instance" 	=> $next_instance_id,
 						"redcap_repeat_instrument" 	=> "recommendations_log",
 						"rec_current_meds" 			=> $current_meds,
+						"rec_step" 					=> $next_tree_step["step_id"],
 						"rec_meds" 					=> $rec_meds,
 						"rec_accepted"				=> 0,
 						"rec_mean_systolic"			=> $systolic_mean,
 						"rec_ts"					=> $current_update_ts
 					);
 					$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
-					// $this->emDebug("store a recommendation log!",  $data);
+					$this->emDebug("store a recommendation log!",  $data);
 				}
 			}
 		}
