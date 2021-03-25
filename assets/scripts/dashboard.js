@@ -386,7 +386,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
         tpl.find(".patient_profile img").attr("src",this.anon_profile_src);
         tpl.find(".patient_profile figcaption.h1").text(patient["patient_fname"] + " " + patient["patient_mname"] + " " + patient["patient_lname"]);
-        tpl.find(".patient_profile figcaption.contact").html("<b>Email:</b> " + patient["patient_email"] + " <span class='mx-2'>|</span> <b>Cel:</b> " + patient["patient_phone"])
+        tpl.find(".patient_profile figcaption.contact").html("<b>MRN:</b> " + patient["patient_mrn"] + " <span class='mx-2'>|</span> <b>Email:</b> " + patient["patient_email"] + " <span class='mx-2'>|</span> <b>Cel:</b> " + patient["patient_phone"])
         tpl.find(".edit_patient").attr("href", _this["edit_patient"]).data("patient",patient["record_id"]);
         tpl.find(".delete_patient").data("patient",patient["record_id"]).data("patient_name",patient["patient_fname"] + " " + patient["patient_mname"] + " " + patient["patient_lname"]);
 
@@ -550,10 +550,12 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                 var target_systolic = rec_log["target_systolic"];
                 var diff_systolic   = mean_systolic - target_systolic;
                 var rec_status      = rec_log["rec_status"]; //Accepted / No change
-                var rec_action      = rec_log["rec_action"]; //Sent to Pharmacy / None
+                var rec_action      = $("<btn>").addClass("btn").addClass("btn-secondary").addClass("btn-xs").text("Copy to Clipboard");//;rec_log["rec_action"]; //Sent to Pharmacy / None
                 var rec_ts          = rec_log["rec_ts"];
 
-                var rec_p = $("<p>").addClass("summary").html(patient["patient_fname"]+"'s mean systolic reading over the last 2 weeks was <b>"+mean_systolic+bp_units+"</b>. " + diff_systolic + bp_units + " over their goal of <b>" + target_systolic + bp_units + "</b>.");
+                var rec_p = $("<p>").addClass("summary").html("MRN : " + patient["patient_mrn"] + "\r\n<br>" + "Date: " + rec_ts +"\r\n");
+                log_step.find(".rec_summaries").append(rec_p);
+                var rec_p = $("<p>").addClass("summary").html(patient["patient_fname"]+"'s mean systolic reading over the last 2 weeks was <b>"+mean_systolic+bp_units+"</b>. " + diff_systolic + bp_units + " over their goal of <b>" + target_systolic + bp_units + "</b>."+"\r\n");
                 log_step.find(".rec_summaries").append(rec_p);
                 var rec_p = $("<p>").addClass("summary").html(patient["patient_fname"] + " is currently taking <b>" +cur_drugs + "</b>.  It is recommended that they move on to next step and use the new course of medications : <b>"+rec_drugs+"</b>");
                 log_step.find(".rec_summaries").append(rec_p);
@@ -561,6 +563,12 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                 log_step.find(".rec_status b").append(rec_status);
                 log_step.find(".rec_action b").append(rec_action);
                 log_step.find(".rec_ts b").append(rec_ts);
+
+                rec_action.data("cptext",log_step.find(".rec_summaries").text());
+                rec_action.click(function(){
+                    let cptext = $(this).data("cptext");
+                    copyToClipboard(cptext);
+                });
 
                 tpl.find(".recs_log .content").append(log_step);
             }
@@ -823,4 +831,15 @@ dashboard.prototype.graphBpData = function(){
             }
         });
     },500);
+}
+
+function copyToClipboard(text) {
+    var dummy = document.createElement("textarea");
+    document.body.appendChild(dummy);
+    dummy.value = text;
+    dummy.style.position = 'absolute';
+    dummy.style.left = '-9999px';
+    dummy.select();
+    document.execCommand("copy");
+    document.body.removeChild(dummy);
 }

@@ -29,6 +29,12 @@ nav .dropdown-toggle::after{
     width: 170px;
     height: 39px;
 }
+
+.btn-xs { padding: .25rem .5rem;
+    font-size: .5rem;
+    line-height: 1.5;
+    border-radius: .2rem;}
+
 .project_title{
     color:#fff; 
     margin:0; 
