@@ -47,7 +47,20 @@ class HTNdashboard {
     public function getAllPatients($provider_id){
         // $this->getProviderbyId($provider_id)
 
-        $filter	= "[patient_physician_id] = '$provider_id' && ([patient_remove_flag] = '' || [patient_remove_flag] = 0)";
+        //NEED TO KEEP THE PEOPLE THAT HAVE BEEN SENT CONSENT, CONSENTED BUT NOT ADDED MRN SEPERATE FROM COMPLETED
+        //[participant_signature_date_esp_v2]
+        //[adult_subject_signature_date_3_v2]
+        //[paper_date_v2]
+
+        $patients           = array();
+        $pending_patients   = array();
+        $rx_change          = array();
+        $labs_needed        = array();
+        $data_needed        = array();
+        $messages           = array();
+
+        //FOR CONSENTED PATIENTS WITH MRN ADDED
+        $filter	= "[patient_physician_id] = '$provider_id' && ([patient_remove_flag] = '' || [patient_remove_flag] = 0) && ([patient_mrn] != '')";
         $fields	= array("record_id", "patient_fname", "patient_lname" , "patient_email", "patient_birthday", "sex", "patient_photo", "filter");
 		$params	= array(
             'project_id'    => $this->patients_project,
@@ -55,16 +68,10 @@ class HTNdashboard {
 			'fields'        => $fields,
 			'filterLogic'   => $filter 
 		);
-		$q 			= \REDCap::getData($params);
-        $results 	= json_decode($q, true);
+		$q 			        = \REDCap::getData($params);
+        $patient_results    = json_decode($q, true);
         
-        $patients       = array();
-        $rx_change      = array();
-        $labs_needed    = array();
-        $data_needed    = array();
-        $messages       = array();
-
-        foreach($results as $i => $result){
+        foreach($patient_results as $i => $result){
             //FIRST DEFAULT VALUES THEN FILL IN
             $result["patient_photo"]    = $this->module->getUrl('assets/images/icon_anon.gif', true, true);
             $result["patient_name"]     = "name n/a";
@@ -124,6 +131,44 @@ class HTNdashboard {
             }
         }
 
+        //FOR PENDING PATIENTS THAT BEEN ADDED OR CONSENTED
+        $filter	= "[patient_physician_id] = '$provider_id' && ([patient_remove_flag] = '' || [patient_remove_flag] = 0) && [patient_mrn] = ''";
+        $fields	= array("record_id","paper_icf_v2", "paper_name_v2", "paper_poc_v2" , "participant_print_name_esp_v2", "cooper_icf_eng_subj_v2", "cooper_icf_eng_subj_v3", "patient_email", "consent_sent", "paper_date_v2", "participant_signature_date_esp_v2", "cooper_icf_datetime_v2");
+		$params	= array(
+            'project_id'    => $this->patients_project,
+			'return_format' => 'json',
+			'fields'        => $fields,
+			'filterLogic'   => $filter 
+		);
+		$q 			                = \REDCap::getData($params);
+        $pending_patients_results 	= json_decode($q, true);
+
+        foreach($pending_patients_results as $pending){
+            $temp = array(
+                "patient_id"    => $pending["record_id"],
+                "consent_email" => $pending["patient_email"],
+                "consent_sent"  => ($pending["consent_sent"] ? date("m/d/y" , strtotime($pending["consent_sent"])) : null)
+            );
+
+            $paper_consent = $pending["paper_icf_v2"];
+            if($paper_consent){
+                $patient_name = $pending["paper_name_v2"];
+                $consent_date = $pending["paper_date_v2"];
+            }else{
+                $patient_name = $pending["participant_print_name_esp_v2"];
+                $consent_date =$pending["participant_signature_date_esp_v2"];
+            }
+            
+            //5 possible fields for names
+            //3 possible fields for consent date.  what the fuck
+
+            $temp["patient_consent_name"]   = $patient_name;
+            $temp["consent_date"]           = $consent_date ? date("m/d/y" , strtotime($consent_date)) : null; 
+            $temp["consent_url"]            = \REDCap::getSurveyLink($pending["record_id"], 'patient_consent_for_mobile_hypertension_system');
+                
+            array_push($pending_patients, $temp);
+        }
+
         //SORT MESSAGES DESC
         krsort($messages);
         foreach($messages as $ts => $msgs){
@@ -136,13 +181,14 @@ class HTNdashboard {
 
         $ui_intf = array(
             "patients"          => $patients,
+            "pending_patients"  => $pending_patients,
             "rx_change"         => $rx_change,
             "labs_needed"       => $labs_needed,
             "data_needed"       => $data_needed,
             "messages"          => $messages
         );
 
-        // $this->module->emDebug("getAllPatients() uiintf", $ui_intf);
+        $this->module->emDebug("getAllPatients() ui_intf", $ui_intf);
         return $ui_intf;
     }
 
@@ -667,6 +713,49 @@ class HTNdashboard {
         $records 	= json_decode($q, true);
         return current($records);
 	}
+
+    public function sendPatientConsent($patient_id, $consent_url , $consent_email){
+        $result = false;
+		if( !empty($patient_id) && !empty($consent_url) && !empty($consent_email) ){
+			$msg_arr        = array();
+			$msg_arr[]      = "<p>Dear Heart Ex Participant,</p>";
+			$msg_arr[]	    = "<p>In order to participate in this study, we need your consent to access your medical information.</p>";
+            $msg_arr[]      = "<p>Please click this <a href='$consent_url'>link</a> to consent to be part of the study<p>";
+			$msg_arr[]      = "<p>Thank You! <br> Stanford Heart Ex Team</p>";
+			
+			$message 	= implode("\r\n", $msg_arr);
+			$to 		= $consent_email;
+			$from 		= "no-reply@stanford.edu";
+			$subject 	= "Stanford Heart Ex requests your consent";
+			$fromName	= "Stanford Heart Ex Team";
+
+			$result = \REDCap::email($to, $from, $subject, $message);
+			if($result){
+				$data = array(
+					"record_id"     => $patient_id,
+					"consent_sent"  => date("Y-m-d"),
+                    "patient_email" => $consent_email
+				);
+				$r = \REDCap::saveData("json", json_encode(array($data)) );
+			}
+            $result = array("consent_sent" => date("m-d-y"), "patient_id" => $patient_id);
+		}
+		return $result;
+    }
+
+    public function newPatientConsent(){
+        //create new record in patients
+        $next_id = $this->module->getNextAvailableRecordId($this->patients_project);
+
+        $data["patient_physician_id"]   = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
+        $data["record_id"]              = $next_id;
+        $r                              = \REDCap::saveData($this->patients_project, 'json', json_encode(array($data)) );
+
+        //get survey link for consent
+        $survey_link                    = \REDCap::getSurveyLink($next_id, 'patient_consent_for_mobile_hypertension_system');
+
+        return array("consent_link" => $survey_link, "patient_id" => $next_id);
+    }
 
     public function addPatient($post){
         $script_fieldnames = $this->module->getPatientBaselineFields(); //\REDCap::getFieldNames("patient_baseline");

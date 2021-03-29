@@ -37,7 +37,8 @@ if(!empty($_POST)){
 }
 
 if(!empty($_GET["patient"])){
-    $patient_id = $_GET["patient"];
+    $patient_id         = $_GET["patient"];
+    $newly_consented    = isset($_GET["consented"]) ? true : false;
     $patient    = $module->getPatientDetails($patient_id);
 
     $patient_name       = $patient["patient_fname"] . " "  . $patient["patient_mname"] . " " . $patient["patient_lname"];
@@ -71,10 +72,8 @@ $ckd                = $patient["ckd"] == "CKD n/a" ? "" : $patient["ckd"];
 $comorbidity        = $patient["comorbidity"] == "comorbidity n/a" ? "" : $patient["comorbidity"];
 $pharmacy_info      = $patient["pharmacy_info"] == "pharmacy n/a" ? "" : $patient["pharmacy_info"];
 
-
-
 $add_edit_btn_text  = !empty($patient) ? "Edit Patient $patient_fname's Data" : "Add New Patient";
-$action             = !empty($patient) && empty($action) ? "edit" : "add";
+$action             = !empty($patient) && empty($action) && !$newly_consented ? "edit" : "add";
 
 //First Get the Pre made DEFAULT Trees
 $default_trees  = $module->getDefaultTrees();

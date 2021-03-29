@@ -3,7 +3,7 @@
 </style>
 <div id="alerts" class="container mt-0">
     <div class="row">
-        <h1 class="mt-0 mb-2 mr-3 ml-3 d-inline-block align-middle">Alerts</h1>
+        <h1 class="mt-0 mb-2 mr-3 ml-3 d-inline-block align-middle">Pending Patient Consent</h1>
     </div>
 
     <div class="row">
@@ -11,19 +11,21 @@
         <thead>
             <tr>
                 <th></th>
-                <th>Patient</th>
-                <th>Alert</th>
-                <th>Date</th>
+                <th>Patient ID</th>
+                <th>Patient Name</th>
+                <th>Consent URL</th>
+                <th>Consent Sent</th>
+                <th>Consented Date</th>
             </tr>
         </thead>
         <tbody id="alerts_tbody">
             
         </tbody>
-        <tfoot>
+        <!-- <tfoot>
             <tr>
                 <td colspan="4"><a href="#" class="text-infolink mr-4 remove_alerts">Remove</a> <a href="#" class="text-infolink select_all_alerts">Select All</a></td>
             </tr>
-        </tfoot>
+        </tfoot> -->
         </table>
     </div>
 </div>

@@ -160,6 +160,16 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		return $this->enabledProjects;
 	}
 
+	public function sendPatientConsent($patient_id, $consent_url , $consent_email){
+		$this->loadEM();
+		return $this->dashboard->sendPatientConsent($patient_id, $consent_url , $consent_email);
+	}
+	
+	public function newPatientConsent(){
+		$this->loadEM();
+		return $this->dashboard->newPatientConsent();
+	}
+
 	public function addPatient($post){
 		$this->loadEM();
 

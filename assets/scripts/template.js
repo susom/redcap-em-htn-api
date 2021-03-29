@@ -299,6 +299,27 @@ var rec_modal = `
     <div class="underlay"></div>
 `;
 
+var email_modal = `
+    <div id="emailconsent">
+        <form> 
+            <input type="hidden" id="consent_patient_id" name="patient_id"/>
+            <input type="hidden" id="consent_url" name="consent_url"/>
+
+            <div class="consent_modal">
+                <h3>Email Consent</h3>
+                <div class="url">Consent URL: <b></b></div>
+                <div class="id">For Patient ID: <b></b></div>
+                <input type="text" id="consent_email" class="col-sm-12 my-3" placeholder="Consent Email"/>
+            </div>
+            <div class="continue">
+                <button class="btn btn-danger btn-sm cancel">Cancel</button>
+                <button class="btn btn-primary btn-sm send">Send Email</button>
+            </div>
+        </form>
+    </div>
+    <div class="underlay"></div>
+`;
+
 var overview_filter = `
     <div class="d-inline-block text-center stat-group">
         <a href="#" class="stat d-inline-block">
@@ -316,9 +337,11 @@ var overview_filter = `
 var alerts_row = `
     <tr>
         <td class="check" data-label="select"><input name="delete_alert" type="checkbox"></td>
-        <td class="patient" data-label="subject"><a href="#" class="text-infolink">RE: Patient <span></span></a></td>
-        <td class="subject" data-label="message"><a href="#" class="text-infolink"><span></span></a></td>
-        <td class="date" data-label="date"><a href="#" class="text-infolink"><span></span></a></td>
+        <td class="patient_id" data-label="patient_id"><a href="#" class="text-infolink">RE: Patient <span></span></a></td>
+        <td class="patient_name" data-label="patient_name"><a href="#" class="text-infolink">RE: Patient <span></span></a></td>
+        <td class="consent_url" data-label="sent"><a href="#" class="text-infolink"><span></span></a></td>
+        <td class="consent_sent" data-label="date"><a href="#" class="text-infolink"><span></span></a></td>
+        <td class="consent_ts" data-label="date"><a href="#" class="text-infolink"><span></span></a></td>
     </tr>
 `;  
 
@@ -600,17 +623,7 @@ var recommendation = `
     </section>
     </div>
 `;
-/* 
-//this design makes no sesnse
-<div class="form-check">
-    <input class="form-check-input" type="checkbox" value="" checked id="defaultCheck1">
-    <label class="form-check-label" for="defaultCheck1">Accept</label>
-</div>
-<div class="form-check">
-    <input class="form-check-input" type="checkbox" value="" id="defaultCheck1">
-    <label class="form-check-label" for="defaultCheck1">No Change</label>
-</div>
-*/
+
 
 var delegate = `
     <div class="form-group ">

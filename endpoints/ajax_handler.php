@@ -102,6 +102,17 @@ if(!empty($_POST)){
             $result     = $module->declineRecommendation($patient);
         break;
 
+        case "new_patient_consent":
+            $result = $module->newPatientConsent();
+        break;
+
+        case "send_patient_consent":
+            $patient_id     = !empty($_POST["patient_id"]) ?  filter_var($_POST["patient_id"], FILTER_SANITIZE_NUMBER_INT): null; 
+            $consent_url    = !empty($_POST["consent_url"]) ?  filter_var($_POST["consent_url"], FILTER_SANITIZE_URL): null;
+            $consent_email  = !empty($_POST["consent_email"]) ?  filter_var($_POST["consent_email"], FILTER_SANITIZE_EMAIL): null;
+            $result         = $module->sendPatientConsent($patient_id, $consent_url , $consent_email);
+        break;
+
         default:
             session_start();
             $_SESSION['logged_in_user'] = $_SESSION['logged_in_user'];

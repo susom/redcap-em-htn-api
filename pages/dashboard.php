@@ -29,7 +29,7 @@ $home_active    = "active";
     <main role="main" class="flex-shrink-0">
         <?php include("components/mod_overview.php")?>
 
-        <?php //include("components/mod_alerts.php")?>
+        <?php include("components/mod_alerts.php")?>
        
         <div id="patients" class="container mt-1">
             <div class="row">

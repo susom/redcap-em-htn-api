@@ -33,7 +33,10 @@ nav .dropdown-toggle::after{
 .btn-xs { padding: .25rem .5rem;
     font-size: .5rem;
     line-height: 1.5;
-    border-radius: .2rem;}
+    border-radius: .2rem;
+    vertical-align:middle;
+    cursor:pointer;
+}
 
 .project_title{
     color:#fff; 
@@ -206,6 +209,10 @@ label + em{
     font-size:85%;
 }
 
+.all_patients p.pending::after{
+    content:"*";
+}
+
  .all_patients .stat,
  .stat i {
     color:#2f5f73;
@@ -335,7 +342,7 @@ label + em{
     position:absolute;
     top:0;
 }
-.edit_patient, .delete_patient{
+.patient_detail .edit_patient, .delete_patient{
     position:absolute;
     top:0;
     right:15px;
@@ -426,6 +433,36 @@ section h3{
 }
 #alerts table caption{
     padding-bottom:0;
+}
+#alerts_tbody .check{
+    width:40px;
+    max-width:50px;
+}
+#alerts_tbody .patient_id{
+    width:115px;
+    max-width:150px;
+}
+#alerts_tbody .patient_name{
+    width:190px;
+    max-width:220px;
+    overflow-wrap: break-word;
+}
+#alerts_tbody .consent_url{
+    width:350px;
+    max-width:430px;
+    overflow-wrap: break-word;
+}
+#alerts_tbody .consent_sent{
+    width:100px;
+    max-width:145px;
+}
+#alerts_tbody .consent_ts{
+    width: 115px;
+    max-width: 145px;
+}
+
+#alerts_tbody tr.highlight{
+    box-shadow: 0 0 20px green;
 }
 
 .reg_link{
@@ -655,4 +692,35 @@ i.email.sent{
 }
 .logic_trees h5 em{
     font-size:77%;
+}
+
+
+
+
+
+#emailconsent{
+    position:fixed; 
+    z-index:10;
+    width:490px; 
+    top:calc(50% - 245px);
+    left:calc(50% - 245px);
+    background:#EAF0F2;
+    border-radius:10px;
+    padding:20px;
+    box-shadow:0 0 10px 0px #333;
+}
+#emailconsent + div{
+    content:"";
+    position:fixed;
+    top:0;
+    width:100vw;
+    height:100vh;
+    background:#000;
+    opacity:.4;
+}
+#emailconsent .continue{
+    text-align:right;
+}
+.consent_modal b {
+    overflow-wrap:break-word;
 }

@@ -3,7 +3,6 @@ function treeLogic(rawJson, patient, urls, is_sponsored){
         this[i] = urls[i];
     }
 
-    //TODO FUCK ME, MUST CHOSE WHICH ?
     this.patient        = patient;
     this.is_sponsored   = is_sponsored;
     console.log("use the patients tree to pick the logic tree shit", rawJson[this.patient["current_treatment_plan_id"]]);

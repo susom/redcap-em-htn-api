@@ -32,7 +32,7 @@ function dashboard(record_id,urls, is_sponsored=false){
 
     this.intf           = null;
     this.filter_txn     = {"rx_change" : "Prescription Change Needed", "labs_needed" : "Lab Results Needed" , "data_needed" : "Data Needed", "all_patients" : "All Patients", "clear_filters" : "Clear Filters"};
-    
+    var _this           = this;
     //some UI/UX 
     $("#overview").on("click","h1", function(e){
         e.preventDefault();
@@ -41,6 +41,64 @@ function dashboard(record_id,urls, is_sponsored=false){
         }else{
             $(this).parent().next().slideDown("medium");
         }
+    });
+
+    //hijack add patient for consent flow
+    $(".add_patient").click(function(e){
+        e.preventDefault();
+    
+        //UI FOR NEW PENDING PATIENT
+
+        //NEED TO prevent DOUBLE CLICKS
+        if(!$(this).prop("disabled")){
+            //disable it until ajax returned
+            $(this).prop("disabled",true);
+            console.log("creating empty patient record, disabling click");
+        }
+
+        //KICK OFF AJAX TO ADD CREATE EMPTY PATIENT RECORD + ID 
+        $.ajax({
+            url : _this["ajax_endpoint"],
+            method: 'POST',
+            data: { "action" : "new_patient_consent" },
+            dataType: 'json'
+        }).done(function (result) {
+            var consent_url = result["consent_link"];
+            var patient_id  = result["patient_id"];
+
+            if(consent_url && patient_id){
+                //ADD TO COUNT OF TOTAL PATIENTS , TEMPORARY UNTIL THE NEXT "REAL" DATA REFRESH
+                var curcount = $("#filters .all_patients p").text();
+                curcount++;
+                $("#filters .all_patients p").addClass("pending").text(curcount);
+
+                //ADD ROW TO alerts* TABLE AND OPEN
+                var row             = $(alerts_row);
+                let patient_name    = "n/a";
+                let consent_sent    = null;
+                let consent_ts      = null;
+
+                row.attr("id","pending_patient_"+patient_id);
+                row.find(".patient_id").html(patient_id);
+                row.find(".patient_name").html(patient_name);
+                row.find(".consent_url").html(consent_url);
+                if(!consent_sent){
+                    _this.consentBindings(row, patient_id, consent_url);
+                }
+
+                row.find(".consent_sent").html((consent_sent ? consent_sent : "n/a"));
+                row.find(".consent_ts").html((consent_ts ? consent_ts : "n/a"));
+
+                row.addClass("highlight");
+                $("#alerts_tbody").prepend(row);
+
+                $("#alerts").slideDown("medium");
+                $(this).prop("disabled",false);
+            }
+        }).fail(function () {
+            console.log("something failed");
+            $(this).prop("disabled",false);
+        });
     });
 
     this.refreshData();
@@ -65,7 +123,7 @@ dashboard.prototype.refreshData = function(){
     }).done(function (result) {
         _this.intf = result;
         _this.updateOverview();
-        // _this.updateAlerts();
+        _this.updateAlerts();
     }).fail(function () {
         console.log("something failed");
     });
@@ -73,6 +131,7 @@ dashboard.prototype.refreshData = function(){
 dashboard.prototype.updateOverview = function(){
     var intf            = this.intf;
     var patients        = intf["patients"];
+    var pending_patients= intf["pending_patients"];
     var rx_change       = intf["rx_change"];
     var labs_needed     = intf["labs_needed"]; 
     var data_needed     = intf["data_needed"];
@@ -89,19 +148,19 @@ dashboard.prototype.updateOverview = function(){
     $("#filters").empty();
     //alerts
     //TODO THIS NEEDS TO BE FIRGURED OUT
-    var tpl = $(overview_filter);
-    tpl.addClass("alerts");
-    tpl.find(".stat p").text("Alerts");
-    tpl.find(".stat i").text(msg_count);
-    tpl.find(".stat-body").remove();
-    tpl.find(".stat p").click(function(e){
-        e.preventDefault();
-        if($("#alerts").is(":visible")){
-            $("#alerts").slideUp("fast");
-        }else{
-            $("#alerts").slideDown("medium");
-        }
-    });
+    // var tpl = $(overview_filter);
+    // tpl.addClass("alerts");
+    // tpl.find(".stat p").text("Alerts");
+    // tpl.find(".stat i").text(msg_count);
+    // tpl.find(".stat-body").remove();
+    // tpl.find(".stat p").click(function(e){
+    //     e.preventDefault();
+    //     if($("#alerts").is(":visible")){
+    //         $("#alerts").slideUp("fast");
+    //     }else{
+    //         $("#alerts").slideDown("medium");
+    //     }
+    // });
     // $("#filters").append(tpl);
 
     //rx_change
@@ -157,34 +216,73 @@ dashboard.prototype.updateOverview = function(){
     
 
     //all
+    var total_patients = Object.keys(patients).length + Object.keys(pending_patients).length;
     var tpl = $(overview_filter);
     tpl.addClass("all_patients");
     tpl.find(".stat").data("filter", "all_patients").data("idx", Object.keys(patients));
-    tpl.find(".stat p").text(Object.keys(patients).length);
+    tpl.find(".stat p").text(total_patients);
+    if(Object.keys(pending_patients).length){
+        tpl.find(".stat p").addClass("pending");
+    }
     tpl.find(".stat i").text("Patients");
     tpl.find(".stat-body .stat-title").text("All Patients");
+    tpl.find(".stat p").click(function(e){
+        e.preventDefault();
+        if($("#alerts").is(":visible")){
+            $("#alerts").slideUp("fast");
+        }else{
+            $("#alerts").slideDown("medium");
+        }
+    });
     $("#filters").append(tpl);
 
     //Build Nav Defailt is ALL Patients
     this.buildNav();
 }
 dashboard.prototype.updateAlerts = function(){
-    //TODO NOT FLESHED OUT YET
     var intf    = this.intf;
-    var alerts  = intf["messages"];
+    var alerts  = intf["pending_patients"];
     
     $("#alerts_tbody").empty();
-    for(var ts in alerts){
-        var ts_alerts = alerts[ts];
-        for(var n in ts_alerts){
-            var alert   = ts_alerts[n];
-            var tpl     = $(alerts_row);
-            tpl.find(".date span").text(alert["date"]);
-            tpl.find(".subject span").text(alert["subject"]);
-            tpl.find(".patient span").text(alert["patient_name"]);
-            tpl.find(".check input").data("record_id", alert["record_id"]).data("redcap_repeat_instance", alert["redcap_repeat_instance"]) ;
-            $("#alerts_tbody").append(tpl);
+    for(var i in alerts){
+        var consent_alert   = alerts[i];
+        var patient_id      = consent_alert["patient_id"];
+        let patient_email   = consent_alert["consent_email"] ? consent_alert["consent_email"] : "n/a";
+        let patient_name    = consent_alert["patient_consent_name"] ? consent_alert["patient_consent_name"] : patient_email;
+        
+        let consent_url     = consent_alert["consent_url"];
+        let consent_sent    = consent_alert["consent_sent"];
+        let consent_ts      = consent_alert["consent_date"];
+        
+        var row             = $(alerts_row);
+        row.attr("id", "pending_patient_"+patient_id);
+
+        row.find(".consent_url").html(consent_url);
+        if(consent_ts){
+            //PATIENT HAS CONSENTED 
+            //MAKE EDIT PATIENT LINK 
+            console.log(patient_id + " has consented so make edit patient link");
+
+            var edit_link = $("<a>").attr("href",this["edit_patient"]).data("patient",patient_id).text(patient_id);
+            edit_link.click(function(e){
+                e.preventDefault();
+                location.href=$(this).attr("href")+"&patient="+$(this).data("patient")+"&consented=1";
+            });
+            patient_id = edit_link;
+        }else{
+            //PATIENT HAS NOT CONSENTED
+            if(!consent_sent){
+                //IF NOT USING REDCAP TO SEND (OR IF NOT SENT THEN ADD THIS FUNCTIONALITY; 
+                this.consentBindings(row, patient_id, consent_url);
+            }
         }
+
+        row.find(".patient_id").html(patient_id);
+        row.find(".patient_name").html(patient_name);
+        row.find(".consent_sent").html((consent_sent ? consent_sent : "n/a"));
+        row.find(".consent_ts").html((consent_ts ? consent_ts : "n/a"));
+
+        $("#alerts_tbody").prepend(row);
     }
     return;
 }
@@ -311,8 +409,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         var patient = this.patient_detail[record_id];
         var tpl     = $(patient_details);
         var _this   = this;
-        console.log("patient info", patient);
-
+        // console.log("patient info", patient);
 
         tpl.find(".dob").text(patient["patient_birthday"]);
         tpl.find(".age").text(patient["patient_age"]);
@@ -832,7 +929,67 @@ dashboard.prototype.graphBpData = function(){
         });
     },500);
 }
+dashboard.prototype.consentBindings = function(row, patient_id, consent_url){
+    var _this = this;
 
+    let btndiv      = $("<div>");
+    // add copy to clip functionality for consent url
+    let copyclip    = $("<btn>").text("copy to clipboard").addClass("btn-info").addClass("btn-xs").addClass("mr-2").data("consent_url",consent_url);
+    btndiv.append(copyclip);
+
+    //add email to patient functionality for consent url
+    let emailconsent = $("<btn>").text("email to patient").addClass("btn-info").addClass("btn-xs").addClass("mr-2").data("consent_url",consent_url).data("patient_id",patient_id);
+    btndiv.append(emailconsent);
+
+    row.find(".consent_url").append(btndiv);
+
+    //bind some events;
+    copyclip.click(function(){
+        let consent_url = $(this).data("consent_url");
+        copyToClipboard(consent_url);
+    });
+
+    emailconsent.click(function(){
+        let consent_url = $(this).data("consent_url");
+        let patient_id  = $(this).data("patient_id");
+
+        var tpl         = $(email_modal);
+        tpl.find(".url b").text(consent_url);
+        tpl.find(".id b").text(patient_id);
+        tpl.find("#consent_patient_id").val(patient_id);
+        tpl.find("#consent_url").val(consent_url);
+        $("body").append(tpl);
+
+        //bind events to the email consent buttons
+        tpl.find(".continue .cancel").click(function(e){
+            e.preventDefault();
+            tpl.remove();
+        });
+        
+        tpl.find(".continue .send").click(function(e){
+            e.preventDefault();
+            
+            let patient_id      = $("#consent_patient_id").val();
+            let consent_url     = $("#consent_url").val();
+            let consent_email   = $("#consent_email").val();
+
+            $.ajax({
+                url : _this["ajax_endpoint"],
+                method: 'POST',
+                data: { "action" : "send_patient_consent" , "patient_id" : patient_id, "consent_url" : consent_url, "consent_email": consent_email },
+                dataType: 'json'
+            }).done(function (result) {
+                let patient_id      = result["patient_id"];
+                let consent_sent    = result["consent_sent"];
+                let pending_row     = $("#pending_patient_"+patient_id);
+                pending_row.find(".consent_sent").text(consent_sent);
+                tpl.remove();
+            }).fail(function () {
+                console.log("something failed");
+            });
+        });
+    });
+}
 function copyToClipboard(text) {
     var dummy = document.createElement("textarea");
     document.body.appendChild(dummy);
