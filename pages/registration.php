@@ -7,7 +7,7 @@ if(isset($_REQUEST)){
     if( isset($_GET["verify"]) ){
         $action = "verify";
         $verification_token = !empty($_GET["verify"]) ? filter_var($_GET["verify"], FILTER_SANITIZE_STRING) : null;
-        $verification_email = !empty($_GET["email"]) ? filter_var($_GET["email"], FILTER_SANITIZE_STRING) : null;
+        $verification_email = !empty($_GET["email"]) ? filter_var($_GET["email"], FILTER_VALIDATE_EMAIL) : null;
     }else{
         $action = $_POST["action"];
     }
@@ -30,6 +30,7 @@ if(isset($_REQUEST)){
         break;
     
         case "verify":
+            //THIS IS THE POINT WHERE THEY SHOULD BE CONSENTING
             $verify_account = $module->verifyAccount($verification_email,$verification_token);
             if(array_key_exists("errors",$verify_account) && empty($verify_account["errors"])){
                 if(array_key_exists("sponsor_id",$verify_account["provider"]) && !empty($verify_account["provider"]["sponsor_id"])){
@@ -43,8 +44,15 @@ if(isset($_REQUEST)){
                     exit;
                 }
             }else{
-                $module->emDebug("Sorry token expired");
+                if(array_search("need_consent", $verify_account["errors"]) > -1){
+                    $need_consent_link  = $verify_account["consent_link"];
+                    $provider_fname     = $verify_account["provider"]["provider_fname"];
+                }
             }  
+        break;
+
+        case "consented":
+
         break;
     }
 }
@@ -80,6 +88,18 @@ $page = "login_reg";
     <main role="main" class="flex-shrink-0">
         <div id="registration" class="container mt-5">
             <div class="row">
+                <?php
+                    //MAN I NEED MORE TIME 
+                    if(!empty($need_consent_link)){
+                        $consent_hack =  '
+                            <div class="col-md-10 offset-md-1 mt-5">
+                                <h1 class="mt-3 mb-5 mr-3 ml-3 d-inline-block align-middle">Account Consent</h1>
+                                <p class="text-muted lead mx-3">Hi '.$provider_fname.',<br><br> Before participating in the Heart Ex Study, please complete the following <a href="'.$need_consent_link.'" target="_blank">Consent Survey</a> (opens in new window/tab).  Then comeback and refresh this page (or click the "verify link" again) to complete your account verification. <br><br>Thanks,<br> Stanford Heart Ex Team</p>
+                        ';
+                        echo $consent_hack;
+                        exit;
+                    }
+                ?>
                 <div class="col-md-6 offset-md-3 mt-5">
                 <?php
                     if(!empty($error)){

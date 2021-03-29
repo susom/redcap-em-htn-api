@@ -674,21 +674,29 @@ class HTNdashboard {
 	public function verifyAccount($verification_email, $verification_token){
 		$provider = $this->findProviderByToken($verification_email, $verification_token);
         if(!empty($provider)){
-            // delete the verification token , set the time stamp
-            $data = array(
-                "record_id"         => $provider["record_id"],
-                "verification_token"=> "",
-                "verification_ts"   => Date("Y-m-d H:i:s"),
-            );
-            $r    = \REDCap::saveData($this->providers_project, 'json', json_encode(array($data)) , $overwriteBehavior = "overwrite");
-            return array("errors" => $r["errors"], "provider" => $provider);
+            $record_id      = $provider["record_id"];
+            $consent_date   = $provider["provider_consent_date"];
+
+            if(empty($consent_date)){
+                $provider_consent_link = \REDCap::getSurveyLink($record_id, 'provider_consent_mobile_hypertension_project_hrtex', '','', $this->providers_project );
+                return array("errors" => array("need_consent"), "provider" => $provider, "consent_link" => $provider_consent_link);
+            }else{
+                // delete the verification token , set the time stamp
+                $data = array(
+                    "record_id"         => $provider["record_id"],
+                    "verification_token"=> "",
+                    "verification_ts"   => Date("Y-m-d H:i:s"),
+                );
+                $r    = \REDCap::saveData($this->providers_project, 'json', json_encode(array($data)) , $overwriteBehavior = "overwrite");
+                return array("errors" => $r["errors"], "provider" => $provider);
+            }
         }
 		return false;
 	}
 	
 	public function findProviderByToken($verification_email, $verification_token){
 		$filter	= "[verification_token] = '$verification_token' and [provider_email] = '$verification_email'";
-        $fields	= array("record_id","provider_email", "provider_pw", "sponsor_id");
+        $fields	= array("record_id","provider_email", "provider_pw", "sponsor_id", "provider_name_consent", "provider_consent_date", "provider_fname");
 		$params	= array(
             'project_id'    => $this->providers_project,
 			'return_format' => 'json',

@@ -27,20 +27,8 @@ $help_active    = "active";
 
             <div class="row patient_body">
                 <div class="patient_details col-md-12 bg-light p-5 rounded">
-                    <h3>What is this?</h3>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut feugiat leo eros, tristique efficitur eros placerat vel. Fusce velit nisl, porttitor eget odio eget, pellentesque lacinia nisi. Suspendisse potenti. Morbi non neque aliquet, maximus odio sit amet, ultricies ligula. Praesent ac laoreet velit. Vivamus id velit id turpis ultricies placerat. Praesent fringilla mauris nibh, sed vulputate diam ultrices quis. In dictum nibh ut mauris vulputate semper. Nunc sit amet odio mattis, mattis est vel, volutpat risus. Nullam scelerisque enim vel urna lobortis, eu aliquet sem sagittis. Morbi non sem eleifend, convallis dui vitae, scelerisque nisi. Suspendisse elementum enim eget augue ultrices, tincidunt fermentum est consequat.</p>
-
-                    <h3>Why do i need to login?</h3>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut feugiat leo eros, tristique efficitur eros placerat vel. Fusce velit nisl, porttitor eget odio eget, pellentesque lacinia nisi. Suspendisse potenti. Morbi non neque aliquet, maximus odio sit amet, ultricies ligula. Praesent ac laoreet velit. Vivamus id velit id turpis ultricies placerat. Praesent fringilla mauris nibh, sed vulputate diam ultrices quis. In dictum nibh ut mauris vulputate semper. Nunc sit amet odio mattis, mattis est vel, volutpat risus. Nullam scelerisque enim vel urna lobortis, eu aliquet sem sagittis. Morbi non sem eleifend, convallis dui vitae, scelerisque nisi. Suspendisse elementum enim eget augue ultrices, tincidunt fermentum est consequat.</p>
-
-                    <h3>How can i change my password?</h3>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut feugiat leo eros, tristique efficitur eros placerat vel. Fusce velit nisl, porttitor eget odio eget, pellentesque lacinia nisi. Suspendisse potenti. Morbi non neque aliquet, maximus odio sit amet, ultricies ligula. Praesent ac laoreet velit. Vivamus id velit id turpis ultricies placerat. Praesent fringilla mauris nibh, sed vulputate diam ultrices quis. In dictum nibh ut mauris vulputate semper. Nunc sit amet odio mattis, mattis est vel, volutpat risus. Nullam scelerisque enim vel urna lobortis, eu aliquet sem sagittis. Morbi non sem eleifend, convallis dui vitae, scelerisque nisi. Suspendisse elementum enim eget augue ultrices, tincidunt fermentum est consequat.</p>
-
-                    <h3>Where is my data stored?</h3>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut feugiat leo eros, tristique efficitur eros placerat vel. Fusce velit nisl, porttitor eget odio eget, pellentesque lacinia nisi. Suspendisse potenti. Morbi non neque aliquet, maximus odio sit amet, ultricies ligula. Praesent ac laoreet velit. Vivamus id velit id turpis ultricies placerat. Praesent fringilla mauris nibh, sed vulputate diam ultrices quis. In dictum nibh ut mauris vulputate semper. Nunc sit amet odio mattis, mattis est vel, volutpat risus. Nullam scelerisque enim vel urna lobortis, eu aliquet sem sagittis. Morbi non sem eleifend, convallis dui vitae, scelerisque nisi. Suspendisse elementum enim eget augue ultrices, tincidunt fermentum est consequat.</p>
-
-                    <h3>Can I input PHI?</h3>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut feugiat leo eros, tristique efficitur eros placerat vel. Fusce velit nisl, porttitor eget odio eget, pellentesque lacinia nisi. Suspendisse potenti. Morbi non neque aliquet, maximus odio sit amet, ultricies ligula. Praesent ac laoreet velit. Vivamus id velit id turpis ultricies placerat. Praesent fringilla mauris nibh, sed vulputate diam ultrices quis. In dictum nibh ut mauris vulputate semper. Nunc sit amet odio mattis, mattis est vel, volutpat risus. Nullam scelerisque enim vel urna lobortis, eu aliquet sem sagittis. Morbi non sem eleifend, convallis dui vitae, scelerisque nisi. Suspendisse elementum enim eget augue ultrices, tincidunt fermentum est consequat.</p>
+                    <!-- <h3>I need help!</h3> -->
+                    <p>If you need assistance, please contact Meg Babakhanian @ <a href="mailto:mbabakha@stanford.edu">mbabakha@stanford.edu</a> or by phone (818) 618-4764</p>
 
                 </div>
             </div>
