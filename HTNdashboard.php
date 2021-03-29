@@ -822,13 +822,16 @@ class HTNdashboard {
             $data[$rc_var] = $rc_val;
         }
         if( (isset($post["action"]) && $post["action"] == "add") || empty($post["action"]) ){
-            $data["patient_physician_id"]       = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
+            $this->module->emDebug("superdelegate?", $_SESSION["logged_in_user"]["super_delegate"], $_SESSION["logged_in_user"]);
+            if(!$_SESSION["logged_in_user"]["super_delegate"]){
+                $data["patient_physician_id"]       = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
+            }
             $data["patient_treatment_status"]   = 0; //always start with the first step of whatever tree
             $data["patient_add_ts"]             = Date("Y-m-d H:i:s"); //always start with the first step of whatever tree
         }
-        $data["current_treatment_plan_id"]  = 1; //default to 1
-        $next_id                            = !empty($post["record_id"]) ? $post["record_id"] : $this->module->getNextAvailableRecordId($this->patients_project);
-        $data["record_id"]                  = $next_id;
+        $data["current_treatment_plan_id"]      = 1; //default to 1
+        $next_id                                = !empty($post["record_id"]) ? $post["record_id"] : $this->module->getNextAvailableRecordId($this->patients_project);
+        $data["record_id"]                      = $next_id;
 
         $r    = \REDCap::saveData($this->patients_project, 'json', json_encode(array($data)) );
         $this->module->emDebug("patient added or edited or what?", $r, $data);
