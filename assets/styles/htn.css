@@ -697,7 +697,7 @@ i.email.sent{
 
 
 
-
+#selectprovider,
 #emailconsent{
     position:fixed; 
     z-index:10;
@@ -709,6 +709,8 @@ i.email.sent{
     padding:20px;
     box-shadow:0 0 10px 0px #333;
 }
+
+#selectprovider + div,
 #emailconsent + div{
     content:"";
     position:fixed;
@@ -718,9 +720,12 @@ i.email.sent{
     background:#000;
     opacity:.4;
 }
+
+#selectprovider .continue,
 #emailconsent .continue{
     text-align:right;
 }
 .consent_modal b {
     overflow-wrap:break-word;
 }
+

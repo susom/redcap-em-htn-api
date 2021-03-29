@@ -103,7 +103,8 @@ if(!empty($_POST)){
         break;
 
         case "new_patient_consent":
-            $result = $module->newPatientConsent();
+            $provider_id    = !empty($_POST["provider_id"]) ? filter_var($_POST["provider_id"], FILTER_SANITIZE_NUMBER_INT) : null;
+            $result         = $module->newPatientConsent($provider_id);
         break;
 
         case "send_patient_consent":
@@ -119,7 +120,7 @@ if(!empty($_POST)){
             $provider_id                = $_POST["record_id"];
             
             //refresh dashboard INTF
-            $result         = $module->dashBoardInterface($provider_id);
+            $result         = $module->dashBoardInterface($provider_id,$_SESSION["logged_in_user"]["super_delegate"]);
         break;
     }
 

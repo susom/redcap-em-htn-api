@@ -56,49 +56,36 @@ function dashboard(record_id,urls, is_sponsored=false){
             console.log("creating empty patient record, disabling click");
         }
 
-        //KICK OFF AJAX TO ADD CREATE EMPTY PATIENT RECORD + ID 
-        $.ajax({
-            url : _this["ajax_endpoint"],
-            method: 'POST',
-            data: { "action" : "new_patient_consent" },
-            dataType: 'json'
-        }).done(function (result) {
-            var consent_url = result["consent_link"];
-            var patient_id  = result["patient_id"];
-
-            if(consent_url && patient_id){
-                //ADD TO COUNT OF TOTAL PATIENTS , TEMPORARY UNTIL THE NEXT "REAL" DATA REFRESH
-                var curcount = $("#filters .all_patients p").text();
-                curcount++;
-                $("#filters .all_patients p").addClass("pending").text(curcount);
-
-                //ADD ROW TO alerts* TABLE AND OPEN
-                var row             = $(alerts_row);
-                let patient_name    = "n/a";
-                let consent_sent    = null;
-                let consent_ts      = null;
-
-                row.attr("id","pending_patient_"+patient_id);
-                row.find(".patient_id").html(patient_id);
-                row.find(".patient_name").html(patient_name);
-                row.find(".consent_url").html(consent_url);
-                if(!consent_sent){
-                    _this.consentBindings(row, patient_id, consent_url);
-                }
-
-                row.find(".consent_sent").html((consent_sent ? consent_sent : "n/a"));
-                row.find(".consent_ts").html((consent_ts ? consent_ts : "n/a"));
-
-                row.addClass("highlight");
-                $("#alerts_tbody").prepend(row);
-
-                $("#alerts").slideDown("medium");
-                $(this).prop("disabled",false);
+        //TODO , IF PROVIDER = super_delegate, then need a dropdown of ALL provider IDS + names?
+        if(_this.intf["super_delegate"].length){
+            var tpl = $(providers_modal);
+            $("body").append(tpl);
+        
+            for(var i in _this.intf["super_delegate"]){
+                let provider        = _this.intf["super_delegate"][i];
+                let provider_id     = provider["record_id"];
+                let provider_name   = provider["provider_fname"] + " " + " " + provider["provider_lname"] + " (pid : "+provider_id+")";
+                let opt             = $("<option>").val(provider_id).text(provider_name);                            
+                $("#provideroptions").append(opt);
             }
-        }).fail(function () {
-            console.log("something failed");
-            $(this).prop("disabled",false);
-        });
+
+            //bind events to the email consent buttons
+            tpl.find(".continue .cancel").click(function(e){
+                e.preventDefault();
+                tpl.remove();
+            });
+            
+            tpl.find(".continue .send").click(function(e){
+                e.preventDefault();
+                //TOO IF NOTHING SELECTED ALERT
+                let provider_id = $( "#provideroptions option:selected" ).val();
+                _this.addPatient(provider_id);
+                tpl.remove();
+            });            
+        }else{
+            //KICK OFF AJAX TO ADD CREATE EMPTY PATIENT RECORD + ID 
+            _this.addPatient();
+        }
     });
 
     this.refreshData();
@@ -989,6 +976,52 @@ dashboard.prototype.consentBindings = function(row, patient_id, consent_url){
             });
         });
     });
+}
+dashboard.prototype.addPatient = function(provider_id){
+    var _this = this;
+    $.ajax({
+        url : this["ajax_endpoint"],
+        method: 'POST',
+        data: { "action" : "new_patient_consent", "provider_id" : provider_id },
+        dataType: 'json'
+    }).done(function (result) {
+        var consent_url = result["consent_link"];
+        var patient_id  = result["patient_id"];
+
+        if(consent_url && patient_id){
+            //ADD TO COUNT OF TOTAL PATIENTS , TEMPORARY UNTIL THE NEXT "REAL" DATA REFRESH
+            var curcount = $("#filters .all_patients p").text();
+            curcount++;
+            $("#filters .all_patients p").addClass("pending").text(curcount);
+
+            //ADD ROW TO alerts* TABLE AND OPEN
+            var row             = $(alerts_row);
+            let patient_name    = "n/a";
+            let consent_sent    = null;
+            let consent_ts      = null;
+
+            row.attr("id","pending_patient_"+patient_id);
+            row.find(".patient_id").html(patient_id);
+            row.find(".patient_name").html(patient_name);
+            row.find(".consent_url").html(consent_url);
+            if(!consent_sent){
+                _this.consentBindings(row, patient_id, consent_url);
+            }
+
+            row.find(".consent_sent").html((consent_sent ? consent_sent : "n/a"));
+            row.find(".consent_ts").html((consent_ts ? consent_ts : "n/a"));
+
+            row.addClass("highlight");
+            $("#alerts_tbody").prepend(row);
+
+            $("#alerts").slideDown("medium");
+            $(".add_patient").prop("disabled",false);
+        }
+    }).fail(function () {
+        $(".add_patient").prop("disabled",false);
+    });
+
+    return;
 }
 function copyToClipboard(text) {
     var dummy = document.createElement("textarea");

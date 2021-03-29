@@ -54,12 +54,13 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	 }
 
 	//Get All Patients
-	public function dashBoardInterface($provider_id){
+	public function dashBoardInterface($provider_id, $super_delegate=null){
 		$this->loadEM();
 
-		$intf = $this->dashboard->getAllPatients($provider_id);
-
-		$intf["ptree"] = $this->treeLogic($provider_id);
+		$this->emDebug("super delegate", $_SESSION["logged_in_user"]['super_delegate']);
+		$intf = $this->dashboard->getAllPatients($provider_id, $super_delegate);
+		$intf["ptree"] 			= $this->treeLogic($provider_id);
+		$intf["super_delegate"] = !empty($_SESSION["logged_in_user"]['super_delegate']) ? $this->dashboard->getAllProviders() : array();
 		return $intf;
 	}
 
@@ -165,9 +166,9 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		return $this->dashboard->sendPatientConsent($patient_id, $consent_url , $consent_email);
 	}
 	
-	public function newPatientConsent(){
+	public function newPatientConsent($provider_id=null){
 		$this->loadEM();
-		return $this->dashboard->newPatientConsent();
+		return $this->dashboard->newPatientConsent($provider_id);
 	}
 
 	public function addPatient($post){

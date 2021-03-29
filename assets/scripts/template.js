@@ -320,6 +320,25 @@ var email_modal = `
     <div class="underlay"></div>
 `;
 
+var providers_modal = `
+    <div id="selectprovider">
+        <form> 
+            <div class="consent_modal">
+                <h3>Select Provider for this Patient</h3>
+                <em>*as a Super Delegate, you may add patients for any provider</em>
+                <select id="provideroptions" class="col-sm-12 p-1 my-3">
+
+                </select>
+            </div>
+            <div class="continue">
+                <button class="btn btn-danger btn-sm cancel">Cancel</button>
+                <button class="btn btn-primary btn-sm send">Add Patient</button>
+            </div>
+        </form>
+    </div>
+    <div class="underlay"></div>
+`;
+
 var overview_filter = `
     <div class="d-inline-block text-center stat-group">
         <a href="#" class="stat d-inline-block">

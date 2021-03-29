@@ -44,14 +44,24 @@ class HTNdashboard {
         }
     }
 
-    public function getAllPatients($provider_id){
+    public function getAllProviders(){
+        $filter	= "[sponsor_id] = ''";
+        $fields	= array("record_id", "provider_fname", "provider_mname", "provider_lname");
+		$params	= array(
+            'project_id'    => $this->providers_project,
+			'return_format' => 'json',
+			'fields'        => $fields,
+			'filterLogic'   => $filter 
+		);
+		$q 			        = \REDCap::getData($params);
+        $providers          = json_decode($q, true);
+        $this->module->emDebug("haha", $providers);   
+        return $providers;
+    }
+    public function getAllPatients($provider_id, $super_delegate=null){
         // $this->getProviderbyId($provider_id)
 
         //NEED TO KEEP THE PEOPLE THAT HAVE BEEN SENT CONSENT, CONSENTED BUT NOT ADDED MRN SEPERATE FROM COMPLETED
-        //[participant_signature_date_esp_v2]
-        //[adult_subject_signature_date_3_v2]
-        //[paper_date_v2]
-
         $patients           = array();
         $pending_patients   = array();
         $rx_change          = array();
@@ -61,7 +71,10 @@ class HTNdashboard {
 
         //FOR CONSENTED PATIENTS WITH MRN ADDED
         $filter	= "[patient_physician_id] = '$provider_id' && ([patient_remove_flag] = '' || [patient_remove_flag] = 0) && ([patient_mrn] != '')";
-        $fields	= array("record_id", "patient_fname", "patient_lname" , "patient_email", "patient_birthday", "sex", "patient_photo", "filter");
+        if($super_delegate){
+            $filter	= "([patient_remove_flag] = '' || [patient_remove_flag] = 0) && ([patient_mrn] != '')";
+        }
+        $fields	= array("record_id", "patient_physician_id", "patient_fname", "patient_lname" , "patient_email", "patient_birthday", "sex", "patient_photo", "filter");
 		$params	= array(
             'project_id'    => $this->patients_project,
 			'return_format' => 'json',
@@ -133,7 +146,10 @@ class HTNdashboard {
 
         //FOR PENDING PATIENTS THAT BEEN ADDED OR CONSENTED
         $filter	= "[patient_physician_id] = '$provider_id' && ([patient_remove_flag] = '' || [patient_remove_flag] = 0) && [patient_mrn] = ''";
-        $fields	= array("record_id","paper_icf_v2", "paper_name_v2", "paper_poc_v2" , "participant_print_name_esp_v2", "cooper_icf_eng_subj_v2", "cooper_icf_eng_subj_v3", "patient_email", "consent_sent", "paper_date_v2", "participant_signature_date_esp_v2", "cooper_icf_datetime_v2");
+        if($super_delegate){
+            $filter	= "([patient_remove_flag] = '' || [patient_remove_flag] = 0) && [patient_mrn] = ''";
+        }
+        $fields	= array("record_id", "patient_physician_id" ,"paper_icf_v2", "paper_name_v2", "paper_poc_v2" , "participant_print_name_esp_v2", "cooper_icf_eng_subj_v2", "cooper_icf_eng_subj_v3", "patient_email", "consent_sent", "paper_date_v2", "participant_signature_date_esp_v2", "cooper_icf_datetime_v2");
 		$params	= array(
             'project_id'    => $this->patients_project,
 			'return_format' => 'json',
@@ -188,7 +204,7 @@ class HTNdashboard {
             "messages"          => $messages
         );
 
-        $this->module->emDebug("getAllPatients() ui_intf", $ui_intf);
+        // $this->module->emDebug("getAllPatients() ui_intf", $ui_intf);
         return $ui_intf;
     }
 
@@ -376,7 +392,7 @@ class HTNdashboard {
         }
 
         $filter     = "[provider_email] = '" . $salt . "' && [verification_ts] <> ''"; //TODO CHHECKK AGAINST PW TOO HAHAHA
-        $fields     = array("record_id", "provider_email", "provider_pw", "provider_fname", "provider_mname", "provider_lname", "sponsor_id");
+        $fields     = array("record_id", "provider_email", "provider_pw", "provider_fname", "provider_mname", "provider_lname", "sponsor_id", "super_delegate");
         $params     = array(
             'project_id'    => $this->providers_project,
             'fields'        => $fields,
@@ -751,11 +767,13 @@ class HTNdashboard {
 		return $result;
     }
 
-    public function newPatientConsent(){
+    public function newPatientConsent($provider_id=null){
         //create new record in patients
         $next_id = $this->module->getNextAvailableRecordId($this->patients_project);
-
-        $data["patient_physician_id"]   = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
+        if(empty($provider_id)){
+            $provider_id = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
+        }
+        $data["patient_physician_id"]   = $provider_id;
         $data["record_id"]              = $next_id;
         $r                              = \REDCap::saveData($this->patients_project, 'json', json_encode(array($data)) );
 
