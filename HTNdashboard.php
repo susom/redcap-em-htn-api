@@ -632,7 +632,11 @@ class HTNdashboard {
 
         $this->module->emDebug("edit accoutn", $new_account);
         $r  = \REDCap::saveData($this->providers_project, 'json', json_encode($new_account) );
-
+        if(empty($r["errors"])){
+            //this is eddit so remove the actual provider
+            array_shift($new_account);
+            $this->newAccountEmail($new_account);
+        }
         if(!empty($instance_data)){
             //TODO something stomping on existing delgates
             //NEED TO BE ABLE TO DELETE DELEGATES
