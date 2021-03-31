@@ -249,7 +249,7 @@ $page = "login_reg";
                             <h4 class="pt-4 pb-1 mb-4">Delegate</h4>
                             <aside>
                                 <div class="form-group">
-                                    <label for="exampleInputEmail1">I am a delegate for the following people<span>**</span>:</label>
+                                    <label for="exampleInputEmail1">Assign Delegates<span>**</span>:</label>
                                 </div>
                                 <div class="form-group">
                                     <label for="exampleInputEmail1 d-block ">Email Address</label>
