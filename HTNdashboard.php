@@ -204,7 +204,7 @@ class HTNdashboard {
             "messages"          => $messages
         );
 
-        // $this->module->emDebug("getAllPatients() ui_intf", $ui_intf);
+        $this->module->emDebug("getAllPatients() ui_intf", $ui_intf["patients"]);
         return $ui_intf;
     }
 

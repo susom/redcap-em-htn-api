@@ -640,12 +640,9 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 		$dash_filter 		= json_decode($patient["filter"],1);
 
-		//TODO
-		//if time since last_update_ts is >= 2 weeks
 		//more complex algo than mean for triggering rx change
 		if(!empty($target_systolic)){
-			//TODO FIX THE FILTER  one week? two weeks?!?
-			$filter = "";//"[bp_reading_ts] > '" . date("n/j/y H:i", strtotime('-20 weeks')) . "'";
+			$filter = "[bp_reading_ts] > '" . date("n/j/y H:i", strtotime('-2 weeks')) . "'";
 			$params	= array(
 				'project_id'	=> $this->enabledProjects["patients"]["pid"],
 				'records' 		=> array($record_id),
@@ -662,9 +659,6 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$diastolic 	= array();
 			$pulse 		= array();
 
-			// $this->emDebug("TODO will need to make sure not to eval if less than 2 weeks data?");
-			//TODO 12/1/2020 : rEDO eval logic against target COMPARE individual readings in the last 2 weeks vs goals as long at 60% of them... wtf
-
 			foreach($records as $record){
 				if($record["redcap_repeat_instrument"] == "bp_readings_log"){
 					array_push($systolic, $record["bp_systolic"]);
@@ -677,10 +671,6 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$diastolic_mean = round(array_sum($diastolic)/count($diastolic));
 			$pulse_mean 	= round(array_sum($pulse)/count($pulse));
 
-			//TODO 
-			$systolic_mean 	= array_pop($systolic);
-
-			// $this->emDebug("TODO, need a more granular evaluation for _uncontrolled");
 			$sys_uncontrolled = $systolic_mean > $target_systolic ? true : false;
 			$dia_uncontrolled = $diastolic_mean > $target_diastolic ? true : false;
 			$pls_uncontrolled = $pulse_mean > $target_pulse ? true : false;	

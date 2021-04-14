@@ -120,6 +120,7 @@ if(!empty($_POST)){
             $provider_id                = $_POST["record_id"];
             
             //refresh dashboard INTF
+            $module->emDebug($provider_id,$_SESSION["logged_in_user"]);
             $result         = $module->dashBoardInterface($provider_id,$_SESSION["logged_in_user"]["super_delegate"]);
         break;
     }
