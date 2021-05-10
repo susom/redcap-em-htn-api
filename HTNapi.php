@@ -354,6 +354,128 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		return $result;
 	}
 
+	public function dailySurveyCheck(){
+		$this->loadEM();
+
+		//FIRST GET ALL THE  PEOPLE
+		//THEN DETERMINE WHAT DAY THEYVE JOINED
+		//IF MULTIPLE OF 7 THEN SEND SURVEY INSTANCE
+		
+		$filter	= "";
+		$fields	= array("record_id","patient_add_ts");
+		$params	= array(
+			'project_id'	=> $this->enabledProjects["patients"]["pid"],
+			'return_format' => 'json',
+			'fields'        => $fields,
+			'filterLogic'   => $filter 
+		);
+		$q 			= \REDCap::getData($params);
+		$records 	= json_decode($q, true);
+
+		foreach($records as $patient){
+			$record_id 		= $patient["record_id"];
+			$patient_added 	= $patient["patient_add_ts"];
+
+			$dateOne 		= new \DateTime();
+			$dateTwo 		= new \DateTime($patient_added);
+
+			$days_since 	= $dateOne->diff($dateTwo)->format("%a");
+			$weekly_anni	= $days_since % 7;
+
+			if($weekly_anni === 0){
+				$this->emDebug("Patient # $record_id 'weekly' anniversery" );
+				
+				//if patient has weekly anniversary lets mark it.
+				$filter	= "";
+				$fields	= array("record_id","message_ts");
+				$params	= array(
+					'project_id'	=> $this->enabledProjects["patients"]["pid"],
+					'return_format' => 'json',
+					'fields'        => $fields,
+					'records'		=> $record_id,
+					'filterLogic'   => $filter 
+				);
+				$q 			= \REDCap::getData($params);
+				$records 	= json_decode($q, true);
+
+				$most_recent_message = array_pop($records);
+				$current_instance_id = 0;
+				if(!empty($most_recent_message["message_ts"])){
+					$current_instance_id= $most_recent_message["redcap_repeat_instance"];
+					$test_date 			= new \DateTime($most_recent_message["message_ts"]);
+					$most_recent_date 	= $dateOne->diff($test_date)->format("%a");
+
+					if($most_recent_date < 7){
+						$this->emDebug("This patient already got this weeks survey $most_recent_date days ago");
+						//they had a survey within the last week, no need
+						continue;
+					}
+				}
+
+				$next_instance_id = $current_instance_id +1;
+				//create survey link if it gets past here
+				$survey_link = \REDCap::getSurveyLink($record_id, "communications", "", $next_instance_id);
+
+				if($survey_link){
+					$data = array(
+						"record_id"             	=> $record_id,
+						"weekly_patient_survey" 	=> $survey_link
+					);
+					$r = \REDCap::saveData("json",  json_encode(array($data)));
+					if(empty($r["errors"])){
+						echo "weekly survey queued for patient # $record_id";
+						$this->emDebug("only  patient #$record_id needs a weekly survey", $survey_link, $r);
+					}
+				}
+			}
+		}
+
+
+		// $msg_arr        = array();
+		// $msg_arr[]      = "<p>Dear " . $patient["patient_fname"] . "</p>";
+		// $msg_arr[]	    = "<p>Please take a moment to answer your <a href='$survey_link' target='_blank'>weekly survey</a> for the Digital Hypertension Management System.</p>";
+		// $msg_arr[]      = "<p>Thank You! <br> Stanford HypertensionStudy Team</p>";
+		
+		// $message 	= implode("\r\n", $msg_arr);
+		// $to 		= $patient["patient_email"];
+		// $from 		= "no-reply@stanford.edu";
+		// $subject 	= "Weekly Stanford Digital Hypertension Management System Survey";
+		// $fromName	= "Stanford Hypertension Study Team";
+
+		
+		// $this->emDebug("emailing patient", $result,$this->enabledProjects["patients"]["pid"], $r);
+		
+		return ;
+	}
+
+	public function dailySurveyClear(){
+		$this->loadEM();
+
+		$filter	= "[weekly_patient_survey] <> ''";
+		$fields	= array("record_id","patient_add_ts");
+		$params	= array(
+			'project_id'	=> $this->enabledProjects["patients"]["pid"],
+			'return_format' => 'json',
+			'fields'        => $fields,
+			'filterLogic'   => $filter 
+		);
+		$q 			= \REDCap::getData($params);
+		$records 	= json_decode($q, true);
+
+		foreach($records as $patient){
+			$record_id 		= $patient["record_id"];
+
+			$data = array(
+				"record_id"             	=> $record_id,
+				"weekly_patient_survey" 	=> ""
+			);
+			$r = \REDCap::saveData("json",  json_encode(array($data)), "overwrite");
+			if(empty($r["errors"])){
+				echo "removing weekly survey for patient #$record_id";
+			}
+		}
+	}
+
 	//get oauthURL to presetn to Patient
 	public function getOAUTHurl($record_id = null){
 		$oauth_url = null;
@@ -1036,4 +1158,39 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			
 		}
 	}
+
+	public function daily_survey_check(){
+		$projects 	= $this->framework->getProjectsWithModuleEnabled();
+		$urls 		= array(
+						$this->getUrl('cron/daily_survey_check.php',true,true)
+					); //has to be page
+		foreach($projects as $index => $project_id){
+			foreach($urls as $url){
+				$thisUrl 	= $url . "&pid=$project_id"; //project specific
+				$client 	= new \GuzzleHttp\Client();
+				$response 	= $client->request('GET', $thisUrl, array(\GuzzleHttp\RequestOptions::SYNCHRONOUS => true));
+				$this->emDebug("running cron for $url on project $project_id");
+			}
+			
+		}
+	}
+
+	public function daily_survey_clear(){
+		$projects 	= $this->framework->getProjectsWithModuleEnabled();
+		$urls 		= array(
+						$this->getUrl('cron/daily_survey_clear.php',true,true)
+					); //has to be page
+		foreach($projects as $index => $project_id){
+			foreach($urls as $url){
+				$thisUrl 	= $url . "&pid=$project_id"; //project specific
+				$client 	= new \GuzzleHttp\Client();
+				$response 	= $client->request('GET', $thisUrl, array(\GuzzleHttp\RequestOptions::SYNCHRONOUS => true));
+				$this->emDebug("running cron for $url on project $project_id");
+			}
+			
+		}
+	}
+		
+
+
 }

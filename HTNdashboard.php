@@ -777,10 +777,14 @@ class HTNdashboard {
         if(empty($provider_id)){
             $provider_id = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
         }
+        $main_provider = current($this->getProvider($provider_id));
+
         $data["patient_physician_id"]   = $provider_id;
+        $data["provider_cell"]          = is_array($main_provider) && !empty($main_provider["provider_cell"]) ? $main_provider["provider_cell"] :null;
         $data["record_id"]              = $next_id;
         $r                              = \REDCap::saveData($this->patients_project, 'json', json_encode(array($data)) );
 
+        $this->module->emDebug("wtf",$main_provider,  $data, $r);
         //get survey link for consent
         $survey_link                    = \REDCap::getSurveyLink($next_id, 'patient_consent_for_mobile_hypertension_system');
 
