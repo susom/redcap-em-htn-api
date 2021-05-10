@@ -94,6 +94,8 @@
 
 		"cron/daily_omron_data_pull",
 		"cron/refresh_omron_tokens",
+		"cron/daily_survey_check",
+		"cron/daily_survey_clear",
 
 		"pages/oauth",
 		"pages/dashboard",

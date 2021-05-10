@@ -421,9 +421,9 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 						"record_id"             	=> $record_id,
 						"weekly_patient_survey" 	=> $survey_link
 					);
-					$r = \REDCap::saveData("json",  json_encode(array($data)));
+					$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], "json",  json_encode(array($data)));
 					if(empty($r["errors"])){
-						echo "weekly survey queued for patient # $record_id";
+						echo "weekly survey queued for patient # $record_id <br>";
 						$this->emDebug("only  patient #$record_id needs a weekly survey", $survey_link, $r);
 					}
 				}
@@ -469,7 +469,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				"record_id"             	=> $record_id,
 				"weekly_patient_survey" 	=> ""
 			);
-			$r = \REDCap::saveData("json",  json_encode(array($data)), "overwrite");
+			$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], "json",  json_encode(array($data)), "overwrite");
 			if(empty($r["errors"])){
 				echo "removing weekly survey for patient #$record_id";
 			}
