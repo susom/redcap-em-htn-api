@@ -1145,7 +1145,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	public function htnAPICron(){
 		$projects 	= $this->framework->getProjectsWithModuleEnabled();
 		$urls 		= array(
-						$this->getUrl('cron/refresh_omron_tokens.php', true, true)
+						 $this->getUrl('cron/refresh_omron_tokens.php', true, true)
 						,$this->getUrl('cron/daily_omron_data_pull.php', true, true)
 					); //has to be page
 		foreach($projects as $index => $project_id){

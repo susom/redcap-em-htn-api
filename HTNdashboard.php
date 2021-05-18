@@ -837,7 +837,7 @@ class HTNdashboard {
             $data["patient_treatment_status"]   = 0; //always start with the first step of whatever tree
             $data["patient_add_ts"]             = Date("Y-m-d H:i:s"); //always start with the first step of whatever tree
         }
-        $data["current_treatment_plan_id"]      = 1; //default to 1
+        $data["current_treatment_plan_id"]      = empty($data["current_treatment_plan_id"]) ? 1 : $data["current_treatment_plan_id"]; //default to 1
         $next_id                                = !empty($post["record_id"]) ? $post["record_id"] : $this->module->getNextAvailableRecordId($this->patients_project);
         $data["record_id"]                      = $next_id;
 
