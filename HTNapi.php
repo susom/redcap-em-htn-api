@@ -57,7 +57,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	public function dashBoardInterface($provider_id, $super_delegate=null){
 		$this->loadEM();
 
-		$this->emDebug("super delegate", $_SESSION["logged_in_user"]['super_delegate']);
+		// $this->emDebug("super delegate", $_SESSION["logged_in_user"]['super_delegate']);
 		$intf = $this->dashboard->getAllPatients($provider_id, $super_delegate);
 		$intf["ptree"] 			= $this->treeLogic($provider_id);
 		$intf["super_delegate"] = !empty($_SESSION["logged_in_user"]['super_delegate']) ? $this->dashboard->getAllProviders() : array();
@@ -729,6 +729,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	}
 
 	public function checkBPvsThreshold($bp_data, $target_threshold, $control_condition=.6){
+		// $this->emDebug("all BP data in last 2 weeks", $bp_data);
+
 		//FIRST SPLIT THE DATA INTO DATES + MORNING OR NIGHT
 		$ampm_datapoints = array();
 		foreach($bp_data as $bp){
@@ -740,11 +742,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			if(!array_key_exists($daykey, $ampm_datapoints) ){
 				$ampm_datapoints[$daykey] = array("am"=>[], "pm"=>[]);
 			}
-			
 			array_push($ampm_datapoints[$daykey][$am_pm], $sys_reading);
 		}
-
-		// $this->emDebug("bp data points for the time frame", $ampm_datapoints);
 
 		//SECOND AVERAGE OUT THE READINS FOR EACH DAYS AM/PM SPLITS, FOR MAX OF 2 data points per day
 		$total_datapoints 	= array();
@@ -768,9 +767,12 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		//THIRD, NOW FIGURE OUT WHAT THE CONTROL CONDITION % IS , AND DO AN ARRAY SUM OF total_datapoints
 		$thresh_check 	= count($above_thresh)*$control_condition;
 		$total_above 	= array_sum($above_thresh);
+		$mean_of_data 	= round(array_sum($total_datapoints)/count($total_datapoints));
 
 		$this->emDebug("target :  $target_threshold, total data points : " . count($above_thresh) . " , control cond : $thresh_check ,  above thresh : $total_above", $total_datapoints);
-		return $total_above > $thresh_check && count($above_thresh) >= 4;
+		
+		//IF ABOVE THRESHOLD,RETURN THE MEAN, if "Controlled" , return false
+		return $total_above > $thresh_check && count($above_thresh) >= 4 ? $mean_of_data : false;
 	}
 
 	// NEED TO PROMPT FOR CR & K readings FROM PROVIDER  BEFORE MAKING RX CHANGE ASSESTMENT if not within last 2 weeks.
@@ -801,9 +803,9 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$rec_step 			= $patient["patient_rec_tree_step"];
 		$dash_filter 		= json_decode($patient["filter"],1);
 
-		//more complex algo than mean for triggering rx change
 		if(!empty($target_systolic)){
-			$filter = "[bp_reading_ts] > '" . date("n/j/y H:i", strtotime('-2 weeks')) . "'";
+			//GET THE LAST 2 WEEKS WORTH OF BP DATA
+			$filter = "[bp_reading_ts] > '" . date("n/j/y H:i", strtotime('-12 weeks')) . "'";
 			$params	= array(
 				'project_id'	=> $this->enabledProjects["patients"]["pid"],
 				'records' 		=> array($record_id),
@@ -814,43 +816,33 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$q 			= \REDCap::getData($params);
 			$records	= json_decode($q, true);
 
-			$is_above 	= $this->checkBPvsThreshold($records, $target_systolic);
-			$this->emDebug("did 60 % of the values > threshold over last 2 weeks , min 4?", $is_above, $records);
+			//CHECK IF DATA OVER LAST 2 WEEKS IS "ABOVE" ThreSHOLD?
+			$is_above 		= $this->checkBPvsThreshold($records, $target_systolic);
+			$systolic_mean 	= $is_above; //if "uncontrolled", return the mean of the last 2 weeks, otherwise "false" is "controlled"
 
-			$systolic 	= array();
-			foreach($records as $record){
-				if($record["redcap_repeat_instrument"] == "bp_readings_log"){
-					array_push($systolic, $record["bp_systolic"]);
-				}
-			}
-			$systolic_mean 	= round(array_sum($systolic)/count($systolic));
-
-			$this->emDebug("current dash filter" , $dash_filter);
 			if($is_above){
 				$provider_trees 		= $this->tree->treeLogic($provider_id);
 				$treelogic 				= $provider_trees[$current_tree];
-
 				$current_tree_step 		= $treelogic["logicTree"][$current_step];
-				
+				// $this->emDebug("current tree, current tree step", $current_tree, $current_step, $current_tree_step);
+
 				$uncontrolled_next_step 		= array_key_exists("Uncontrolled", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled"] : null;
 				$uncontrolled_Kplus_next_step 	= array_key_exists("Uncontrolled, K > 4.5", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled, K > 4.5"] : null;
 				$uncontrolled_Kminus_next_step 	= array_key_exists("Uncontrolled, K < 4.5", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled, K < 4.5"] : null;
 				
-				$cr_sideeffect 			= $current_tree_step["side_effects"]["elevated_cr"];
+				$cr_sideeffect 					= $current_tree_step["side_effects"]["elevated_cr"];
 
 				//NEED TO CHECK IF THIS STEP HAS AN "elevated_cr" Side FX or a "K < or K >" check
-				$this->emDebug("rx change recommendation, Use current tree, find the uncontrolled next step", $current_tree_step, $uncontrolled_next_step);
-				$this->emDebug("BUT BEFORE THAT NEED TO CHECK FOR cr or K", $current_tree_step, $uncontrolled_next_step, $cr_sideeffect);
+				$this->emDebug("rx change recommendation, Use current tree, find the uncontrolled next step, check if needs labs first though", $current_tree_step, $uncontrolled_next_step);
 
-				//TODO PULL IN TREE INFO AND SEE WHAT NEXT STEP IS FOR "uncontrolled"
 				$current_update_ts		= date("Y-m-d H:i:s");
 				$lab_values 			= array();
 				$need_lab 				= false;
 
-				if(!$uncontrolled_next_step || is_int($cr_sideffect)){ 
+				if(!empty($uncontrolled_Kplus_next_step) || !empty($uncontrolled_Kminus_next_step) || !empty($cr_sideeffect)){ 
 					//UNCONTROLLED STEP HAS A LAB CHECK (K) OR a POSSIBLE ELEVATED CR Side EFFECT
 					//NEED RECENT LABS ( 2 weeks )
-
+					$this->emDebug("possible labs needed, K or CR" , $uncontrolled_Kplus_next_step, $uncontrolled_Kminus_next_step, $cr_sideeffect);
 					$filter = "[lab_ts] > '" . date("n/j/y", strtotime('-2 weeks')) . "'";
 					$params	= array(
 						'project_id'	=> $this->enabledProjects["patients"]["pid"],
@@ -866,10 +858,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 							$lab_values[$lab["lab_name"]] = $lab["lab_value"];
 						}
 					}
-					// $this->emDebug("recent labs needed foo!", $lab_values);
-
-					if(!$uncontrolled_next_step){
-						//if not normal "uncontrolled", then it has a K check
+					$this->emDebug("recent lab values?", $lab_values);		
+					if(empty($lab_values)){
+						$need_lab = true;
+					}elseif(!empty($uncontrolled_Kplus_next_step) || !empty($uncontrolled_Kminus_next_step)){
 						//then set the uncontrolled_next_step
 						$this->emdebug("this is K check step, if have K, then use that as recommended step");
 						if(isset($lab_values["k"])){
@@ -877,22 +869,21 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 						}else{
 							$need_lab = true;
 						}
- 					}
-					
-					if(is_int($cr_sideffect) && !isset($lab_values["cr"])){
+ 					}elseif(!empty($cr_sideeffect) && !isset($lab_values["cr"])){
 						$need_lab = true;
 					}
 				}
 
 				$filter_tag = $need_lab ? "labs_needed" : "rx_change";
-				$data = array(
+				$data 		= array(
 					"record_id"             	=> $record_id,
-					"patient_rec_tree_step" 	=> $uncontrolled_next_step,
+					"patient_rec_tree_step" 	=> (!$need_lab ? $uncontrolled_next_step : null),
 					"last_update_ts"			=> $current_update_ts,
 					"filter"      				=> $filter_tag,
 				);
 				$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
-			
+				$this->emDebug("update patient baseline data", $data);
+
 				//SAVE THE RECOMMENDATION STEP WHETHER IT WILL BE ACCEPTED OR NOT
 				if($filter_tag == "rx_change"){
 					$current_meds 	= implode(", ",$current_tree_step["drugs"]);
@@ -1013,18 +1004,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
      * @return bool
      */
     public function getNextAvailableRecordId($pid=PROJECT_ID){
-        $pro                = new \Project($pid);
-        $primary_record_var = $pro->table_pk;
-
-        $q          = \REDCap::getData($pid, 'json', null, $primary_record_var );
-        $results    = json_decode($q,true);
-        if(empty($results)){
-            $next_id = 1;
-        }else{
-            $last_entry = array_pop($results);
-            $next_id    = $last_entry[$primary_record_var] + 1;
-        }
-
+        $next_id = \REDCap::reserveNewRecordId($pid);
         return $next_id;
 	}
 	

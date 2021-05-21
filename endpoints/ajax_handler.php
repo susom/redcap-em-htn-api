@@ -85,7 +85,7 @@ if(!empty($_POST)){
                 );
                 $result = \REDCap::saveData('json', json_encode(array($data)) );
 
-                $module->emDebug("i need to add the main record", $data);
+                // $module->emDebug("i need to add the main record", $data);
             }
         break;
 
@@ -120,7 +120,7 @@ if(!empty($_POST)){
             $provider_id                = $_POST["record_id"];
             
             //refresh dashboard INTF
-            $module->emDebug($provider_id,$_SESSION["logged_in_user"]);
+            // $module->emDebug($provider_id,$_SESSION["logged_in_user"]);
             $result         = $module->dashBoardInterface($provider_id,$_SESSION["logged_in_user"]["super_delegate"]);
         break;
     }
