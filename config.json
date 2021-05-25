@@ -35,6 +35,13 @@
 			"cron_max_run_time": "1800"
 		},
 		{
+			"cron_name": "htn_communications_check",
+			"cron_description": "Cron that runs 30 minutes to respond to participant survey responses",
+			"method": "communications_check",
+			"cron_frequency": "1800",
+			"cron_max_run_time": "300"
+		},
+		{
 			"cron_name": "htn_check_weekly_survey",
 			"cron_description": "Cron that runs every morning to see who is on a weekly anniversary",
 			"method": "daily_survey_check",

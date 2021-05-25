@@ -911,6 +911,189 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		return;
 	}
 
+	public function communicationsCheck(){
+		$this->loadEM();
+
+		//every 30 minutes, gather all "unread" communications
+		//get the patient id 
+		//if side effect
+		//eval current step based on the side effectg
+		//make recoomendation or flag patient
+		
+		$filter	= "[message_read] <> 1";
+		$fields	= array("record_id","patient_side_fx","extras_patient_input","patient_physician_id","current_treatment_plan_id","patient_treatment_status","patient_rec_tree_step","filter");
+		$params	= array(
+			'project_id'	=> $this->enabledProjects["patients"]["pid"],
+			'return_format' => 'json',
+			'fields'        => $fields,
+			'filterLogic'   => $filter 
+		);
+		$q 			= \REDCap::getData($params);
+		$records 	= json_decode($q, true);
+
+
+		$side_fx_key_map = array();
+		$side_fx_key_map[1] = "cough";
+		$side_fx_key_map[2] = "rash_other";
+		$side_fx_key_map[3] = "breast_discomfort";
+		$side_fx_key_map[4] = "rash_other";
+		$side_fx_key_map[5] = "asthma";
+		$side_fx_key_map[6] = "slow_hr";
+
+		//When getData with mixed data from stand alone instrument and repeating, the repeating wont have the data from the standalone, so need to buffer it into array		
+		foreach($records as $comm){
+			$instr 		= $comm["redcap_repeat_instrument"];
+			$record_id  = $comm["record_id"];
+			
+			if($instr !== "communications"){
+				$patient_baseline_data[$record_id] = $comm;
+				continue;
+			}
+
+			$instance_id 	= $comm["redcap_repeat_instance"];
+			$free_text 		= $comm["extras_patient_input"]; //nothing can be ddone wiht this
+			
+			//GET THE PATIENT TREE, AND CURRENT STEP, WONT BE IN THS REPEAT RECORD, WILL NEED TO PULL FROM STANDALONE RECORDS BUFFERED IN $patient_baseline_data
+			$provider_id 	= $patient_baseline_data[$record_id]["patient_physician_id"];
+			$current_tree 	= $patient_baseline_data[$record_id]["current_treatment_plan_id"];
+			$current_step 	= $patient_baseline_data[$record_id]["patient_treatment_status"];
+			$current_rec 	= $patient_baseline_data[$record_id]["patient_rec_tree_step"]; //if they alreayd have a rec? do what?
+			$current_filter = $patient_baseline_data[$record_id]["filter"];
+
+			//CYCLE THROUGH THESEE IF ANY SIDE FX, MEASURE AGAINST CURRENT STEPS SIDDEFX RULESS and THROW RECCOMENDATION
+			$survey_side_fx 	= array();
+			foreach(range(1, 6) as $number){
+				$side_fx_check 	= "patient_side_fx___" .$number ;
+				$side_fx 		= $comm[$side_fx_check];
+				
+				if($side_fx){
+					//meassure against tree
+					array_push($survey_side_fx,$number);
+				}
+			}
+
+			if(empty($survey_side_fx)){
+				$but = !empty($free_text) ? " but they did put '$free_text' in the 'Other SideFX' field" : null;
+				$this->emDebug("patient $record_id has no sidefx" . $but);
+				continue;
+			}else{
+				$provider_trees 		= $this->tree->treeLogic($provider_id);
+				$treelogic 				= $provider_trees[$current_tree];
+				$current_tree_step 		= $treelogic["logicTree"][$current_step];
+				
+				$current_step_sidefx 	= $current_tree_step["side_effects"];
+				$this->emDebug("$record_id has side fx", $survey_side_fx, $current_step_sidefx);
+
+				$possible_recs = array();
+				foreach($survey_side_fx as $sfx){
+					$patient_side_fx = $side_fx_key_map[$sfx];
+					
+					//check it against the side effects inthe current tree step
+					$rec_step = $current_step_sidefx[$patient_side_fx];
+					array_push($possible_recs,$rec_step);
+
+					$this->emDebug("this patient has side fx : $patient_side_fx and is recommended to go to step : $rec_step");
+					if(strpos(strtoupper($rec_step),"STOP") > -1){
+						$possible_recs = array($rec_step);
+						break;
+					}
+				}
+
+				if(!empty($possible_recs)){
+					$this->emDebug("this patient has a side fx RX CHANGE!!!", $possible_recs);
+					foreach($possible_recs as $rec){
+						//if side fx has this:
+						//"rash_other" => array("Uncontrolled, K < 4.5" => 69, "Uncontrolled, K > 4.5" => 65),
+						// then need to get their lab values
+
+						//if patient only h as one side fx rec, easy , we make their recommendation
+
+						//if patient rec is text and not digit, then what happens?
+						$uncontrolled_next_step 		= $rec;
+						$uncontrolled_Kplus_next_step 	= array_key_exists("Uncontrolled, K > 4.5", $rec) ?  $rec["Uncontrolled, K > 4.5"] : null;
+						$uncontrolled_Kminus_next_step 	= array_key_exists("Uncontrolled, K < 4.5", $rec) ?  $rec["Uncontrolled, K < 4.5"] : null;
+						
+						$current_update_ts		= date("Y-m-d H:i:s");
+						$lab_values 			= array();
+						$need_lab 				= false;
+						if(!empty($uncontrolled_Kplus_next_step) || !empty($uncontrolled_Kminus_next_step)){ 
+							//UNCONTROLLED STEP HAS A LAB CHECK (K) OR a POSSIBLE ELEVATED CR Side EFFECT
+							//NEED RECENT LABS ( 2 weeks )
+							$this->emDebug("possible labs needed, K or CR" , $uncontrolled_Kplus_next_step, $uncontrolled_Kminus_next_step);
+							$filter = "[lab_ts] > '" . date("n/j/y", strtotime('-2 weeks')) . "'";
+							$params	= array(
+								'project_id'	=> $this->enabledProjects["patients"]["pid"],
+								'records' 		=> array($record_id),
+								'return_format' => 'json',
+								'fields'        => array("record_id", "lab_name", "lab_value", "lab_ts"),
+								'filterLogic' 	=> $filter
+							);
+							$q 		= \REDCap::getData($params);
+							$labs	= json_decode($q, true);
+							if(!empty($labs)){
+								foreach($labs as $lab){
+									$lab_values[$lab["lab_name"]] = $lab["lab_value"];
+								}
+							}
+	
+							if(empty($lab_values)){
+								$need_lab = true;
+							}elseif(!empty($uncontrolled_Kplus_next_step) || !empty($uncontrolled_Kminus_next_step)){
+								//then set the uncontrolled_next_step
+								$this->emdebug("this is K check step, if have K, then use that as recommended step");
+								if(isset($lab_values["k"])){
+									$uncontrolled_next_step = $lab_values["k"] > 4.5 ? $uncontrolled_Kplus_next_step : $uncontrolled_Kminus_next_step;
+								}else{
+									$need_lab = true;
+								}
+							}
+						}
+
+						$filter_tag = $need_lab ? "labs_needed" : "rx_change";
+						$data 		= array(
+							"record_id"             	=> $record_id,
+							"patient_rec_tree_step" 	=> (!$need_lab ? $uncontrolled_next_step : null),
+							"last_update_ts"			=> $current_update_ts,
+							"filter"      				=> $filter_tag,
+						);
+						// $r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
+						$this->emDebug("update patient baseline data", $data);
+
+						//SAVE THE RECOMMENDATION STEP WHETHER IT WILL BE ACCEPTED OR NOT
+						if($filter_tag == "rx_change"){
+							$current_meds 	= implode(", ",$current_tree_step["drugs"]);
+							$next_tree_step = $treelogic["logicTree"][$uncontrolled_next_step];
+							$rec_meds 		= implode(", ",$next_tree_step["drugs"]);
+
+							$next_instance_id 				= $this->getNextInstanceId($record_id, "recommendations_log", "rec_ts");
+							$data = array(
+								"record_id"             	=> $record_id,
+								"redcap_repeat_instance" 	=> $next_instance_id,
+								"redcap_repeat_instrument" 	=> "recommendations_log",
+								"rec_current_meds" 			=> $current_meds,
+								"rec_step" 					=> $next_tree_step["step_id"],
+								"rec_meds" 					=> $rec_meds,
+								"rec_accepted"				=> 0,
+								"rec_ts"					=> $current_update_ts
+							);
+							// $r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
+							$this->emDebug("store a recommendation log!",  $data);
+						}
+					}
+				}
+			}
+
+			//UPDATE THE INSTANCE AS "read"
+			$data 		= array(
+				"record_id"             	=> $record_id,
+				"redcap_repeat_instrument"	=> "communications",
+				"redcap_repeat_instance" 	=> $instance_id,
+				"message_read"				=> 1,
+			);
+			// $r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)));
+		}
+	}
+
 	// contact patient by email / text if available
 	public function contactPatient($record_id, $subject, $msg){
 		$this->loadEM();
@@ -1198,6 +1381,19 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		}
 	}
 		
-
-
+	public function communications_check(){
+		$projects 	= $this->framework->getProjectsWithModuleEnabled();
+		$urls 		= array(
+						$this->getUrl('cron/communications_check.php',true,true)
+					); //has to be page
+		foreach($projects as $index => $project_id){
+			foreach($urls as $url){
+				$thisUrl 	= $url . "&pid=$project_id"; //project specific
+				$client 	= new \GuzzleHttp\Client();
+				$response 	= $client->request('GET', $thisUrl, array(\GuzzleHttp\RequestOptions::SYNCHRONOUS => true));
+				$this->emDebug("running cron for $url on project $project_id");
+			}
+			
+		}
+	}
 }
