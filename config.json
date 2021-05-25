@@ -103,6 +103,7 @@
 		"cron/refresh_omron_tokens",
 		"cron/daily_survey_check",
 		"cron/daily_survey_clear",
+		"cron/communications_check",
 
 		"pages/oauth",
 		"pages/dashboard",
