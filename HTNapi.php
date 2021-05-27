@@ -98,6 +98,17 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		return $this->dashboard->getProvider($provider_id);
 	}
 
+	public function sendResetPassword($login_email){
+		$this->loadEM();
+
+		return $this->dashboard->sendResetPassword($login_email);
+	}
+
+	public function updateProviderPassword($record_id, $login_email, $rawpw){
+		$this->loadEM();
+
+		return $this->dashboard->updateProviderPassword($record_id, $login_email, $rawpw);
+	}
 
 	public function flagPatientForDeletion($patient_record_id){
 		$this->loadEM();

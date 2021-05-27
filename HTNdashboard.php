@@ -691,6 +691,24 @@ class HTNdashboard {
         }
     }
 
+    public function resetPasswordEmail($provider){
+            $verify_link        = $this->module->getUrl("pages/reset_password.php", true, true)."&email=".$provider["provider_email"]."&verify=".$provider["verification_token"];
+            $msg_arr            = array();
+            $welcome        = "Dear " . $provider["provider_fname"] .",";
+            $msg_arr[]      = "<p>" . $welcome . "</p>";
+            $msg_arr[]      = "<p>A password reset request was made for your HTN account.  If you did not initiate this request, simply ignore this email.<p>";
+            $msg_arr[]      = "<p>Otherwise click the following <a href='".$verify_link."'>link</a> to reset your HTN account password.</p>";
+            $msg_arr[]      = "<p>Thank You! <br> Stanford HypertensionStudy Team</p>";
+            
+            $message 	= implode("\r\n", $msg_arr);
+            $to 		= $provider["provider_email"];
+            $from 		= "no-reply@stanford.edu";
+            $subject 	= "HTN - Reset Password Request";
+            $fromName	= "Stanford Hypertension Team";
+
+            $result = \REDCap::email($to, $from, $subject, $message);
+    }
+
 	public function verifyAccount($verification_email, $verification_token){
 		$provider = $this->findProviderByToken($verification_email, $verification_token);
         if(!empty($provider)){
@@ -742,6 +760,20 @@ class HTNdashboard {
         return current($records);
 	}
 
+    public function getProviderbyEmail($provider_email){
+        $filter     = "[provider_email] = '" . $provider_email . "'";
+        $fields     = array("record_id", "provider_email", "provider_pw", "provider_fname");
+        $params     = array(
+            'project_id'    => $this->providers_project,
+            'fields'        => $fields,
+            'filterLogic'   => $filter,
+            'return_format' => 'json'
+        );
+        $raw        = \REDCap::getData($params);
+        $results    = json_decode($raw,1);
+        return $results;
+    }
+    
     public function sendPatientConsent($patient_id, $consent_url , $consent_email){
         $result = false;
 		if( !empty($patient_id) && !empty($consent_url) && !empty($consent_email) ){
@@ -866,6 +898,50 @@ class HTNdashboard {
         }else{
             return false;
         }
+    }
+
+    public function sendResetPassword($login_email){
+        $results = $this->getProviderbyEmail($login_email);
+
+        $this->module->emDebug("found the provider?", $results);
+
+        if(!empty($results)){
+            $provider   = current($results);
+            $record_id  = $provider["record_id"];
+            $new_token  = $this->module->makeEmailVerifyToken();
+
+            $data                       = array();
+            $data["record_id"]          = $record_id;
+            $data["verification_token"] = $new_token;
+            $r                          = \REDCap::saveData($this->providers_project, 'json', json_encode(array($data)) );
+            
+            $provider["verification_token"] = $new_token;
+            if(empty($r["errors"]) && empty($edit_id)){
+                $this->resetPasswordEmail($provider);
+            } 
+        }
+
+        return $results;
+    }
+
+    public function updateProviderPassword($record_id, $provider_email, $rawpw){
+    
+        $salt       = $provider_email;
+        $pepper     = $this->pepper;
+        $input      = $salt.$rawpw.$pepper;
+        $post_val   = $this->pwHash($input);
+
+        $data                       = array();
+        $data["record_id"]          = $record_id;
+        $data["provider_pw"]        = $post_val;
+        $r                          = \REDCap::saveData($this->providers_project, 'json', json_encode(array($data)) );
+        if(empty($r["errors"])){
+            $this->module->emDebug("provider password updated",  $r);
+            $_SESSION["buffer_alert"] = array("errors" => null , "success" => "Password Updated!");
+            $this->loginProvider($provider_email, $post_val, true);
+            return true;
+        }
+        return false;
     }
 }
 ?> 

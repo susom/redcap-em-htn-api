@@ -1,25 +1,63 @@
 <?php
 namespace Stanford\HTNtree;
 /** @var \Stanford\HTNtree\HTNtree $module */
+session_start();
 
-$verification_token = !empty($_GET["verify"]) ? filter_var($_GET["verify"], FILTER_SANITIZE_STRING) : null;
-if($verification_token){
-    $action = $_POST["action"];
 
-    switch($action){
-        case "login_provider":
-            $login_email    = strtolower(trim(filter_var($_POST["login_email"], FILTER_SANITIZE_STRING)));
-            $login_pw       = strtolower(trim(filter_var($_POST["login_pw"], FILTER_SANITIZE_STRING)));  
-            $verify         = $module->loginProvider($login_email, $login_pw);
-            if($verify){
+$show_pw_fields = false;
+$action         = isset($_POST["action"]) ? filter_var($_POST["action"], FILTER_SANITIZE_STRING) : null;
+if(!isset($action) && isset($_GET["verify"]) ){
+    $action = "verify";
+}
+switch($action){
+    case "reset_password":
+        $login_email    = strtolower(trim(filter_var($_POST["login_email"], FILTER_SANITIZE_STRING)));
+        $result         = $module->sendResetPassword($login_email);
+        if(!empty($result)){
+            $_SESSION["buffer_alert"] = array("errors" => null , "success" => "Check your email for a reset password link.");  
+            header("Location: " . $module->getUrl("pages/dashboard.php", true, true));
+            exit;
+        }else{
+            $_SESSION["buffer_alert"] = array("errors" => "Email not found." , "success" => "");  ;
+        }
+    break;
+
+    case "update_password":
+        $record_id      = strtolower(trim(filter_var($_POST["record_id"], FILTER_SANITIZE_NUMBER_INT)));
+        $provider_email = trim(filter_var($_POST["provider_email"], FILTER_VALIDATE_EMAIL)) ;
+        $pw_1           = strtolower(trim(filter_var($_POST["provider_pw"], FILTER_SANITIZE_STRING)));
+        $pw_2           = strtolower(trim(filter_var($_POST["provider_pw2"], FILTER_SANITIZE_STRING)));
+        
+        if(!empty($pw_1) && $pw_1 == $pw_2){
+            $result     = $module->updateProviderPassword($record_id, $provider_email, $pw_1);
+            if(!empty($result)){
                 header("Location: " . $module->getUrl("pages/dashboard.php", true, true));
                 exit;
-            }else{
-                $module->emDebug("not verified!");
-                $errors[]   = "Email / Password combination not found";
-            }   
-        break;
-    }
+            }
+        }else{
+            $_SESSION["buffer_alert"] = array("errors" => "Passwords do not match" , "success" => "");
+            $show_pw_fields = true;
+        }
+    break;
+
+    case "verify":
+        $verification_token = !empty($_GET["verify"]) ? filter_var($_GET["verify"], FILTER_SANITIZE_STRING) : null;
+        $verification_email = !empty($_GET["email"]) ? filter_var($_GET["email"], FILTER_VALIDATE_EMAIL) : null;
+
+        $verify_account     = $module->verifyAccount($verification_email,$verification_token);
+        if(array_key_exists("errors",$verify_account) && empty($verify_account["errors"])){
+            $_SESSION["buffer_alert"] = array("errors" => null , "success" => "Account found, reset password below.");
+            $show_pw_fields = true;
+            $record_id      = $verify_account["provider"]["record_id"];
+            $provider_email = $verify_account["provider"]["provider_email"];
+        }
+    break;
+}
+
+//FOR PASSING ALERTS AROUND
+if(isset($_SESSION["buffer_alert"])){
+    $errors = $_SESSION["buffer_alert"];
+    unset($_SESSION["buffer_alert"]);
 }
 ?>
 <!DOCTYPE html>
@@ -28,7 +66,7 @@ if($verification_token){
     <?php include("components/gl_meta.php") ?>
     <!-- Custom styles for this template -->
 </head>
-<?php
+<?php 
 $page = "login_reg";
 ?>
 <body class="d-flex flex-column h-100">
@@ -40,9 +78,9 @@ $page = "login_reg";
         <div id="login" class="container mt-5">
             <?php
                 if(!empty($errors)){
-                    echo '<div class="mt-4 row">
-                            <div class="col-md-6 offset-md-3 alert alert-danger">'.$errors[0].'</div>
-                        </div>';
+                    $greenred   = !empty($errors["errors"]) ? "danger" : "success";
+                    $msg        = !empty($errors["errors"]) ? $errors["errors"] : $errors["success"];
+                    echo "<div class='offset-sm-3 col-sm-6 alert alert-".$greenred."'>".$msg."</div>";
                 }
             ?>
 
@@ -51,19 +89,25 @@ $page = "login_reg";
                     <h1 class="mt-3 mb-3 mr-3 ml-3 d-inline-block align-middle">Reset Password</h1>
                     
                     <form method="POST" class="mr-3 ml-3">
-                        <input type="hidden" name="action" value="login_provider"/>
-                        <div class="form-group">
-                            <label for="login_email">Email address</label>
-                            <input type="email" class="form-control" id="login_email" name="login_email" aria-describedby="emailHelp" placeholder="johndoe@stanford.edu">
-                        </div>
-                        <div class="form-group">
-                            <label for="login_pw">New Password</label>
-                            <input type="password" class="form-control" id="login_pw" name="login_pw" placeholder="secret password">
-                        </div>
-                        <div class="form-group">
-                            <label for="login_pw">Confirm Password</label>
-                            <input type="password" class="form-control" id="login_pw" name="login_pw" placeholder="secret password">
-                        </div>
+                        <?php if($show_pw_fields) { ?>
+                            <input type="hidden" name="action" value="update_password"/>
+                            <input type="hidden" name="record_id" value="<?=$record_id?>"/>
+                            <input type="hidden" name="provider_email" value="<?=$provider_email?>"/>
+                            <div class="form-group">
+                                <label for="login_pw">New Password</label>
+                                <input type="password" class="form-control" id="provider_pw" name="provider_pw" placeholder="new password">
+                            </div>
+                            <div class="form-group">
+                                <label for="login_pw">Confirm Password</label>
+                                <input type="password" class="form-control" id="provider_pw2" name="provider_pw2" placeholder="new password again">
+                            </div>
+                        <?php } else { ?>
+                            <input type="hidden" name="action" value="reset_password"/>
+                            <div class="form-group">
+                                <label for="login_email">Email address</label>
+                                <input type="email" class="form-control" id="login_email" name="login_email" aria-describedby="emailHelp" placeholder="johndoe@stanford.edu">
+                            </div>
+                        <?php } ?>
                         <div class="btns pt-4 pb-4">
                             <button type="submit" id="login_go" class="btn btn-primary btn-block">Reset Password</button>
                         </div>
