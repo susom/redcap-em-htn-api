@@ -816,7 +816,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 		if(!empty($target_systolic)){
 			//GET THE LAST 2 WEEKS WORTH OF BP DATA
-			$filter = "[bp_reading_ts] > '" . date("n/j/y H:i", strtotime('-12 weeks')) . "'";
+			$filter = "[bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-2 weeks')) . "'";
 			$params	= array(
 				'project_id'	=> $this->enabledProjects["patients"]["pid"],
 				'records' 		=> array($record_id),
@@ -854,7 +854,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 					//UNCONTROLLED STEP HAS A LAB CHECK (K) OR a POSSIBLE ELEVATED CR Side EFFECT
 					//NEED RECENT LABS ( 2 weeks )
 					$this->emDebug("possible labs needed, K or CR" , $uncontrolled_Kplus_next_step, $uncontrolled_Kminus_next_step, $cr_sideeffect);
-					$filter = "[lab_ts] > '" . date("n/j/y", strtotime('-2 weeks')) . "'";
+					$filter = "[lab_ts] > '" . date("Y-m-d", strtotime('-2 weeks')) . "'";
 					$params	= array(
 						'project_id'	=> $this->enabledProjects["patients"]["pid"],
 						'records' 		=> array($record_id),
