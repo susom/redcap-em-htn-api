@@ -33,7 +33,7 @@ function dashboard(record_id,urls, is_sponsored=false){
     this.intf           = null;
     this.filter_txn     = {"rx_change" : "Prescription Change Needed", "labs_needed" : "Lab Results Needed" , "data_needed" : "Data Needed", "all_patients" : "All Patients", "clear_filters" : "Clear Filters"};
     var _this           = this;
-    //some UI/UX 
+    //some UI/UX
     $("#overview").on("click","h1", function(e){
         e.preventDefault();
         if($(this).parent().next().is(":visible")){
@@ -46,26 +46,25 @@ function dashboard(record_id,urls, is_sponsored=false){
     //hijack add patient for consent flow
     $(".add_patient").click(function(e){
         e.preventDefault();
-    
+
         //UI FOR NEW PENDING PATIENT
 
         //NEED TO prevent DOUBLE CLICKS
         if(!$(this).prop("disabled")){
             //disable it until ajax returned
             $(this).prop("disabled",true);
-            console.log("creating empty patient record, disabling click");
         }
 
         //TODO , IF PROVIDER = super_delegate, then need a dropdown of ALL provider IDS + names?
         if(_this.intf["super_delegate"].length){
             var tpl = $(providers_modal);
             $("body").append(tpl);
-        
+
             for(var i in _this.intf["super_delegate"]){
                 let provider        = _this.intf["super_delegate"][i];
                 let provider_id     = provider["record_id"];
                 let provider_name   = provider["provider_fname"] + " " + " " + provider["provider_lname"] + " (pid : "+provider_id+")";
-                let opt             = $("<option>").val(provider_id).text(provider_name);                            
+                let opt             = $("<option>").val(provider_id).text(provider_name);
                 $("#provideroptions").append(opt);
             }
 
@@ -74,16 +73,16 @@ function dashboard(record_id,urls, is_sponsored=false){
                 e.preventDefault();
                 tpl.remove();
             });
-            
+
             tpl.find(".continue .send").click(function(e){
                 e.preventDefault();
                 //TOO IF NOTHING SELECTED ALERT
                 let provider_id = $( "#provideroptions option:selected" ).val();
                 _this.addPatient(provider_id);
                 tpl.remove();
-            });            
+            });
         }else{
-            //KICK OFF AJAX TO ADD CREATE EMPTY PATIENT RECORD + ID 
+            //KICK OFF AJAX TO ADD CREATE EMPTY PATIENT RECORD + ID
             _this.addPatient();
         }
     });
@@ -120,7 +119,7 @@ dashboard.prototype.updateOverview = function(){
     var patients        = intf["patients"];
     var pending_patients= intf["pending_patients"];
     var rx_change       = intf["rx_change"];
-    var labs_needed     = intf["labs_needed"]; 
+    var labs_needed     = intf["labs_needed"];
     var data_needed     = intf["data_needed"];
     var alerts          = intf["messages"];
     var _this           = this;
@@ -166,7 +165,7 @@ dashboard.prototype.updateOverview = function(){
         tpl.find(".stat").parent().addClass("picked");
     }
     $("#filters").append(tpl);
-    
+
 
     //labs_needed
     var tpl = $(overview_filter);
@@ -183,7 +182,7 @@ dashboard.prototype.updateOverview = function(){
         tpl.find(".stat").parent().addClass("picked");
     }
     $("#filters").append(tpl);
-    
+
 
     //data_needed
     var tpl = $(overview_filter);
@@ -200,7 +199,7 @@ dashboard.prototype.updateOverview = function(){
         tpl.find(".stat").parent().addClass("picked");
     }
     $("#filters").append(tpl);
-    
+
 
     //all
     var total_patients = Object.keys(patients).length + Object.keys(pending_patients).length;
@@ -229,25 +228,25 @@ dashboard.prototype.updateOverview = function(){
 dashboard.prototype.updateAlerts = function(){
     var intf    = this.intf;
     var alerts  = intf["pending_patients"];
-    
+
     $("#alerts_tbody").empty();
     for(var i in alerts){
         var consent_alert   = alerts[i];
         var patient_id      = consent_alert["patient_id"];
         let patient_email   = consent_alert["consent_email"] ? consent_alert["consent_email"] : "n/a";
         let patient_name    = consent_alert["patient_consent_name"] ? consent_alert["patient_consent_name"] : patient_email;
-        
+
         let consent_url     = consent_alert["consent_url"];
         let consent_sent    = consent_alert["consent_sent"];
         let consent_ts      = consent_alert["consent_date"];
-        
+
         var row             = $(alerts_row);
         row.attr("id", "pending_patient_"+patient_id);
 
         row.find(".consent_url").html(consent_url);
         if(consent_ts){
-            //PATIENT HAS CONSENTED 
-            //MAKE EDIT PATIENT LINK 
+            //PATIENT HAS CONSENTED
+            //MAKE EDIT PATIENT LINK
             console.log(patient_id + " has consented so make edit patient link");
 
             var edit_link = $("<a>").attr("href",this["edit_patient"]).data("patient",patient_id).text(patient_id);
@@ -259,7 +258,7 @@ dashboard.prototype.updateAlerts = function(){
         }else{
             //PATIENT HAS NOT CONSENTED
             if(!consent_sent){
-                //IF NOT USING REDCAP TO SEND (OR IF NOT SENT THEN ADD THIS FUNCTIONALITY; 
+                //IF NOT USING REDCAP TO SEND (OR IF NOT SENT THEN ADD THIS FUNCTIONALITY;
                 this.consentBindings(row, patient_id, consent_url);
             }
         }
@@ -352,12 +351,17 @@ dashboard.prototype.buildNav = function(){
                 _el.addClass("active");
                 _this.cur_patient = _el.data("record_id");
                 _this.setSession("cur_patient",_this.cur_patient);
+
+                //TODO
+                console.log("TODO, why doesnt the patientdetail have bp_resyltsalready?");
+                result["bp_readings"] = _this.intf["patients"][result.record_id]["bp_readings"];
+
                 _this.patient_detail[record_id] = result;
                 _this.setSession("patient_detail",_this.patient_detail);
 
-                //artificial delay to draw the eye when theres a change 
+                //artificial delay to draw the eye when theres a change
                 $("#patient_details").removeClass().addClass("col-md-8 none_selected bg-light rounded").empty().addClass("loading_patient");
-                
+
                 if(isAutoClick){
                     //if its autoclick from a refreshData call dont bother with the fake settimeout
                     _this.displayPatientDetail(record_id);
@@ -385,12 +389,12 @@ dashboard.prototype.buildNav = function(){
         var newnav = $("<p>").text(null_text);
         $("#patient_list").append(newnav);
     }
-    
+
 }
 dashboard.prototype.displayPatientDetail = function(record_id){
     $("#patient_details").removeClass().addClass("col-md-8");
     $("#patient_details").empty();
-    
+
     record_id = this.cur_patient ? this.cur_patient : record_id;
     if(record_id || this.cur_patient){
         var patient = this.patient_detail[record_id];
@@ -414,7 +418,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         }
 
         tpl.find(".comorbidity").html(comorbid_list.join("\r\n"));
-        
+
         var need_CRK    = patient["crk_readings"].length ? false : true;
         if(!need_CRK){
             for(var i in patient["crk_readings"]){
@@ -436,7 +440,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             emaillink.addClass("email");
             emaillink.click(function(e){
                 $(this).text("Sending Authorization Request ...");
-                
+
                 e.preventDefault();
                 var _el = $(this);
                 $.ajax({
@@ -456,7 +460,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                 }).fail(function () {
                     console.log("something failed");
                 });
-            });          
+            });
             cuff_type = emaillink;
         }
         tpl.find(".patient_status").html(cuff_type);
@@ -479,7 +483,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             var tab = $(this).data("tab");
             $("#patient_details .nav-link").removeClass("active");
             $(this).addClass("active");
-            
+
             $(".panels").hide();
             $("."+tab).show();
             return false;
@@ -584,7 +588,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             log_step.find(".ts h5").html(ts_temp[0]);
             log_step.find(".ts em").html(ts_temp[1]);
             log_step.find(".meds h6").html(log["ptree_current_meds"]);
-            
+
             if(log.hasOwnProperty("ptree_step_intolerances") && log["ptree_step_intolerances"].length){
                 log_step.find(".intolerances span").html(log["ptree_step_intolerances "]);
             }else{
@@ -605,7 +609,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                 log_step.find(".note").remove();
                 log_step.find(".comment").remove();
             }
-            
+
             tpl.find(".presription_tree .content").append(log_step);
         }
         var view_tree   = $("<button>").text("View Patient Interactive Tree View").addClass("btn btn-info btn-large");
@@ -660,8 +664,8 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             var none_msg = $("<em>").addClass("none_msg").text("No recommendations have been generated yet.");
             tpl.find(".recs_log .content").append(none_msg);
         }
-        
-   
+
+
 
         //BP READINGS GRAPH
         if(patient["bp_readings"].length){
@@ -694,7 +698,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         // TODO FIX PTREE
         if(patient["filter"] == "rx_change"){
             var rec = $(recommendation);
-            var patient_id          = record_id;  
+            var patient_id          = record_id;
             var cur_tree_step_idx   = patient["patient_treatment_status"] ? parseInt(patient["patient_treatment_status"]) : 0;
             var cur_tree_id         = patient["current_treatment_plan_id"] ? patient["current_treatment_plan_id"] : 1;
             var cur_drugs           = _this.intf["ptree"][cur_tree_id]["logicTree"][cur_tree_step_idx]["drugs"].join(", ");
@@ -703,7 +707,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             var rec_tree_step_idx   = parseInt(patient["patient_rec_tree_step"]);
             var rec_drugs           = _this.intf["ptree"][cur_tree_id]["logicTree"][rec_tree_step_idx]["drugs"].join(", ");
             rec.find("h6").text(rec_drugs);
-            
+
             var sum_bps = 0;
             for(var i in patient["bp_readings"]){
                 var bp_units = patient["bp_readings"][i]["bp_units"];
@@ -712,7 +716,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             var mean_systolic   = Math.round(sum_bps/patient["bp_readings"].length);
             var target_systolic = patient["patient_bp_target_systolic"];
             var diff_systolic   = Math.abs(target_systolic - mean_systolic);
-            
+
             var rec_p = $("<p>").addClass("summary").html(patient["patient_fname"]+"'s mean systolic reading over the last 2 weeks was <b>"+mean_systolic+bp_units+"</b>. " + diff_systolic + bp_units + " over their goal of <b>" + target_systolic + bp_units + "</b>.");
             rec.find(".summaries").append(rec_p);
             var rec_p = $("<p>").addClass("summary").html(patient["patient_fname"] + " is currently taking <b>" +cur_drugs + "</b>.  It is recommended that they move on to next step and use the new course of medications : <b>"+rec_drugs+"</b>");
@@ -739,7 +743,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
             rec.on("click", ".send_and_accept", function(e){
                 e.preventDefault();
-                
+
                 // ADD SOME DATA TO THE patient OBJ
                 patient["provider_comment"] = $("#provider_comment").val().trim() != "" ? $("#provider_comment").val() : "accepted recommendation";
                 patient["current_drugs"]    = $("#recommendations .change h6").text();
@@ -765,7 +769,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
             rec.on("click", ".decline_rec", function(e){
                 e.preventDefault();
-                
+
                 $.ajax({
                     url : _this["ajax_endpoint"],
                     method: 'POST',
@@ -774,7 +778,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                 }).done(function (result) {
                     //remove recommendation from patient details
                     _this.patient_detail["patient_rec_tree_step"] = null;
-                    _this.patient_detail["filter"] = null;                    
+                    _this.patient_detail["filter"] = null;
                     _this.setSession("patient_detail",_this.patient_detail);
 
                     rec.slideUp("medium", function(){
@@ -800,7 +804,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         var tpl = $("<h1>No Patient Selected</h1>");
     }
     $("#patient_details").append(tpl);
-    
+
     //open to recoommendation (must be after append) if it is an rxchangeoh
     if(this.cur_patient && patient["filter"] == "rx_change"){
         $(".recommendation_tab").trigger("click");
@@ -853,13 +857,13 @@ dashboard.prototype.graphBpData = function(){
         datasys.push(sys);
         datadia.push(dia);
     }
-    
+
     setTimeout(function(){
         var chart = c3.generate({
             "bindto"    : "#bpchart",
             "title"     : {
                 "text": function(d){
-                    return patient["patient_fname"]+"'s Blood Pressure Data"; 
+                    return patient["patient_fname"]+"'s Blood Pressure Data";
                 }
             },
             "data"      : {
@@ -871,7 +875,7 @@ dashboard.prototype.graphBpData = function(){
                             },
                 "type" : "spline"
             },
-            
+
 
             "subchart"  : {
                 "show" : false
@@ -904,8 +908,8 @@ dashboard.prototype.graphBpData = function(){
             "tooltip"   : {
                 format: {
                     "title" : function(d) {
-                        var dr = d; 
-                        return 'BP: ' + dr; 
+                        var dr = d;
+                        return 'BP: ' + dr;
                     },
                     "value" : function(value, ratio, id) {
                         var format = id === 'data1' ? d3.format(',') : d3.format('');
@@ -952,10 +956,10 @@ dashboard.prototype.consentBindings = function(row, patient_id, consent_url){
             e.preventDefault();
             tpl.remove();
         });
-        
+
         tpl.find(".continue .send").click(function(e){
             e.preventDefault();
-            
+
             let patient_id      = $("#consent_patient_id").val();
             let consent_url     = $("#consent_url").val();
             let consent_email   = $("#consent_email").val();
@@ -985,6 +989,7 @@ dashboard.prototype.addPatient = function(provider_id){
         data: { "action" : "new_patient_consent", "provider_id" : provider_id },
         dataType: 'json'
     }).done(function (result) {
+        console.log("add Blank Patient", result);
         var consent_url = result["consent_link"];
         var patient_id  = result["patient_id"];
 

@@ -13,20 +13,21 @@ if(isset($_POST["action"])){
         case "login_provider":
             $login_email    = strtolower(trim(filter_var($_POST["login_email"], FILTER_SANITIZE_STRING)));
             $login_pw       = strtolower(trim(filter_var($_POST["login_pw"], FILTER_SANITIZE_STRING)));
-            $verify         = $module->loginProvider($login_email, $login_pw);
+            //TODO SO I CAN USE CLEAR TEXT PASSWORD already hashed!
+            $verify         = $module->loginProvider($login_email, $login_pw, true);
             if($verify){
                 if(empty($_SESSION["logged_in_user"]["provider_trees"])){
                     $provider_id    = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
-                    
+
                     $provider_trees = $module->getDefaultTrees($provider_id);
                     $_SESSION["logged_in_user"]["provider_trees"] = $provider_trees;
                 }
-                
+
                 header("Location: " . $module->getUrl("pages/dashboard.php", true, true));
                 exit;
             }else{
                 $_SESSION["buffer_alert"]  = array("errors" => "Email / Password combination not found", "success" => null);
-            }   
+            }
         break;
     }
 }
@@ -49,7 +50,7 @@ $page = "login_reg";
 <body class="d-flex flex-column h-100">
     <?php include("components/gl_topnav.php") ?>
 
-    
+
     <!-- Begin page content -->
     <main role="main" class="flex-shrink-0">
         <div id="login" class="container mt-5">
@@ -64,7 +65,7 @@ $page = "login_reg";
 
                 <div class="col-md-6 offset-md-3 bg-light border rounded mt-5">
                     <h1 class="mt-3 mb-3 mr-3 ml-3 d-inline-block align-middle">Log In</h1>
-                    
+
                     <form method="POST" class="mr-3 ml-3">
                         <input type="hidden" name="action" value="login_provider"/>
                         <div class="form-group">
@@ -99,7 +100,7 @@ $(document).ready(function(){
     var new_tree        = {};
     var patient_list    = {};
     var treatment_trees = {};
-    
+
     if(typeof(Storage) !== "undefined"){
         if(localStorage.getItem("patient_list")){
             patient_list    = JSON.parse(localStorage.getItem("patient_list"));
@@ -122,7 +123,7 @@ $(document).ready(function(){
                 $("#patient_tree").append(newopt.clone());
             }
         }
-        
+
         // localStorage.setItem("key",JSON.stringify(OB));
         // localStorage.removeItem("key");
         // localStorage.clear();
@@ -146,7 +147,7 @@ $(document).ready(function(){
         setTimeout(function(){
             $(".alert").slideUp("medium");
         },4000);
-    <?php    
+    <?php
         }
     ?>
 });

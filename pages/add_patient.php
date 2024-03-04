@@ -25,12 +25,12 @@ if(!empty($_POST)){
         break;
 
         case "add":
-            
+
         break;
 
         default :
-            
-            
+
+
         break;
     }
 
@@ -71,7 +71,6 @@ $planning_pregnancy = $patient["planning_pregnancy"];
 $ckd                = $patient["ckd"] == "CKD n/a" ? "" : $patient["ckd"];
 $comorbidity        = $patient["comorbidity"] == "comorbidity n/a" ? "" : $patient["comorbidity"];
 $pharmacy_info      = $patient["pharmacy_info"] == "pharmacy n/a" ? "" : $patient["pharmacy_info"];
-
 $add_edit_btn_text  = !empty($patient) ? "Edit Patient $patient_fname's Data" : "Add New Patient";
 $action             = !empty($patient) && empty($action) && !$newly_consented ? "edit" : "add";
 
@@ -100,7 +99,7 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
     <?php include("components/gl_topnav.php") ?>
 
     <!-- Begin page content -->
-    <main role="main" class="flex-shrink-0">        
+    <main role="main" class="flex-shrink-0">
         <div id="patients" class="container mt-5">
             <div class="row pt-5">
                 <h1 class="mt-0 mb-3 mr-3 ml-3 d-inline-block align-middle"><?=$add_edit_btn_text?></h1>
@@ -150,7 +149,7 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                                 <input type="text" class="form-control" name="patient_mrn" value="<?=$patient["patient_mrn"]?>" id="patient_mrn" aria-describedby="patient_mrn" placeholder="eg; 123456789">
                                                 <small id="patient_mrn_help" class="form-text text-muted">This will be used to link with STARR/EPIC databses.</small>
                                             </div>
-                                            
+
                                             <div class="form-group col-sm-6">
                                                 <label for="patient_email"><b>Patient Email*</b></label>
                                                 <input type="text" class="form-control" name="patient_email" value="<?=$patient["patient_email"]?>" id="patient_email" aria-describedby="patient_email" placeholder="eg; jane@doe.com">
@@ -160,23 +159,23 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                             <div class="col-sm-12 my-4 bg-info text-light py-3 row">
                                                 <h3 class="col-sm-12"><b>Blood Pressure Goals</b></h3>
                                                 <div class="form-group col-sm-4">
-                                                    <label for="patient_bp_target_systolic"><b>Systolic Goal*</b></label>
+                                                    <label for="patient_bp_target_systolic"><b>Systolic Target*</b></label>
                                                     <input type="text" class="form-control" name="patient_bp_target_systolic" value="<?=$patient["patient_bp_target_systolic"] ?? 120?>" id="patient_bp_target_systolic" aria-describedby="patient_bp_target_systolic">
                                                 </div>
                                                 <div class="form-group col-sm-4">
-                                                    <label for="patient_bp_target_diastolic"><b>Diastolic Goal*</b></label>
+                                                    <label for="patient_bp_target_diastolic"><b>Diastolic Target*</b></label>
                                                     <input type="text" class="form-control" name="patient_bp_target_diastolic" value="<?=$patient["patient_bp_target_diastolic"] ?? 80?>" id="patient_bp_target_diastolic" aria-describedby="patient_bp_target_diastolic">
                                                 </div>
                                                 <div class="form-group col-sm-4">
-                                                    <label for="patient_bp_target_pulse"><b>Pulse Goal*</b></label>
+                                                    <label for="patient_bp_target_pulse"><b>Pulse Target*</b></label>
                                                     <input type="text" class="form-control" name="patient_bp_target_pulse" value="<?=$patient["patient_bp_target_pulse"] ?? 65?>" id="patient_bp_target_pulse" aria-describedby="patient_bp_target_pulse">
                                                 </div>
                                             </div>
                                         </figcaption>
                                     </fig>
                                 </div>
-                                
-                                <div class="patient_details col-sm-10 offset-sm-1 mb-3 row <?= $action == "edit" ? "show" : "hide"?>">            
+
+                                <div class="patient_details col-sm-10 offset-sm-1 mb-3 row <?= $action == "edit" ? "show" : "hide"?>">
                                     <h3 class="col-sm-12">Patient Details</h3>
                                     <em class="col-sm-12 mb-3">Much of this will be pulled and automatically refreshed from STARR/EPIC</em>
                                     <div class="form-group col-sm-4">
@@ -191,14 +190,14 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                         <label for="patient_lname"><b>Last Name*</b></label>
                                         <input type="text" class="form-control" name="patient_lname" value="<?=$patient["patient_lname"]?>" id="patient_lname" aria-describedby="patient_lname" placeholder="Last Name">
                                     </div>
-                                    
+
                                     <div class="form-group col-sm-7">
                                         <label for="patient_phone"><b>Patient Cell*</b></label>
                                         <input type="text" class="form-control" name="patient_phone" value="<?=$patient["patient_phone"]?>" id="patient_phone" aria-describedby="patient_phone" placeholder="eg; 555-555-1234">
                                         <small id="patient_phone_help" class="form-text text-muted">This will be used to text surveys to patient.</small>
                                     </div>
-                                    
-                                    
+
+
                                     <div class="form-group col-sm-6">
                                         <label><b>Patient Sex*</b></label>
                                         <div class="form-check">
@@ -217,8 +216,8 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
 
                                     <div class="form-group col-sm-6">
                                         <label for="patient_mrn"><b>Patient DOB*</b></label>
-                                        <input type="text" class="form-control" name="patient_birthday" value="<?=$dob?>" id="patient_birthday" aria-describedby="patient_birthday" placeholder="eg; mm/dd/yyyy">
-                                        <small id="patient_birthday_help" class="form-text text-muted">*This will also be pulled from STARR/EPIC databses.</small>
+                                        <input type="text" class="form-control" name="patient_birthday" value="<?=$patient_birthday?>" id="patient_birthday" aria-describedby="patient_birthday" placeholder="eg; yyyy/mm/dd">
+<!--                                        <small id="patient_birthday_help" class="form-text text-muted">*This will also be pulled from STARR/EPIC databses.</small>-->
                                     </div>
 
                                     <div class="col-sm-12 row">
@@ -289,36 +288,36 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                                 }
                                             ?>
                                         </div>
-                                    
-                                    
+
+
                                         <div class="form-group col-sm-12">
                                             <label for="comorbidity"><b>Comorbidities</b></label>
                                             <input type="text" class="form-control" name="comorbidity" value="<?=$comorbidity?>" id="comorbidity" aria-describedby="comorbidity" placeholder="eg; diabetes, whooping cough">
                                             <small id="comorbidity" class="form-text text-muted">*This will also be pulled from STARR/EPIC databses.</small>
                                         </div>
-                                    
+
                                         <div class="form-group col-sm-12">
                                             <label for="pharmacy_info"><b>Pharmacy Info</b></label>
                                             <input type="text" class="form-control" name="pharmacy_info" value="<?=$pharmacy_info?>" id="pharmacy_info" aria-describedby="pharmacy_info" placeholder="eg; CVS">
                                         </div>
-                                                
 
-                                        
+
+
                                     </div>
                                 </div>
-                                
+
                                 <div class="btns text-center mt-2 mb-5">
                                     <button type="submit" id="save_patient" class='btn btn-primary btn-lg'><?=$add_edit_btn_text?></button>
                                 </div>
-                                
+
                                 <?php
                                     }
                                 ?>
                             </form>
                         </div>
-                        
+
                     </div>
-                    
+
                 </div>
             </div>
         </div>

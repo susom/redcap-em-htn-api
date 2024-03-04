@@ -51,11 +51,10 @@ class HTNdashboard {
             'project_id'    => $this->providers_project,
 			'return_format' => 'json',
 			'fields'        => $fields,
-			'filterLogic'   => $filter 
+			'filterLogic'   => $filter
 		);
 		$q 			        = \REDCap::getData($params);
         $providers          = json_decode($q, true);
-        $this->module->emDebug("haha", $providers);   
         return $providers;
     }
     public function getAllPatients($provider_id, $super_delegate=null){
@@ -79,11 +78,11 @@ class HTNdashboard {
             'project_id'    => $this->patients_project,
 			'return_format' => 'json',
 			'fields'        => $fields,
-			'filterLogic'   => $filter 
+			'filterLogic'   => $filter
 		);
 		$q 			        = \REDCap::getData($params);
         $patient_results    = json_decode($q, true);
-        
+
         foreach($patient_results as $i => $result){
             //FIRST DEFAULT VALUES THEN FILL IN
             $result["patient_photo"]    = $this->module->getUrl('assets/images/icon_anon.gif', true, true);
@@ -154,7 +153,7 @@ class HTNdashboard {
             'project_id'    => $this->patients_project,
 			'return_format' => 'json',
 			'fields'        => $fields,
-			'filterLogic'   => $filter 
+			'filterLogic'   => $filter
 		);
 		$q 			                = \REDCap::getData($params);
         $pending_patients_results 	= json_decode($q, true);
@@ -174,14 +173,14 @@ class HTNdashboard {
                 $patient_name = $pending["participant_print_name_esp_v2"];
                 $consent_date =$pending["participant_signature_date_esp_v2"];
             }
-            
+
             //5 possible fields for names
             //3 possible fields for consent date.  what the fuck
 
             $temp["patient_consent_name"]   = $patient_name;
-            $temp["consent_date"]           = $consent_date ? date("m/d/y" , strtotime($consent_date)) : null; 
+            $temp["consent_date"]           = $consent_date ? date("m/d/y" , strtotime($consent_date)) : null;
             $temp["consent_url"]            = \REDCap::getSurveyLink($pending["record_id"], 'patient_consent_for_mobile_hypertension_system');
-                
+
             array_push($pending_patients, $temp);
         }
 
@@ -204,7 +203,7 @@ class HTNdashboard {
             "messages"          => $messages
         );
 
-        // $this->module->emDebug("getAllPatients() ui_intf", $ui_intf["patients"]);
+//        $this->module->emDebug("getAllPatients() ui_intf", $ui_intf["patients"]);
         return $ui_intf;
     }
 
@@ -262,9 +261,9 @@ class HTNdashboard {
                 $result["patient_age"]  = "$years yrs old";
             }
             $result["planning_pregnancy"]   = $result["planning_pregnancy"] == "1" ? "Yes" : "No";
-            
 
-            
+
+
             $result["patient_mrn"]  = empty($result["patient_mrn"]) ? "n/a" : $result["patient_mrn"];
             $result["patient_fname"] = empty($result["patient_fname"]) ? "n/a" : $result["patient_fname"];
             $result["patient_lname"] = empty($result["patient_lname"]) ? "n/a" : $result["patient_lname"];
@@ -279,10 +278,10 @@ class HTNdashboard {
             $result["weight"] = empty($result["weight"]) ? "weight n/a" : $result["weight"];
             $result["height"] = empty($result["height"]) ? "height n/a" : $result["height"];
             $result["bmi"] = empty($result["bmi"]) ? "BMI n/a" : $result["bmi"];
-            $result["ckd"] = empty($result["ckd"]) ? "CKD n/a" : $result["ckd"];
+            $result["ckd"] = (!isset($result["ckd"]) || $result["ckd"] === null) ? "CKD n/a" : $result["ckd"];
             $result["comorbidity"] = empty($result["comorbidity"]) ? "comorbidity n/a" : $result["comorbidity"];
             $result["pharmacy_info"] = empty($result["pharmacy_info"]) ? "pharmacy n/a" : $result["pharmacy_info"];
-            
+
 
 
             //GET PATIENT BP READINGS DATA OVER LAST 2 WEEKS
@@ -337,7 +336,7 @@ class HTNdashboard {
             );
             $rec_raw            = \REDCap::getData($tree_params);
             $rec_results        = json_decode($rec_raw,1);
-            
+
             $pretty_rec_logs    = array();
             $bp_units           = isset($result["bp_readings"][0]) ? $result["bp_readings"][0]["bp_units"] : "mmHg";
             $target_systolic    = $result["patient_bp_target_systolic"];
@@ -345,7 +344,7 @@ class HTNdashboard {
                 array_push($pretty_rec_logs, array(
                     "cur_drugs"    => $rec_result["rec_current_meds"]
                    ,"rec_drugs"    => $rec_result["rec_meds"]
-                   ,"bp_units"     => $bp_units 
+                   ,"bp_units"     => $bp_units
                    ,"rec_status"   => empty($rec_result["rec_accepted"]) ? "No Change" : "Accepted"
                    ,"rec_action"   => empty($rec_result["rec_accepted"]) ? "None" : "Sent to Pharmacy??"
                    ,"rec_ts"       => $rec_result["rec_ts"]
@@ -376,7 +375,7 @@ class HTNdashboard {
 		}
 		return $subSettings;
     }
-    
+
     public function getProjectDictionary($proj_id){
         $dict = \REDCap::getDataDictionary($proj_id, "array");
         return $dict;
@@ -391,6 +390,7 @@ class HTNdashboard {
             $pw_hash = $pw_input;
         }
 
+
         $filter     = "[provider_email] = '" . $salt . "' && [verification_ts] <> ''"; //TODO CHHECKK AGAINST PW TOO HAHAHA
         $fields     = array("record_id", "provider_email", "provider_pw", "provider_fname", "provider_mname", "provider_lname", "sponsor_id", "super_delegate");
         $params     = array(
@@ -401,6 +401,8 @@ class HTNdashboard {
         );
         $raw        = \REDCap::getData($params);
         $results    = json_decode($raw,1);
+
+        $this->module->emDebug("login user", $params);
 
         $errors     = array();
         if(!empty($results)){
@@ -468,7 +470,7 @@ class HTNdashboard {
             $raw        = \REDCap::getData($params);
             $results    = json_decode($raw,1);
         }
-        
+
         if(!empty($results)){
             $errors = "<ul><li>Username/Email already in system</li></ul>";
             return array("errors" => $errors);
@@ -492,7 +494,7 @@ class HTNdashboard {
                             //IF CHOICE NOT FOUND, JUST SKIP THIS FIELD , FIX LATER
                             continue;
                         }
-                    } 
+                    }
                     //MASSAGE FOR DATE FIELDS
                     if ($dict[$key]["text_validation_type_or_show_slider_number"] == "date_ymd"){
                         $post_val = Date("Y-m-d", strtotime($post_val));
@@ -558,19 +560,19 @@ class HTNdashboard {
         $provider_pw2   = in_array("provider_pw", $dict_keys) ? strtolower(trim(filter_var($_POST["provider_pw2"], FILTER_SANITIZE_STRING))) : null;
         $edit_id        = empty($_POST["record_id"]) ? null : $_POST["record_id"];
 
-        $errors         = array(); 
+        $errors         = array();
         if($provider_pw != $provider_pw2){
             if( $provider_pw != $provider_pw2 ){
                 $errors[] = "Mismatched Password Inputs";
             }
             return array("errors" => $errors);
         }
-        
+
         if(empty($edit_id)){
             $errors[] = "Missing record id";
         }
 
-   
+
         $data = array();
         foreach($dict_keys as $key){
             if(array_key_exists($key, $_POST)){
@@ -593,7 +595,7 @@ class HTNdashboard {
                         //IF CHOICE NOT FOUND, JUST SKIP THIS FIELD , FIX LATER
                         continue;
                     }
-                } 
+                }
                 //MASSAGE FOR DATE FIELDS
                 if ($dict[$key]["text_validation_type_or_show_slider_number"] == "date_ymd"){
                     $post_val = Date("Y-m-d", strtotime($post_val));
@@ -661,7 +663,7 @@ class HTNdashboard {
     }
 
     public function newAccountEmail($providers){
-        $this->module->emDebug("providers?", $providers );
+        $this->module->emDebug("newAccountEmail ", $providers );
 
         $main_provider = $providers[0];
         foreach($providers as $new_account){
@@ -679,7 +681,7 @@ class HTNdashboard {
             }
             $msg_arr[]      = "<p>Please click this <a href='".$verify_link."'>link</a> to complete your account registration.<p>";
             $msg_arr[]      = "<p>Thank You! <br> Stanford HypertensionStudy Team</p>";
-            
+
             $message 	= implode("\r\n", $msg_arr);
             $to 		= $new_account["provider_email"];
             $from 		= "no-reply@stanford.edu";
@@ -687,7 +689,7 @@ class HTNdashboard {
             $fromName	= "Stanford Hypertension Team";
 
             $result = \REDCap::email($to, $from, $subject, $message);
-            $this->module->emDebug("verification email sent?", $result,$verify_link );
+            $this->module->emDebug("verification email sent?", $result, $verify_link );
         }
     }
 
@@ -699,7 +701,7 @@ class HTNdashboard {
             $msg_arr[]      = "<p>A password reset request was made for your HTN account.  If you did not initiate this request, simply ignore this email.<p>";
             $msg_arr[]      = "<p>Otherwise click the following <a href='".$verify_link."'>link</a> to reset your HTN account password.</p>";
             $msg_arr[]      = "<p>Thank You! <br> Stanford HypertensionStudy Team</p>";
-            
+
             $message 	= implode("\r\n", $msg_arr);
             $to 		= $provider["provider_email"];
             $from 		= "no-reply@stanford.edu";
@@ -707,6 +709,7 @@ class HTNdashboard {
             $fromName	= "Stanford Hypertension Team";
 
             $result = \REDCap::email($to, $from, $subject, $message);
+            $this->module->emDebug("reset email sent?", $result,$message );
     }
 
 	public function verifyAccount($verification_email, $verification_token){
@@ -731,7 +734,7 @@ class HTNdashboard {
         }
 		return false;
 	}
-	
+
 	public function findProviderByToken($verification_email, $verification_token){
 		$filter	= "[verification_token] = '$verification_token' and [provider_email] = '$verification_email'";
         $fields	= array("record_id","provider_email", "provider_pw", "sponsor_id", "provider_name_consent", "provider_consent_date", "provider_fname");
@@ -739,7 +742,7 @@ class HTNdashboard {
             'project_id'    => $this->providers_project,
 			'return_format' => 'json',
 			'fields'        => $fields,
-			'filterLogic'   => $filter 
+			'filterLogic'   => $filter
 		);
 		$q 			= \REDCap::getData($params);
         $records 	= json_decode($q, true);
@@ -753,7 +756,7 @@ class HTNdashboard {
             'project_id'    => $this->providers_project,
 			'return_format' => 'json',
 			'fields'        => $fields,
-			'filterLogic'   => $filter 
+			'filterLogic'   => $filter
 		);
 		$q 			= \REDCap::getData($params);
         $records 	= json_decode($q, true);
@@ -773,7 +776,7 @@ class HTNdashboard {
         $results    = json_decode($raw,1);
         return $results;
     }
-    
+
     public function sendPatientConsent($patient_id, $consent_url , $consent_email){
         $result = false;
 		if( !empty($patient_id) && !empty($consent_url) && !empty($consent_email) ){
@@ -782,7 +785,7 @@ class HTNdashboard {
 			$msg_arr[]	    = "<p>In order to participate in this study, we need your consent to access your medical information.</p>";
             $msg_arr[]      = "<p>Please click this <a href='$consent_url'>link</a> to consent to be part of the study<p>";
 			$msg_arr[]      = "<p>Thank You! <br> Stanford Heart Ex Team</p>";
-			
+
 			$message 	= implode("\r\n", $msg_arr);
 			$to 		= $consent_email;
 			$from 		= "no-reply@stanford.edu";
@@ -790,6 +793,7 @@ class HTNdashboard {
 			$fromName	= "Stanford Heart Ex Team";
 
 			$result = \REDCap::email($to, $from, $subject, $message);
+            $this->module->emDebug("send patient conesnet by email", $result,$message );
 			if($result){
 				$data = array(
 					"record_id"     => $patient_id,
@@ -914,18 +918,18 @@ class HTNdashboard {
             $data["record_id"]          = $record_id;
             $data["verification_token"] = $new_token;
             $r                          = \REDCap::saveData($this->providers_project, 'json', json_encode(array($data)) );
-            
+
             $provider["verification_token"] = $new_token;
             if(empty($r["errors"]) && empty($edit_id)){
                 $this->resetPasswordEmail($provider);
-            } 
+            }
         }
 
         return $results;
     }
 
     public function updateProviderPassword($record_id, $provider_email, $rawpw){
-    
+
         $salt       = $provider_email;
         $pepper     = $this->pepper;
         $input      = $salt.$rawpw.$pepper;
@@ -944,4 +948,4 @@ class HTNdashboard {
         return false;
     }
 }
-?> 
+?>
