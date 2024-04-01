@@ -25,7 +25,7 @@
 		"redcap_module_project_enable",
 		"redcap_module_save_configuration"
 	],
-	
+
 	"crons": [
 		{
 			"cron_name": "htn_access_token_expire_check",
@@ -56,10 +56,10 @@
 			"cron_minute": 30
 		}
 	],
-	
+
 	"framework-version": 5,
 
-	"enable-every-page-hooks-on-system-pages": false,	
+	"enable-every-page-hooks-on-system-pages": false,
 
 	"links": {
 		"project": [
@@ -152,7 +152,7 @@
 		},
 		{
 			"key": "omron-postback",
-			"name": "<b>Omron Postback URL</b> <br> <i>Will ideally be dynamic/automatic based on current project, but Omron requires a whitelist so for now use the URL from Production Project : <strong>21382</strong></i>",
+			"name": "<b>Omron Postback URL</b> <br> <i>Will ideally be dynamic/automatic based on current project, but Omron requires a whitelist so for now use the URL from Production Project : <strong></strong></i>",
 			"required": false,
 			"type": "text"
 		},

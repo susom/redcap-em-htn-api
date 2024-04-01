@@ -22,7 +22,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		parent::__construct();
 		// Other code to run when object is instantiated
 	}
-	
+
 	//Load the pertinent EM stuff, as well as the broken off Classes for Dashboard and Tree
 	public function loadEM(){
 		$this->getEnabledProjects();
@@ -67,7 +67,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	//Get All Patients
 	public function getPatientDetails($record_id){
 		$this->loadEM();
-		
+
 		return $this->dashboard->getPatientDetails($record_id);
 	}
 
@@ -147,20 +147,20 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
     public function getEnabledProjects() {
         $enabledProjects    = array();
 		$projects           = \ExternalModules\ExternalModules::getEnabledProjects($this->PREFIX);
-		
+
         while($project = db_fetch_assoc($projects)){
             $pid  = $project['project_id'];
             $name = $project['name'];
             $url  = APP_PATH_WEBROOT . 'ProjectSetup/index.php?pid=' . $project['project_id'];
             $mode = $this->getProjectSetting("em-mode", $pid);
-            
+
             $enabledProjects[$mode] = array(
                 'pid'   => $pid,
                 'name'  => $name,
                 'url'   => $url,
                 'mode'  => $mode
             );
-            
+
         }
 
         $this->enabledProjects = $enabledProjects;
@@ -176,7 +176,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$this->loadEM();
 		return $this->dashboard->sendPatientConsent($patient_id, $consent_url , $consent_email);
 	}
-	
+
 	public function newPatientConsent($provider_id=null){
 		$this->loadEM();
 		return $this->dashboard->newPatientConsent($provider_id);
@@ -228,7 +228,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			"filter" 					=> '',
 			"last_update_ts"			=> Date("Y-m-d H:i:s")
 		);
-		// TODO THIS timestamp IS WHEN THE LAST RECOMMENDATION WAS MADE or Accepted, DONT MAKE ANOTHER ONE FOR 2 WEEKS at LEAST 
+		// TODO THIS timestamp IS WHEN THE LAST RECOMMENDATION WAS MADE or Accepted, DONT MAKE ANOTHER ONE FOR 2 WEEKS at LEAST
 		$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
 		// $this->emDebug("Accepting rx change", $data);
 
@@ -238,7 +238,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 	public function declineRecommendation($patient_details){
 		$this->loadEM();
-		
+
 		// update the shortcut data in patient baseline
 		$data = array(
 			"record_id"             	=> $patient_details["record_id"],
@@ -246,7 +246,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			"filter" 					=> ''
 		);
 		$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
-		
+
 		$this->updateRecLog($patient_details["record_id"], $step_id, true);
 		return array("rec declined");
 	}
@@ -259,10 +259,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$params	= array(
 				'return_format' => 'json',
 				'fields'        => $fields,
-				'filterLogic'   => $filter 
+				'filterLogic'   => $filter
 			);
 			$q 		= \REDCap::getData($params);
-			$rows 	= json_decode($q,1);			
+			$rows 	= json_decode($q,1);
 
 			foreach($rows as $row){
 				if($row["redcap_repeat_instrument"] == "recommendations_log"){
@@ -277,7 +277,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 					$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode($data) );
 					// $this->emDebug("accept/reject recommendtation", $data, $r);
 				}
-			}			
+			}
 		}
 	}
 
@@ -307,7 +307,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		if ($onlyHandEnterableChars) {
 			$characters = '34789ACDEFHJKLMNPRTWXY'; // Potential characters to use (omitting 150QOIS2Z6GVU)
 		} else {
-			$characters = 'abcdefghijkmnopqrstuvwxyzABCDEFGHIJKLMNPQRSTUVWXYZ23456789'; // Potential characters to use 
+			$characters = 'abcdefghijkmnopqrstuvwxyzABCDEFGHIJKLMNPQRSTUVWXYZ23456789'; // Potential characters to use
 			if ($addNonAlphaChars) $characters .= '~.$#@!%^&*-';
 		}
 		// If returning only letter, then remove all non-alphas from $characters
@@ -320,12 +320,12 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		for ($p = 0; $p < $length; $p++) {
 			$string .= $characters[mt_rand(0, $strlen_characters-1)];
 		}
-		// If hash matches a number in Scientific Notation, then fetch another one 
+		// If hash matches a number in Scientific Notation, then fetch another one
 		// (because this could cause issues if opened in certain software - e.g. Excel)
 		if (preg_match('/^\d+E\d/', $string)) {
 			return generateRandomString($length, $addNonAlphaChars, $onlyHandEnterableChars);
-		} 
-			
+		}
+
 		return $string;
 	}
 
@@ -345,7 +345,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$msg_arr[]	    = "<p><a href='https://apps.apple.com/us/app/omron-heartadvisor/id1444973178' target='_blank'>Apple App Store</a> or <a href='https://play.google.com/store/apps/details?id=com.omronhealthcare.heartadvisor&hl=en_US&gl=US' target='_blank'>Google Play Store</a></p>";
             $msg_arr[]      = "<p>Please click this <a href='".$this->getURL("pages/oauth.php", true, true)."&state=".$patient["record_id"]."'>link</a> to start the process of authorizing us to retrieve your data from Omron.<p>";
 			$msg_arr[]      = "<p>Thank You! <br> Stanford HypertensionStudy Team</p>";
-			
+
 			$message 	= implode("\r\n", $msg_arr);
 			$to 		= $patient["patient_email"];
 			$from 		= "no-reply@stanford.edu";
@@ -371,14 +371,14 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		//FIRST GET ALL THE  PEOPLE
 		//THEN DETERMINE WHAT DAY THEYVE JOINED
 		//IF MULTIPLE OF 7 THEN SEND SURVEY INSTANCE
-		
+
 		$filter	= "";
 		$fields	= array("record_id","patient_add_ts");
 		$params	= array(
 			'project_id'	=> $this->enabledProjects["patients"]["pid"],
 			'return_format' => 'json',
 			'fields'        => $fields,
-			'filterLogic'   => $filter 
+			'filterLogic'   => $filter
 		);
 		$q 			= \REDCap::getData($params);
 		$records 	= json_decode($q, true);
@@ -395,7 +395,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 			if($weekly_anni === 0){
 				$this->emDebug("Patient # $record_id 'weekly' anniversery" );
-				
+
 				//if patient has weekly anniversary lets mark it.
 				$filter	= "";
 				$fields	= array("record_id","message_ts");
@@ -404,7 +404,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 					'return_format' => 'json',
 					'fields'        => $fields,
 					'records'		=> $record_id,
-					'filterLogic'   => $filter 
+					'filterLogic'   => $filter
 				);
 				$q 			= \REDCap::getData($params);
 				$records 	= json_decode($q, true);
@@ -446,16 +446,16 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		// $msg_arr[]      = "<p>Dear " . $patient["patient_fname"] . "</p>";
 		// $msg_arr[]	    = "<p>Please take a moment to answer your <a href='$survey_link' target='_blank'>weekly survey</a> for the Digital Hypertension Management System.</p>";
 		// $msg_arr[]      = "<p>Thank You! <br> Stanford HypertensionStudy Team</p>";
-		
+
 		// $message 	= implode("\r\n", $msg_arr);
 		// $to 		= $patient["patient_email"];
 		// $from 		= "no-reply@stanford.edu";
 		// $subject 	= "Weekly Stanford Digital Hypertension Management System Survey";
 		// $fromName	= "Stanford Hypertension Study Team";
 
-		
+
 		// $this->emDebug("emailing patient", $result,$this->enabledProjects["patients"]["pid"], $r);
-		
+
 		return ;
 	}
 
@@ -468,7 +468,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			'project_id'	=> $this->enabledProjects["patients"]["pid"],
 			'return_format' => 'json',
 			'fields'        => $fields,
-			'filterLogic'   => $filter 
+			'filterLogic'   => $filter
 		);
 		$q 			= \REDCap::getData($params);
 		$records 	= json_decode($q, true);
@@ -490,7 +490,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	//get oauthURL to presetn to Patient
 	public function getOAUTHurl($record_id = null){
 		$oauth_url = null;
-		
+
 		if($record_id){
 			$client_id      = $this->getProjectSetting("omron-client-id");
 			$oauth_url      = $this->getProjectSetting("omron-auth-url");
@@ -511,67 +511,70 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		return $oauth_url;
 	}
 
+
 	// gets or refresh omron access token
-	public function getOrRefreshOmronAccessToken($access_refresh_token, $refresh=false){
-		$client_id      = $this->getProjectSetting("omron-client-id");
-		$client_secret  = $this->getProjectSetting("omron-client-secret");
-		$omron_url      = $this->getProjectSetting("omron-auth-url");
-		$oauth_postback = $this->getProjectSetting("omron-postback");
-		$oauth_scope    = $this->getProjectSetting("omron-auth-scope");
+    public function getOrRefreshOmronAccessToken($token, $refresh = false) {
+        $client_id      = $this->getProjectSetting("omron-client-id");
+        $client_secret  = $this->getProjectSetting("omron-client-secret");
+        $redirect_uri   = $this->getProjectSetting("omron-postback"); // Ensure this is correct and URL-encoded
+        $omron_url      = $this->getProjectSetting("omron-api-url");
+        $oauth_scope    = $this->getProjectSetting("omron-auth-scope");
 
-		$data 			= array(
-			"client_id" 	=> $client_id,
-			"client_secret" => $client_secret,
-			"redirect_uri"	=> $oauth_postback
-		);
+        // Token endpoint
+        $token_url  = $omron_url . "/connect/token";
 
-		if($refresh){
-			$data["refresh_token"] 	= $access_refresh_token;
-			$data["grant_type"] 	= "refresh_token";
-		}else{
-			$data["code"] 			= $access_refresh_token;
-			$data["grant_type"] 	= "authorization_code";
-			$data["scope"] 			= $oauth_scope;
-		}
+        // Data to be sent in the POST request
+        $data = array(
+            'client_id'     => $client_id,
+            'client_secret' => $client_secret,
+            'redirect_uri'  => $redirect_uri
+        );
 
-		$api_url 		= $omron_url . "/connect/token";
-		$ch 			= curl_init($api_url);
+        if ($refresh) {
+            $data['grant_type'] = 'refresh_token';
+            $data['refresh_token'] = $token;
+        } else {
+            $data['grant_type'] = 'authorization_code';
+            $data['code'] = $token;
+        }
 
-        $header_data = array();
-		array_push($header_data, 'Content-Type: application/x-www-form-urlencoded');
-		array_push($header_data, 'Content-Length: ' . strlen(http_build_query($data)));
-		array_push($header_data, 'Cache-Control: no-cache' );
-		
-		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-		curl_setopt($ch, CURLOPT_POST, true);
-	
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $header_data);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
-		curl_setopt($ch, CURLOPT_TIMEOUT, 105200);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-		curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_VERBOSE, 1);
-        
-		$info 	= curl_getinfo($ch);
-		$result = curl_exec($ch);
+        // cURL initiation and setting options
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $token_url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/x-www-form-urlencoded'));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        // Execute the cURL session and close it
+        $result = curl_exec($ch);
+        if (curl_errno($ch)) {
+            $this->emDebug("Curl error: " . curl_error($ch));
+        }
         curl_close($ch);
 
-        return $result;
-	}
+        // Decode JSON response
+        $response = json_decode($result, true);
 
-	//returns array, expects JWT token
+        // Log the response for debugging purposes
+//        $this->emDebug("getOrRefreshOmronAccessToken", $api_url, $token_url, $data, array_keys($response));
+
+        return $response;
+    }
+
+
+    //returns array, expects JWT token
 	public function decodeJWT($token){
 		return json_decode(base64_decode(str_replace('_', '/', str_replace('-','+',explode('.', $token)[1]))), true);
 	}
 
+
 	// gets or refresh omron access token
 	public function getOmronAPIData($omron_access_token, $omron_token_type, $hook_timestamp=null, $limit=null, $type="bloodpressure", $includeHourlyActivity=false, $sortOrder="asc"){
-		//There are two typical use cases when you will use the Omron API to retrieve data for a user: 
+		//There are two typical use cases when you will use the Omron API to retrieve data for a user:
 		// To retrieve historical data at the time the user authorizes your application
 		// To retrieve data whenever your application receives notification that an upload has occurred
 		$omron_url = $this->getProjectSetting("omron-api-url");
-
 		$data = array(
 			"type" 					=> $type,
 			"sortOrder"				=> $sortOrder
@@ -589,18 +592,19 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$hook_timestamp = date("Y")."-".date("m")."-01";
 		}
 		$data["since"] 	= $hook_timestamp;
-		$api_url 		= $omron_url;
+		$api_url 		= $omron_url . "/api/measurement";
 		$ch 			= curl_init($api_url);
+        $this->emDebug("$api_url");
 
 		$header_data = array();
 		array_push($header_data, "Authorization: $omron_token_type $omron_access_token");
 		array_push($header_data, 'Content-Type: application/x-www-form-urlencoded');
 		array_push($header_data, 'Content-Length: ' . strlen(http_build_query($data)));
 		array_push($header_data, 'Cache-Control: no-cache' );
-		
+
 		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
 		curl_setopt($ch, CURLOPT_POST, true);
-	
+
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header_data);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
@@ -608,7 +612,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_VERBOSE, 0);
-        
+
         $info 	= curl_getinfo($ch);
 		$result = curl_exec($ch);
         curl_close($ch);
@@ -624,7 +628,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			'project_id'	=> $this->enabledProjects["patients"]["pid"],
 			'return_format' => 'json',
 			'fields'        => $fields,
-			'filterLogic'   => $filter 
+			'filterLogic'   => $filter
 		);
 		$q 			= \REDCap::getData($params);
 		$records 	= json_decode($q, true);
@@ -635,7 +639,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$this->emDebug("found token details");
 		return current($records);
 	}
-	
+
 	// get data via API and recurse if pagination
 	public function recurseSaveOmronApiData($omron_client_id, $since_ts=null, $token_details=array()){
 		$this->loadEM();
@@ -660,7 +664,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			// $this->emDebug("Since the newdata hook gets posted with THEIR server ts, but for some stupid reason, searches the data by LOCAL ts, to be safe I will adjust the ts - 1 day", $adjusted_since_ts);
 
 			$result             = $this->getOmronAPIData($omron_access_token, $omron_token_type, $adjusted_since_ts);
-			$api_data           = json_decode($result, true); 
+			$api_data           = json_decode($result, true);
 
 			$status             = $api_data["status"];
 			$truncated          = $api_data["result"]["truncated"];
@@ -717,15 +721,16 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 						// $this->contactPatient($record_id, "Warning : Abnormal Blood Pressure Reading Detected", "<p>We received your blood pressure cuff data from Omron.</p><p>The reading is at a dangerously high level : $bp_systolic/$bp_diastolic.</p><p>Please call 911 or Go to Urgent Care.</p>");
 					}
 				}
-			
+
+
 				$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode($data) );
-				if(empty($r["errors"])){
+                if(empty($r["errors"])){
 					$readings_saved = count($r["ids"]);
 					$this->emDebug("Saved $readings_saved Omron BP readings for RC $record_id");
-					
+
 					if($truncated){
 						//last bp_reading_ts from the foreach will be the paginating ts
-						$this->recurseSaveOmronApiData($omron_client_id, $bp_reading_ts, $token_details);
+                        $this->recurseSaveOmronApiData($omron_client_id, $bp_reading_ts, $token_details);
 					}else{
 						$this->emDebug("recurseSaveOmronApiData done, now evaluate the last 2 weeks data to see if need rx change");
 						$this->evaluateOmronBPavg($record_id);
@@ -739,8 +744,18 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		}
 	}
 
-	public function checkBPvsThreshold($bp_data, $target_threshold, $control_condition=.6){
+	public function checkBPvsThreshold($bp_data, $target_threshold, $control_condition=.6, $external_avg=null){
 		// $this->emDebug("all BP data in last 2 weeks", $bp_data);
+
+        // FOR TESTING A HARD CODED AVERAGE SYSTOLIC
+        // Use the external average if provided
+        if ($external_avg !== null) {
+            $mean_of_data = $external_avg;
+            $is_above = $mean_of_data > $target_threshold ? true : false;
+            // Assume each external average represents sufficient data points
+            $this->emDebug("IN checkBPvsThreshold for ", $record_id, $mean_of_data, $target_threshold);
+            return $is_above ? $mean_of_data : false;
+        }
 
 		//FIRST SPLIT THE DATA INTO DATES + MORNING OR NIGHT
 		$ampm_datapoints = array();
@@ -774,43 +789,39 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				array_push($above_thresh, $above);
 			}
 		}
-
 		//THIRD, NOW FIGURE OUT WHAT THE CONTROL CONDITION % IS , AND DO AN ARRAY SUM OF total_datapoints
 		$thresh_check 	= count($above_thresh)*$control_condition;
 		$total_above 	= array_sum($above_thresh);
-		$mean_of_data 	= round(array_sum($total_datapoints)/count($total_datapoints));
+		$mean_of_data 	= $total_datapoints ? round(array_sum($total_datapoints)/count($total_datapoints)) : 0;
 
-		$this->emDebug("target :  $target_threshold, total data points : " . count($above_thresh) . " , control cond : $thresh_check ,  above thresh : $total_above", $total_datapoints);
-		
+//		$this->emDebug("target :  $target_threshold, total data points : " . count($above_thresh) . " , control cond : $thresh_check ,  above thresh : $total_above", $total_datapoints);
+
 		//IF ABOVE THRESHOLD,RETURN THE MEAN, if "Controlled" , return false
 		return $total_above > $thresh_check && count($above_thresh) >= 4 ? $mean_of_data : false;
 	}
 
 	// NEED TO PROMPT FOR CR & K readings FROM PROVIDER  BEFORE MAKING RX CHANGE ASSESTMENT if not within last 2 weeks.
-	public function evaluateOmronBPavg($record_id){
+	public function evaluateOmronBPavg($record_id, $external_avg = null){
 		$this->loadEM();
-
-		// GET patient BP data, current filter status, and 
+$this->emDebug("Starting evaluation for record", $record_id);
+		// GET patient BP data, current filter status, and
 		$params	= array(
 			'project_id'	=> $this->enabledProjects["patients"]["pid"],
 			'records' 		=> array($record_id),
 			'return_format' => 'json',
-			'fields'        => array("record_id", "filter", "patient_bp_target_systolic", "patient_bp_target_diastolic", "patient_bp_target_pulse","current_treatment_plan_id", "patient_treatment_status", "patient_physician_id", "last_update_ts"),
-			'filterLogic' 	=> $filter
+			'fields'        => array("record_id", "filter", "patient_bp_target_systolic", "patient_bp_target_diastolic", "patient_bp_target_pulse","current_treatment_plan_id", "patient_treatment_status", "patient_physician_id", "last_update_ts")
 		);
 		$q 					= \REDCap::getData($params);
 		$records			= json_decode($q, true);
 		$patient 			= current($records);
 
-		// $this->emDebug("the patient", $patient);
-
 		$target_pulse 		= $patient["patient_bp_target_pulse"];
 		$target_systolic 	= $patient["patient_bp_target_systolic"];
 		$target_diastolic 	= $patient["patient_bp_target_diastolic"];
-		
+
 		$provider_id 		= $patient["patient_physician_id"];
 		$current_tree 		= $patient["current_treatment_plan_id"];
-		$current_step 		= $patient["patient_treatment_status"]; 
+		$current_step 		= $patient["patient_treatment_status"];
 		$rec_step 			= $patient["patient_rec_tree_step"];
 		$dash_filter 		= json_decode($patient["filter"],1);
 
@@ -828,19 +839,22 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			$records	= json_decode($q, true);
 
 			//CHECK IF DATA OVER LAST 2 WEEKS IS "ABOVE" ThreSHOLD?
-			$is_above 		= $this->checkBPvsThreshold($records, $target_systolic);
+			$is_above 		= $this->checkBPvsThreshold($records, $target_systolic,.6,  $external_avg);
 			$systolic_mean 	= $is_above; //if "uncontrolled", return the mean of the last 2 weeks, otherwise "false" is "controlled"
-
-			if($is_above){
+$this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $systolic_mean);
+            if($is_above){
 				$provider_trees 		= $this->tree->treeLogic($provider_id);
 				$treelogic 				= $provider_trees[$current_tree];
 				$current_tree_step 		= $treelogic["logicTree"][$current_step];
-				// $this->emDebug("current tree, current tree step", $current_tree, $current_step, $current_tree_step);
+				$this->emDebug("IS ABOVE current tree, current tree step", $current_tree, $current_step, $current_tree_step);
+                $this->emDebug("IN evaluateOmronBPavg", $current_tree_step["bp_status"], $current_tree_step["bp_status"]["Uncontrolled"] );
 
-				$uncontrolled_next_step 		= array_key_exists("Uncontrolled", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled"] : null;
-				$uncontrolled_Kplus_next_step 	= array_key_exists("Uncontrolled, K > 4.5", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled, K > 4.5"] : null;
+                $uncontrolled_next_step 		= array_key_exists("Uncontrolled", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled"] : null;
+
+                $this->emDebug("IN evaluateOmronBPavg", $current_tree_step["bp_status"], $current_tree_step["bp_status"]["Uncontrolled"] );
+
+                $uncontrolled_Kplus_next_step 	= array_key_exists("Uncontrolled, K > 4.5", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled, K > 4.5"] : null;
 				$uncontrolled_Kminus_next_step 	= array_key_exists("Uncontrolled, K < 4.5", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled, K < 4.5"] : null;
-				
 				$cr_sideeffect 					= $current_tree_step["side_effects"]["elevated_cr"];
 
 				//NEED TO CHECK IF THIS STEP HAS AN "elevated_cr" Side FX or a "K < or K >" check
@@ -850,7 +864,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				$lab_values 			= array();
 				$need_lab 				= false;
 
-				if(!empty($uncontrolled_Kplus_next_step) || !empty($uncontrolled_Kminus_next_step) || !empty($cr_sideeffect)){ 
+				if(!empty($uncontrolled_Kplus_next_step) || !empty($uncontrolled_Kminus_next_step) || !empty($cr_sideeffect)){
 					//UNCONTROLLED STEP HAS A LAB CHECK (K) OR a POSSIBLE ELEVATED CR Side EFFECT
 					//NEED RECENT LABS ( 2 weeks )
 					$this->emDebug("possible labs needed, K or CR" , $uncontrolled_Kplus_next_step, $uncontrolled_Kminus_next_step, $cr_sideeffect);
@@ -869,7 +883,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 							$lab_values[$lab["lab_name"]] = $lab["lab_value"];
 						}
 					}
-					$this->emDebug("recent lab values?", $lab_values);		
+					$this->emDebug("recent lab values?", $lab_values);
 					if(empty($lab_values)){
 						$need_lab = true;
 					}elseif(!empty($uncontrolled_Kplus_next_step) || !empty($uncontrolled_Kminus_next_step)){
@@ -892,6 +906,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 					"last_update_ts"			=> $current_update_ts,
 					"filter"      				=> $filter_tag,
 				);
+
+                $this->emDebug('this is just before the first saveData with recommendation or lab needed/rx change', $data);
 				$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
 				$this->emDebug("update patient baseline data", $data);
 
@@ -926,18 +942,18 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$this->loadEM();
 
 		//every 30 minutes, gather all "unread" communications
-		//get the patient id 
+		//get the patient id
 		//if side effect
 		//eval current step based on the side effectg
 		//make recoomendation or flag patient
-		
+
 		$filter	= "[message_read] <> 1";
 		$fields	= array("record_id","patient_side_fx","extras_patient_input","patient_physician_id","current_treatment_plan_id","patient_treatment_status","patient_rec_tree_step","filter");
 		$params	= array(
 			'project_id'	=> $this->enabledProjects["patients"]["pid"],
 			'return_format' => 'json',
 			'fields'        => $fields,
-			'filterLogic'   => $filter 
+			'filterLogic'   => $filter
 		);
 		$q 			= \REDCap::getData($params);
 		$records 	= json_decode($q, true);
@@ -951,11 +967,11 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$side_fx_key_map[5] = "asthma";
 		$side_fx_key_map[6] = "slow_hr";
 
-		//When getData with mixed data from stand alone instrument and repeating, the repeating wont have the data from the standalone, so need to buffer it into array		
+		//When getData with mixed data from stand alone instrument and repeating, the repeating wont have the data from the standalone, so need to buffer it into array
 		foreach($records as $comm){
 			$instr 		= $comm["redcap_repeat_instrument"];
 			$record_id  = $comm["record_id"];
-			
+
 			if($instr !== "communications"){
 				$patient_baseline_data[$record_id] = $comm;
 				continue;
@@ -963,7 +979,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 			$instance_id 	= $comm["redcap_repeat_instance"];
 			$free_text 		= $comm["extras_patient_input"]; //nothing can be ddone wiht this
-			
+
 			//GET THE PATIENT TREE, AND CURRENT STEP, WONT BE IN THS REPEAT RECORD, WILL NEED TO PULL FROM STANDALONE RECORDS BUFFERED IN $patient_baseline_data
 			$provider_id 	= $patient_baseline_data[$record_id]["patient_physician_id"];
 			$current_tree 	= $patient_baseline_data[$record_id]["current_treatment_plan_id"];
@@ -976,7 +992,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			foreach(range(1, 6) as $number){
 				$side_fx_check 	= "patient_side_fx___" .$number ;
 				$side_fx 		= $comm[$side_fx_check];
-				
+
 				if($side_fx){
 					//meassure against tree
 					array_push($survey_side_fx,$number);
@@ -991,14 +1007,14 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				$provider_trees 		= $this->tree->treeLogic($provider_id);
 				$treelogic 				= $provider_trees[$current_tree];
 				$current_tree_step 		= $treelogic["logicTree"][$current_step];
-				
+
 				$current_step_sidefx 	= $current_tree_step["side_effects"];
 				$this->emDebug("$record_id has side fx", $survey_side_fx, $current_step_sidefx);
 
 				$possible_recs = array();
 				foreach($survey_side_fx as $sfx){
 					$patient_side_fx = $side_fx_key_map[$sfx];
-					
+
 					//check it against the side effects inthe current tree step
 					$rec_step = $current_step_sidefx[$patient_side_fx];
 					array_push($possible_recs,$rec_step);
@@ -1023,11 +1039,11 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 						$uncontrolled_next_step 		= $rec;
 						$uncontrolled_Kplus_next_step 	= array_key_exists("Uncontrolled, K > 4.5", $rec) ?  $rec["Uncontrolled, K > 4.5"] : null;
 						$uncontrolled_Kminus_next_step 	= array_key_exists("Uncontrolled, K < 4.5", $rec) ?  $rec["Uncontrolled, K < 4.5"] : null;
-						
+
 						$current_update_ts		= date("Y-m-d H:i:s");
 						$lab_values 			= array();
 						$need_lab 				= false;
-						if(!empty($uncontrolled_Kplus_next_step) || !empty($uncontrolled_Kminus_next_step)){ 
+						if(!empty($uncontrolled_Kplus_next_step) || !empty($uncontrolled_Kminus_next_step)){
 							//UNCONTROLLED STEP HAS A LAB CHECK (K) OR a POSSIBLE ELEVATED CR Side EFFECT
 							//NEED RECENT LABS ( 2 weeks )
 							$this->emDebug("possible labs needed, K or CR" , $uncontrolled_Kplus_next_step, $uncontrolled_Kminus_next_step);
@@ -1046,7 +1062,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 									$lab_values[$lab["lab_name"]] = $lab["lab_value"];
 								}
 							}
-	
+
 							if(empty($lab_values)){
 								$need_lab = true;
 							}elseif(!empty($uncontrolled_Kplus_next_step) || !empty($uncontrolled_Kminus_next_step)){
@@ -1131,7 +1147,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
             $msg_arr[]      = "<p>Dear " . $patient["patient_fname"] . "</p>";
             $msg_arr[]	    = $msg;
 			$msg_arr[]      = "<p>Stanford Hypertension Team</p>";
-			
+
 			$message 	= implode("\r\n", $msg_arr);
 			$to 		= $patient["patient_email"];
 			$from 		= "no-reply@stanford.edu";
@@ -1154,7 +1170,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			'project_id'	=> $this->enabledProjects["patients"]["pid"],
             'return_format' => 'json',
 			'fields'        => $fields,
-            'filterLogic'   => $filter 
+            'filterLogic'   => $filter
 		);
 		if($record_id){
 			$params['records'] = array($record_id);
@@ -1162,7 +1178,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
         $q 			= \REDCap::getData($params);
 		$records 	= json_decode($q, true);
-		
+
 		$used_bp_id 		= array();
 		$last_instance_id 	= 0;
 		foreach($records as $record){
@@ -1201,7 +1217,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
         $next_id = \REDCap::reserveNewRecordId($pid);
         return $next_id;
 	}
-	
+
 	// revoke omron access or refresh (why?) token, no return only 200 no matter what
 	public function revokeToken($token_to_revoke, $refresh=false){
 		$client_id      	= $this->getProjectSetting("omron-client-id");
@@ -1222,10 +1238,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		array_push($header_data, 'Content-Type: application/x-www-form-urlencoded');
 		array_push($header_data, 'Content-Length: ' . strlen(http_build_query($data)));
 		array_push($header_data, 'Cache-Control: no-cache' );
-		
+
 		curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
 		curl_setopt($ch, CURLOPT_POST, true);
-	
+
         curl_setopt($ch, CURLOPT_HTTPHEADER, $header_data);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, FALSE);
@@ -1233,7 +1249,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($ch, CURLOPT_HEADER, 0);
         curl_setopt($ch, CURLOPT_VERBOSE, 0);
-        
+
         $info 	= curl_getinfo($ch);
 		$result = curl_exec($ch);
         curl_close($ch);
@@ -1251,12 +1267,12 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		global $project_id;
 
 		$filter	= "[omron_token_expire] != '' ";
-		$fields	= array("record_id","omron_client_id","omron_acess_token","omron_refresh_token", "omron_token_expire", "omron_token_type");
+		$fields	= array("record_id","omron_client_id","omron_access_token","omron_refresh_token", "omron_token_expire", "omron_token_type");
 		$params	= array(
 			'project_id'	=> $project_id,
             'return_format' => 'json',
             'fields'        => $fields,
-            'filterLogic'   => $filter 
+            'filterLogic'   => $filter
 		);
 		if($record_id){
 			$params['records'] = array($record_id);
@@ -1286,16 +1302,15 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 			if($diff_in_seconds < 172800){
 				$omron_refresh_token    = $patient["omron_refresh_token"];
 				$record_id              = $patient["record_id"];
-				
+
 				//if token will expire within 48 hours, then go ahead and refresh it with the refresh token
-				$result                 = $this->getOrRefreshOmronAccessToken($omron_refresh_token, true);
-				$new_token_details      = json_decode($result, true);
+                $new_token_details      = $this->getOrRefreshOmronAccessToken($omron_refresh_token, true);
 				if(!empty($new_token_details)){
 					$access_token           = $new_token_details["access_token"];
 					$refresh_token          = $new_token_details["refresh_token"];
 					$token_type             = $new_token_details["token_type"];
-					$token_expire           = date("Y-m-d H:i:s", time() + $new_token_details["expires_in"]); 
-					
+					$token_expire           = date("Y-m-d H:i:s", time() + $new_token_details["expires_in"]);
+
 					$temp = array(
 						"record_id"             => $record_id,
 						"omron_access_token"    => $access_token,
@@ -1307,6 +1322,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				}
 			}
 		}
+
 		if(!empty($data)){
 			$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode($data) );
 			if(empty($r["errors"])){
@@ -1317,20 +1333,20 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		}else{
 			$this->emDebug("refreshOmronAccessTokens : no tokens needed refreshing in the next 48 hours");
 		}
-		
-
-		return;
+        return;
 	}
 
 	// cron to pull data daily in case the notification ping fails?
 	public function dailyOmronDataPull(){
-		//GET ALL PATIENTS (REGARDLESS OF PROVIDER) WHO HAVE ACCESS TOKENS 
+		//GET ALL PATIENTS (REGARDLESS OF PROVIDER) WHO HAVE ACCESS TOKENS
 		//PULL ALL DATA FOR TODAY
 
 		$data = array();
 		$patients_with_tokens   = $this->getPatientsWithTokens();
 
 		foreach($patients_with_tokens as $patient){
+//            $this->emDebug("dailyOmronDataPull foreach", $patients_with_tokens);
+
 			$omron_client_id 	= $patient["omron_client_id"];
 			$record_id 			= $patient["record_id"];
 			$since_today 		= date("Y-m-d");
@@ -1339,7 +1355,6 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				$this->emDebug("BP data for $since_today was succesfully downloaded for record_id $record_id");
 			}
 		}
-		return;
 	}
 
 	// cron to refresh omron access tokens expiring within 48 hours
@@ -1356,7 +1371,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				$response 	= $client->request('GET', $thisUrl, array(\GuzzleHttp\RequestOptions::SYNCHRONOUS => true));
 				$this->emDebug("running cron for $url on project $project_id");
 			}
-			
+
 		}
 	}
 
@@ -1372,7 +1387,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				$response 	= $client->request('GET', $thisUrl, array(\GuzzleHttp\RequestOptions::SYNCHRONOUS => true));
 				$this->emDebug("running cron for $url on project $project_id");
 			}
-			
+
 		}
 	}
 
@@ -1388,10 +1403,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				$response 	= $client->request('GET', $thisUrl, array(\GuzzleHttp\RequestOptions::SYNCHRONOUS => true));
 				$this->emDebug("running cron for $url on project $project_id");
 			}
-			
+
 		}
 	}
-		
+
 	public function communications_check(){
 		$projects 	= $this->framework->getProjectsWithModuleEnabled();
 		$urls 		= array(
@@ -1404,7 +1419,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 				$response 	= $client->request('GET', $thisUrl, array(\GuzzleHttp\RequestOptions::SYNCHRONOUS => true));
 				$this->emDebug("running cron for $url on project $project_id");
 			}
-			
+
 		}
 	}
 }

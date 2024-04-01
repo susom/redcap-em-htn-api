@@ -2,7 +2,7 @@
 namespace Stanford\HTNapi;
 /** @var \Stanford\HTNapi\HTNapi $module */
 
-// This needs to be whitelisted with OMRON dev, currently manual process. 
+// This needs to be whitelisted with OMRON dev, currently manual process.
 
 // Takes raw data from the request
 $json = file_get_contents('php://input') ?? array();
@@ -10,14 +10,14 @@ $json = file_get_contents('php://input') ?? array();
 // Converts it into a PHP object
 $data = json_decode($json, true);
 
+$module->emDebug("In newdata_hook", $_POST,$data, "anything?");
+
 if(!empty($data)){
     // $module->emDebug("ah ha it came in raw");
     $_POST = $data;
 }
 
 if( !empty($_POST) ){
-    $module->emDebug("Ping to New Data Hook", $_POST);
-
     //id, timestamp
     $omron_client_id = $_POST["id"] ?? null;
     $new_data_ts     = $_POST["timestamp"] ?? null;  //not as granular so should be ok

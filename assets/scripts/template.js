@@ -76,7 +76,7 @@ var tree_medrow_template = `
                           <option value="Furosemide" data-unit="mg" data-dosage="[20,40,80]" data-freq="2" data-note="most effective when combined with ACEI">Furosemide</option>
                           <option value="Torsemide" data-unit="mg" data-dosage="[10,20,40]" data-note="most effective when combined with ACEI">Torsemide</option>
                       </optgroup>
-      
+
                       <optgroup label="ACEI - ACE Inhibtor">
                           <option value="Lisinopril" data-unit="mg" data-dosage="[10,20,30,40]">Lisinopril</option>
                           <option value="Benazaril" data-unit="mg" data-dosage="[5,10,20,40]">Benazaril</option>
@@ -85,7 +85,7 @@ var tree_medrow_template = `
                           <option value="Ramipril" data-unit="mg" data-dosage="[1.25,2.5,5,10]">Ramipril</option>
                           <option value="Trandolapril" data-unit="mg" data-dosage="[1,2,4]">Trandolapril</option>
                       </optgroup>
-      
+
                       <optgroup label="ARB (Angiotensin receptor blocker)">
                           <option value="Candesartan" data-unit="mg" data-dosage="[8,16,32]" data-note="may prevent migraine headaches">Candesartan</option>
                           <option value="Valsartan" data-unit="mg" data-dosage="[40,80,160,320]">Valsartan</option>
@@ -93,7 +93,7 @@ var tree_medrow_template = `
                           <option value="Olmesartan" data-unit="mg" data-dosage="[20,40]">Olmesartan</option>
                           <option value="Telmisartan" data-unit="mg" data-dosage="[20,40,80]">Telmisartan</option>
                       </optgroup>
-      
+
                       <optgroup label="Calcium Channel Blockers (CCB)">
                           <option value="Nifedipine ER" data-unit="mg" data-dosage="[30,60,90]">Nifedipine ER</option>
                           <option value="Diltiazem ER" data-unit="mg" data-dosage="[180,240,300,360]">Diltiazem ER</option>
@@ -101,7 +101,7 @@ var tree_medrow_template = `
                           <option value="Verapamil" data-unit="mg" data-dosage="[80,120]" data-freq="3">Verapamil</option>
                           <option value="Verapamil ER" data-unit="mg" data-dosage="[240,480]" >Verapamil ER</option>
                       </optgroup>
-      
+
                       <optgroup label="Beta-Blockers">
                           <option value="Metroprolol succinate" data-unit="mg" data-dosage="[1,2,3]">Metroprolol succinate</option>
                           <option value="Tartrate" data-unit="mg" data-dosage="[50,100]" data-freq="2">Tartrate</option>
@@ -111,14 +111,14 @@ var tree_medrow_template = `
                           <option value="Labetalol" data-unit="mg" data-dosage="[100,200,300]" data-freq="2">Labetalol</option>
                           <option value="Nebivolol" data-unit="mg" data-dosage="[5,10]">Nebivolol</option>
                       </optgroup>
-      
+
                       <optgroup label="Vasodilators">
                           <option value="Hydralazine" data-unit="mg" data-dosage="[25,50,100]" data-freq="2">Hydralazine</option>
                           <option value="Minoxidil" data-unit="mg" data-dosage="[5,10]">Minoxidil</option>
                           <option value="Terazosin" data-unit="mg" data-dosage="[1,2,5]">Terazosin</option>
                           <option value="Doxazosin" data-unit="mg" data-dosage="[1,2,4]" data-note="at bedtime">Doxazosin</option>
                       </optgroup>
-      
+
                       <optgroup label="Centrally-acting">
                           <option value="Clonidine"  data-unit="mg" data-dosage="[0.1,0.2]" data-freq="2">Clonidine</option>
                           <option value="Methyldopa" data-unit="mg" data-dosage="[250,500]" data-freq="2">Methyldopa</option>
@@ -127,7 +127,7 @@ var tree_medrow_template = `
                   </select>
                   <textarea class="med_notes form-control-sm p-1" ame="med_notes[]" placeholder="Notes:"></textarea>
               </div>
-      
+
               <div class="form-group side_effect mb-0">
                   <select class="alt_med_name bg-secondary text-white form-control-sm mb-1" name='alt_med_name[]'>
                       <option value="0">Alternate Drug (side effects)</option>
@@ -141,7 +141,7 @@ var tree_medrow_template = `
                           <option value="Furosemide" data-unit="mg" data-dosage="[20,40,80]" data-freq="2" data-note="most effective when combined with ACEI">Furosemide</option>
                           <option value="Torsemide" data-unit="mg" data-dosage="[10,20,40]" data-note="most effective when combined with ACEI">Torsemide</option>
                       </optgroup>
-      
+
                       <optgroup label="ACEI - ACE Inhibtor">
                           <option value="Lisinopril" data-unit="mg" data-dosage="[10,20,30,40]">Lisinopril</option>
                           <option value="Benazaril" data-unit="mg" data-dosage="[5,10,20,40]">Benazaril</option>
@@ -150,7 +150,7 @@ var tree_medrow_template = `
                           <option value="Ramipril" data-unit="mg" data-dosage="[1.25,2.5,5,10]">Ramipril</option>
                           <option value="Trandolapril" data-unit="mg" data-dosage="[1,2,4]">Trandolapril</option>
                       </optgroup>
-      
+
                       <optgroup label="ARB (Angiotensin receptor blocker)">
                           <option value="Candesartan" data-unit="mg" data-dosage="[8,16,32]" data-note="may prevent migraine headaches">Candesartan</option>
                           <option value="Valsartan" data-unit="mg" data-dosage="[40,80,160,320]">Valsartan</option>
@@ -158,7 +158,7 @@ var tree_medrow_template = `
                           <option value="Olmesartan" data-unit="mg" data-dosage="[20,40]">Olmesartan</option>
                           <option value="Telmisartan" data-unit="mg" data-dosage="[20,40,80]">Telmisartan</option>
                       </optgroup>
-      
+
                       <optgroup label="Calcium Channel Blockers (CCB)">
                           <option value="Nifedipine ER" data-unit="mg" data-dosage="[30,60,90]">Nifedipine ER</option>
                           <option value="Diltiazem ER" data-unit="mg" data-dosage="[180,240,300,360]">Diltiazem ER</option>
@@ -166,7 +166,7 @@ var tree_medrow_template = `
                           <option value="Verapamil" data-unit="mg" data-dosage="[80,120]" data-freq="3">Verapamil</option>
                           <option value="Verapamil ER" data-unit="mg" data-dosage="[240,480]" >Verapamil ER</option>
                       </optgroup>
-      
+
                       <optgroup label="Beta-Blockers">
                           <option value="Metroprolol succinate" data-unit="mg" data-dosage="[1,2,3]">Metroprolol succinate</option>
                           <option value="Tartrate" data-unit="mg" data-dosage="[50,100]" data-freq="2">Tartrate</option>
@@ -176,14 +176,14 @@ var tree_medrow_template = `
                           <option value="Labetalol" data-unit="mg" data-dosage="[100,200,300]" data-freq="2">Labetalol</option>
                           <option value="Nebivolol" data-unit="mg" data-dosage="[5,10]">Nebivolol</option>
                       </optgroup>
-      
+
                       <optgroup label="Vasodilators">
                           <option value="Hydralazine" data-unit="mg" data-dosage="[25,50,100]" data-freq="2">Hydralazine</option>
                           <option value="Minoxidil" data-unit="mg" data-dosage="[5,10]">Minoxidil</option>
                           <option value="Terazosin" data-unit="mg" data-dosage="[1,2,5]">Terazosin</option>
                           <option value="Doxazosin" data-unit="mg" data-dosage="[1,2,4]" data-note="at bedtime">Doxazosin</option>
                       </optgroup>
-      
+
                       <optgroup label="Centrally-acting">
                           <option value="Clonidine"  data-unit="mg" data-dosage="[.1,.2]" data-freq="2">Clonidine</option>
                           <option value="Methyldopa" data-unit="mg" data-dosage="[250,500]" data-freq="2">Methyldopa</option>
@@ -206,12 +206,12 @@ var tree_medstep_template = `
                 <a href="#" title="Duplicate Previous Dosage" data-action="dupe_prev_dose" class="dupe_prev_dose text-primary d-inline-block align-middle border rounded">&#8635;</a>
                 <a href="#" title="Remove Dosage" data-action="remove_dose" class="remove_dose text-danger d-inline-block align-middle border rounded">&times;</a>
             </div>
-            
+
             <div class="dose_selects text-center">
                 <select class="dose_select mx-auto my-0 form-control-sm">
                     <option class="custom" value="Dosage">Custom Dosage</option>
                 </select>
-                
+
                 <span class='d-block'>or</span>
                 <input type="name" class="custom_dose form-control-sm" name="custom_dose" placeholder="Custom Dosage"/>
                 <select class="freq_select mx-auto my-0 form-control-sm">
@@ -226,7 +226,7 @@ var tree_medstep_template = `
 var treeview_step_template = `
       <div class="tree_step">
             <ul class="step_drugs">
-                
+
             </ul>
             <div class="branches">
                 <b class="eval">14 days</b>
@@ -237,7 +237,7 @@ var treeview_step_template = `
             <div class="next_steps">
                 <b class="continue">Continue</b>
                 <ul class="step_drugs se">
-                    
+
                 </ul>
             </div>
       </div>
@@ -273,12 +273,12 @@ var tree_step_msg = `
                 <p class='msg'>Continue current step</p>
             </div>
         </div>
-    </div>  
+    </div>
 `;
 
 var branch_container = `
     <div class="branch">
-        
+
     </div>
 `;
 
@@ -301,7 +301,7 @@ var rec_modal = `
 
 var email_modal = `
     <div id="emailconsent">
-        <form> 
+        <form>
             <input type="hidden" id="consent_patient_id" name="patient_id"/>
             <input type="hidden" id="consent_url" name="consent_url"/>
 
@@ -322,7 +322,7 @@ var email_modal = `
 
 var providers_modal = `
     <div id="selectprovider">
-        <form> 
+        <form>
             <div class="consent_modal">
                 <h3>Select Provider for this Patient</h3>
                 <em>*as a Super Delegate, you may add patients for any provider</em>
@@ -362,7 +362,7 @@ var alerts_row = `
         <td class="consent_sent" data-label="date"><a href="#" class="text-infolink"><span></span></a></td>
         <td class="consent_ts" data-label="date"><a href="#" class="text-infolink"><span></span></a></td>
     </tr>
-`;  
+`;
 
 var patient_nav = `
     <dl class="patient_tab rounded bg-light">
@@ -399,7 +399,7 @@ var patient_details = `
                     <a href="#" class="edit_patient ">Edit</a>
                     <a href="#" class="delete_patient "></a>
                 </div>
-                
+
             </div>
 
             <div class="patient_details row mb-5">
@@ -452,7 +452,7 @@ var patient_details = `
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">Calculated EGFR</dt>
-                    <dd class="d-inline-block egfr">108</dd>
+                    <dd class="d-inline-block egfr"></dd>
                     </dl>
                     <dl class="mb-2">
                     <dt class="d-inline-block">Planning Pregnancy</dt>
@@ -478,7 +478,7 @@ var patient_details = `
                         <dd class="font-weight-light mb-0 frequency">Frequency : <span>2/week</span></dd>
                         <dd class="font-weight-light mb-0 total_duration">Total Duration : <span>2 weeks</span></dd>
                     </dl>
-                    
+
                     <dl class="col-md-5 offset-md-1">
                         <dt>Pulse Goal</dt>
                         <dd class="font-weight-light mb-0 pulse_goal">Pulse : <span>< 50</span></dd>
@@ -493,7 +493,7 @@ var patient_details = `
             <section class="presription_tree">
                 <h3 class="text-center p-3">Medication Log <em>Current Tree : <b></b></em></h3>
                 <div class="content bg-light mh-10 mx-1">
-                    
+
                 </div>
             </section>
 
@@ -501,7 +501,7 @@ var patient_details = `
                 <h3 class="text-center p-3">Data</h3>
                 <div class="content rounded-bottom bg-light mh-10 mx-1">
                     <div id="bpchart"></div>
-                    <div class="instep" style="text-align: center; padding: 0px 20px 20px;">
+                    <div class="instep eval_bp_data" style="text-align: center; padding: 0px 20px 20px;">
                         <button id="run_bp_eval" class="btn btn-info btn-large">Manually Execute BP Data Eval</button>
                     </div>
                 </div>
@@ -510,7 +510,7 @@ var patient_details = `
             <section class="recs_log">
                 <h3 class="text-center p-3">Recommendations Log</h3>
                 <div class="content bg-light p-3 pb-5 rounded">
-                    
+
                 </div>
             </section>
         </div>
@@ -580,7 +580,7 @@ var rec_log_step = `
         <div class="col-sm-8 border-right">
             <h4 class="pt-2">Notes</h4>
             <div class="rec_summaries">
-            
+
             </div>
         </div>
         <div class="col-sm-4 pr-0 row">

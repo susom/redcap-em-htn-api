@@ -2,6 +2,8 @@
 namespace Stanford\HTNapi;
 /** @var \Stanford\HTNapi\HTNapi $module */
 
+
+$module->emDebug("IN OAUTH POST BACK", $_REQUEST);
 if(!empty($_REQUEST)){
     $error      = isset($_REQUEST["error"]) ? $_REQUEST["error"] : null;
     $acode      = isset($_REQUEST["code"]) ? $_REQUEST["code"] : null;
@@ -11,12 +13,9 @@ if(!empty($_REQUEST)){
     if($error){
         $module->emDebug("Authorization Failed", $error);
     }else{
-        //if no 
+        //if no
         if($acode && $record_id){
-            $raw        = $module->getOrRefreshOmronAccessToken($acode);
-            $postback   = json_decode($raw, true);
-            $module->emDebug("Authorization Granted??? here is the post back", $postback);
-
+            $postback = $module->getOrRefreshOmronAccessToken($acode);
             if( !array_key_exists("error", $postback) ){
                 $id_token           = isset($postback["id_token"]) ? $postback["id_token"] : null;
                 $omron_client_id    = null;
@@ -28,8 +27,8 @@ if(!empty($_REQUEST)){
                 $access_token       = $postback["access_token"];
                 $refresh_token      = $postback["refresh_token"];
                 $token_type         = $postback["token_type"]; //always gonna be "Bearer"
-                $token_expire       = date("Y-m-d H:i:s", time() + $postback["expires_in"]); 
-                
+                $token_expire       = date("Y-m-d H:i:s", time() + $postback["expires_in"]);
+
                 $data = array(
                     "record_id"             => $record_id,
                     "omron_client_id"       => $omron_client_id,
@@ -39,14 +38,15 @@ if(!empty($_REQUEST)){
                     "omron_token_type"      => $token_type
                 );
                 $r  = \REDCap::saveData('json', json_encode(array($data)) );
+
                 if(empty($r["errors"])){
                     $module->emDebug("record $record_id saved", $data);
 
                     // NOW DO FIRST PULL OF HIstorical PAtient BP DATA if ANY
                     if($omron_client_id){
-                        //dont pass token details (even though we have them) because need to run first pass with no "since" in the recurseive funciton 
+                        //dont pass token details (even though we have them) because need to run first pass with no "since" in the recurseive funciton
                         $success = $module->recurseSaveOmronApiData($omron_client_id);
-                
+
                         if($success){
                             $module->emDebug("First API Pull of Historical BP Data for patient RC $record_id");
                         }else{
@@ -66,8 +66,8 @@ if(!empty($_REQUEST)){
 }
 
 /*
-When our users upload device data to the Omron Wellness solution, your application will be sent an upload notification. 
-at which point your application may make a pull request using our API to receive the new data. 
+When our users upload device data to the Omron Wellness solution, your application will be sent an upload notification.
+at which point your application may make a pull request using our API to receive the new data.
 In addition, your application may make an initial pull request to load historic data upon the initial user connection.
 We currently offer two types of data through our API service: Blood Pressure Readings & Activity Metrics
 
@@ -116,9 +116,9 @@ https://oauth.omronwellness.com
             color:#fff;
         }
         .container{
-            width:1140px; 
+            width:1140px;
             margin:0 auto;
-            padding:20px; 
+            padding:20px;
             overflow:hidden;
         }
         #main { margin-bottom:55px; }
@@ -127,18 +127,18 @@ https://oauth.omronwellness.com
             background:url(https://ohi-oauth.numerasocial.com/static/omron-logo.png) no-repeat;
             background-size:contain;
             width:107px;
-            height:23px;  
+            height:23px;
 
             border-right:1px solid #fff;
             padding-right:20px;
-            margin-right:20px; 
+            margin-right:20px;
         }
         .heartex_logo{
             float:left;
             background:url(<?= $module->getURL("assets/images/logo_heartex_trans.png", true, true)?>) no-repeat;
             background-size:contain;
             width:100px;
-            height:23px; 
+            height:23px;
         }
 
         .well{
@@ -146,33 +146,33 @@ https://oauth.omronwellness.com
             margin:0 auto;
             border-radius:3px;
             border:1px solid #ddd;
-            margin-top:50px; 
-            padding-bottom:40px; 
+            margin-top:50px;
+            padding-bottom:40px;
         }
 
         .well h3{
             background:#f5f5f5;
-            margin:0; 
-            padding:10px 20px; 
+            margin:0;
+            padding:10px 20px;
             border-radius:3px 3px 0 0;
             border-bottom:1px solid #ddd;
             font-size:
         }
 
         .well p {
-            padding:20px 20px 0; 
-            margin:0 0; 
+            padding:20px 20px 0;
+            margin:0 0;
         }
 
         .well .btn{
-            display:block; 
+            display:block;
             width:50%;
             margin:20px auto 0;
-            padding: 10px 20px; 
-            background:#0072bc; 
+            padding: 10px 20px;
+            background:#0072bc;
             border-radius:3px;
-            color:#fff; 
-            text-decoration:none; 
+            color:#fff;
+            text-decoration:none;
         }
     </style>
 </head>
@@ -201,7 +201,7 @@ https://oauth.omronwellness.com
                         Please try the link again at a later time.</p>";
                         echo "<a class='btn' href='$oauth_url'>Go To the Omron Authorization Page</a>";
                     }
-                ?>  
+                ?>
             </div>
         </div>
     </div>

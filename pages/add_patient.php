@@ -145,15 +145,9 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                             <p class="col-sm-12 text-muted lead small">The rest of the Patient's baseline data will be pulled from STARR/Epic databses based on the patient's MRN. <br> All required fields are marked with a *</p>
 
                                             <div class="form-group col-sm-12">
-                                                <label for="patient_mrn"><b>Patient MRN*</b></label>
+                                                <label for="patient_mrn"><b>Patient MRN/Study ID</b></label>
                                                 <input type="text" class="form-control" name="patient_mrn" value="<?=$patient["patient_mrn"]?>" id="patient_mrn" aria-describedby="patient_mrn" placeholder="eg; 123456789">
-                                                <small id="patient_mrn_help" class="form-text text-muted">This will be used to link with STARR/EPIC databses.</small>
-                                            </div>
-
-                                            <div class="form-group col-sm-6">
-                                                <label for="patient_email"><b>Patient Email*</b></label>
-                                                <input type="text" class="form-control" name="patient_email" value="<?=$patient["patient_email"]?>" id="patient_email" aria-describedby="patient_email" placeholder="eg; jane@doe.com">
-                                                <small id="patient_email_help" class="form-text text-muted">This will be used to authorize BP data.</small>
+<!--                                                <small id="patient_mrn_help" class="form-text text-muted">This will be used to link with STARR/EPIC databses.</small>-->
                                             </div>
 
                                             <div class="col-sm-12 my-4 bg-info text-light py-3 row">
@@ -175,7 +169,7 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                     </fig>
                                 </div>
 
-                                <div class="patient_details col-sm-10 offset-sm-1 mb-3 row <?= $action == "edit" ? "show" : "hide"?>">
+                                <div class="patient_details col-sm-10 offset-sm-1 mb-3 row <?= $action && true == "edit" ? "show" : "hide"?>">
                                     <h3 class="col-sm-12">Patient Details</h3>
                                     <em class="col-sm-12 mb-3">Much of this will be pulled and automatically refreshed from STARR/EPIC</em>
                                     <div class="form-group col-sm-4">
@@ -191,12 +185,17 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                         <input type="text" class="form-control" name="patient_lname" value="<?=$patient["patient_lname"]?>" id="patient_lname" aria-describedby="patient_lname" placeholder="Last Name">
                                     </div>
 
-                                    <div class="form-group col-sm-7">
-                                        <label for="patient_phone"><b>Patient Cell*</b></label>
+                                    <div class="form-group col-sm-6">
+                                        <label for="patient_email"><b>Patient Email</b></label>
+                                        <input type="text" class="form-control" name="patient_email" value="<?=$patient["patient_email"]?>" id="patient_email" aria-describedby="patient_email" placeholder="eg; jane@doe.com">
+                                        <small id="patient_email_help" class="form-text text-muted">This can be used to send BP data authorization request.</small>
+                                    </div>
+
+                                    <div class="form-group col-sm-6">
+                                        <label for="patient_phone"><b>Patient Cel</b></label>
                                         <input type="text" class="form-control" name="patient_phone" value="<?=$patient["patient_phone"]?>" id="patient_phone" aria-describedby="patient_phone" placeholder="eg; 555-555-1234">
                                         <small id="patient_phone_help" class="form-text text-muted">This will be used to text surveys to patient.</small>
                                     </div>
-
 
                                     <div class="form-group col-sm-6">
                                         <label><b>Patient Sex*</b></label>

@@ -5,7 +5,7 @@ namespace Stanford\HTNtree;
 header("Access-Control-Allow-Origin: *");
 
 if(!empty($_POST)){
-    // $module->emDebug("refresh dashboard INTF", $_POST);
+    $module->emDebug("ajax_handler", $_POST);
     $action = $_POST["action"];
     switch($action){
         case "update_cr_reading":
@@ -19,7 +19,7 @@ if(!empty($_POST)){
 
         case "update_k_reading":
             $lab = "k";
-            
+
             $record_id  = $_POST["record_id"] ?? null;
             $reading    = $_POST["reading"] ?? null;
 
@@ -27,16 +27,27 @@ if(!empty($_POST)){
         break;
 
         case "manual_eval_bp":
-            $record_id  = $_POST["record_id"] ?? null;
-            $module->evaluateOmronBPavg($record_id);
+            $record_id = $_POST["record_id"] ?? null;
+            $external_avg = $_POST["external_avg"] ?? null; // Retrieve the external_avg from the POST data
 
-            $result = array("yay we did it");
+            // Convert to the correct data type if necessary, e.g., float
+            $external_avg = !is_null($external_avg) ? (float)$external_avg : null;
+
+            $module->evaluateOmronBPavg($record_id, $external_avg); // Pass the external_avg to the function
+
+            $result = array("message" => "Evaluation completed.");
+            echo json_encode($result); // Send a JSON response back to the client
         break;
 
         case "sendAuth":
             //email patient a authorization request and link
             $patient  = $_POST["patient"] ?? null;
-            $result = $module->emailOmronAuthRequest($patient);
+//            $result = $module->emailOmronAuthRequest($patient);
+
+            $result = null;
+            if( !empty($patient) && isset($patient["record_id"])  ){
+                $result = $module->getURL("pages/oauth.php", true, true)."&state=".$patient["record_id"];
+            }
         break;
 
         case "markAlertRead":
@@ -108,7 +119,7 @@ if(!empty($_POST)){
         break;
 
         case "send_patient_consent":
-            $patient_id     = !empty($_POST["patient_id"]) ?  filter_var($_POST["patient_id"], FILTER_SANITIZE_NUMBER_INT): null; 
+            $patient_id     = !empty($_POST["patient_id"]) ?  filter_var($_POST["patient_id"], FILTER_SANITIZE_NUMBER_INT): null;
             $consent_url    = !empty($_POST["consent_url"]) ?  filter_var($_POST["consent_url"], FILTER_SANITIZE_URL): null;
             $consent_email  = !empty($_POST["consent_email"]) ?  filter_var($_POST["consent_email"], FILTER_SANITIZE_EMAIL): null;
             $result         = $module->sendPatientConsent($patient_id, $consent_url , $consent_email);
@@ -118,7 +129,7 @@ if(!empty($_POST)){
             session_start();
             $_SESSION['logged_in_user'] = $_SESSION['logged_in_user'];
             $provider_id                = $_POST["record_id"];
-            
+
             //refresh dashboard INTF
             // $module->emDebug($provider_id,$_SESSION["logged_in_user"]);
             $result         = $module->dashBoardInterface($provider_id,$_SESSION["logged_in_user"]["super_delegate"]);
@@ -127,6 +138,4 @@ if(!empty($_POST)){
 
     echo json_encode($result);
     exit;
-        
 }
-    

@@ -247,7 +247,7 @@ dashboard.prototype.updateAlerts = function(){
         if(consent_ts){
             //PATIENT HAS CONSENTED
             //MAKE EDIT PATIENT LINK
-            console.log(patient_id + " has consented so make edit patient link");
+            // console.log(patient_id + " has consented so make edit patient link");
 
             var edit_link = $("<a>").attr("href",this["edit_patient"]).data("patient",patient_id).text(patient_id);
             edit_link.click(function(e){
@@ -352,10 +352,6 @@ dashboard.prototype.buildNav = function(){
                 _this.cur_patient = _el.data("record_id");
                 _this.setSession("cur_patient",_this.cur_patient);
 
-                //TODO
-                console.log("TODO, why doesnt the patientdetail have bp_resyltsalready?");
-                result["bp_readings"] = _this.intf["patients"][result.record_id]["bp_readings"];
-
                 _this.patient_detail[record_id] = result;
                 _this.setSession("patient_detail",_this.patient_detail);
 
@@ -443,6 +439,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
                 e.preventDefault();
                 var _el = $(this);
+
                 $.ajax({
                     url : _this["ajax_endpoint"],
                     method: 'POST',
@@ -452,7 +449,23 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                     if(result){
                         setTimeout(function(){
                             _el.addClass("sent");
-                            _el.text("Request Sent, Send Again?");
+                            _el.text("Request Sent");
+
+                            // Create the new text box and copy button
+                            var textBox = $('<input>').attr({
+                                type: 'text',
+                                value: result,
+                                readonly: ''
+                            }).css('color', 'red'); // Add your CSS as needed
+
+                            var copyButton = $('<button>').text('Copy to clipboard').click(function() {
+                                textBox.select();
+                                document.execCommand('copy');
+                            });
+
+                            // Append the new elements under the original link
+                            _el.after(textBox, copyButton);
+
                         }, 1000);
                     }else{
                         _el.text("Error - Try Clicking Again");
@@ -676,24 +689,58 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             tpl.find("#bpchart").html(nodata);
         }
 
+        // tpl.find("#run_bp_eval").click(function(e){
+        //     e.preventDefault();
+        //
+        //     $.ajax({
+        //         url : _this["ajax_endpoint"],
+        //         method: 'POST',
+        //         data: { "action" : "manual_eval_bp" , "record_id" : patient["record_id"]},
+        //         dataType: 'json'
+        //     }).done(function (result) {
+        //         console.log("yay it did it");
+        //         //NEED TO IMMEDIELTY REFRESH DASHBOARD NOW!
+        //         _this.refreshData();
+        //     }).fail(function () {
+        //         console.log("something failed");
+        //     });
+        // });
+
+        // Find the place in your template where you want to add the input
+        var inputContainer = tpl.find(".eval_bp_data");
+
+        var externalAvgInput = $('<input>').attr({
+            type: 'text',
+            id: 'external_avg_input',
+            placeholder: 'Enter Average BP'
+        });
+
+        inputContainer.append(externalAvgInput);
+
         tpl.find("#run_bp_eval").click(function(e){
             e.preventDefault();
 
+            // Retrieve the value from the textbox
+            var externalAvg = $('#external_avg_input').val();
+
             $.ajax({
-                url : _this["ajax_endpoint"],
+                url: _this["ajax_endpoint"],
                 method: 'POST',
-                data: { "action" : "manual_eval_bp" , "record_id" : patient["record_id"], "patient" : patient },
+                data: {
+                    "action": "manual_eval_bp",
+                    "record_id": patient["record_id"],
+                    "external_avg": externalAvg // Include the external_avg in the data object
+                },
                 dataType: 'json'
-            }).done(function (result) {
-                console.log("yay it did it");
-                //NEED TO IMMEDIELTY REFRESH DASHBOARD NOW!
+            }).done(function(result) {
+                console.log("yay it did it", result);
+                // Refresh dashboard data to reflect any changes
                 _this.refreshData();
-            }).fail(function () {
+            }).fail(function() {
                 console.log("something failed");
             });
-
-
         });
+
 
         // TODO FIX PTREE
         if(patient["filter"] == "rx_change"){

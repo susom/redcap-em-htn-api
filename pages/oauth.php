@@ -31,9 +31,9 @@ $oauth_url      = $module->getOAUTHurl($record_id);
             color:#fff;
         }
         .container{
-            width:100%; 
+            width:100%;
             margin:0 auto;
-            padding:20px 0; 
+            padding:20px 0;
             overflow:hidden;
         }
         #main { margin-bottom:55px; }
@@ -42,11 +42,11 @@ $oauth_url      = $module->getOAUTHurl($record_id);
             background:url(https://ohi-oauth.numerasocial.com/static/omron-logo.png) no-repeat;
             background-size:contain;
             width:107px;
-            height:23px;  
+            height:23px;
 
             border-right:1px solid #fff;
             padding-right:20px;
-            margin-right:20px; 
+            margin-right:20px;
             margin-left:20px;
         }
         copyright{
@@ -57,43 +57,43 @@ $oauth_url      = $module->getOAUTHurl($record_id);
             background:url(<?= $module->getURL("assets/images/logo_heartex_trans.png", true, true)?>) no-repeat;
             background-size:contain;
             width:100px;
-            height:23px; 
+            height:23px;
         }
 
         .well{
             width:50%;
             min-width:320px;
-            max-width:640px; 
+            max-width:640px;
             margin:0 auto;
             border-radius:3px;
             border:1px solid #ddd;
-            margin-top:50px; 
-            padding-bottom:40px;  
+            margin-top:50px;
+            padding-bottom:40px;
         }
 
         .well h3{
             background:#f5f5f5;
-            margin:0; 
-            padding:10px 20px; 
+            margin:0;
+            padding:10px 20px;
             border-radius:3px 3px 0 0;
             border-bottom:1px solid #ddd;
             font-size:
         }
 
         .well p {
-            padding:20px; 
-            margin:0 0 20px; 
+            padding:20px;
+            margin:0 0 20px;
         }
 
         .well .btn{
-            display:block; 
+            display:block;
             width:50%;
             margin:0 auto;
-            padding: 10px 20px; 
-            background:#0072bc; 
+            padding: 10px 20px;
+            background:#0072bc;
             border-radius:3px;
-            color:#fff; 
-            text-decoration:none; 
+            color:#fff;
+            text-decoration:none;
             text-align:center;
         }
     </style>
@@ -118,7 +118,7 @@ $oauth_url      = $module->getOAUTHurl($record_id);
                         echo "<p>Sorry there was an error, please contact your provider to request a new link.</p>";
                     }
                 ?>
-                
+
             </div>
         </div>
     </div>

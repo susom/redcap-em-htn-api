@@ -11,8 +11,8 @@ if(isset($_SESSION["buffer_alert"])){
 }
 
 // $module->evaluateOmronBPavg(1);
-$provider_id    = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"]; 
-$sponsored      = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? true : false; 
+$provider_id    = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
+$sponsored      = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? true : false;
 $page           = "dashboard";
 $home_active    = "active";
 ?>
@@ -30,7 +30,7 @@ $home_active    = "active";
         <?php include("components/mod_overview.php")?>
 
         <?php include("components/mod_alerts.php")?>
-       
+
         <div id="patients" class="container mt-1">
             <div class="row">
                 <h1 class="mt-0 mb-4 mr-3 ml-3 d-inline-block align-middle">Patients</h1>
@@ -43,7 +43,7 @@ $home_active    = "active";
                 <div id="patient_list" class="col-md-4">
                 </div>
                 <div id="patient_details" class="col-md-8">
-                    
+
                 </div>
             </div>
         </div>
@@ -60,7 +60,6 @@ $(document).ready(function(){
         ,"anon_profile_src" : '<?=$module->getUrl('assets/images/icon_anon.gif', true, true)?>'
         ,"ptree_url" : '<?=$module->getUrl('pages/tree_view.php', true, true)?>'
         ,"edit_patient" : '<?=$module->getUrl('pages/add_patient.php', true, true)?>'
-        
     };
 
     <?php
@@ -69,7 +68,7 @@ $(document).ready(function(){
         setTimeout(function(){
             $(".alert").slideUp("medium");
         },4000);
-    <?php    
+    <?php
         }
     ?>
 

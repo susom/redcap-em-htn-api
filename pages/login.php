@@ -1,6 +1,7 @@
 <?php
 namespace Stanford\HTNapi;
 /** @var \Stanford\HTNapi\HTNapi $module */
+
 session_start();
 if(!empty($_GET["logout"])){
     unset($_SESSION["logged_in_user"]);
@@ -37,6 +38,9 @@ if(isset($_SESSION["buffer_alert"])){
     $error = $_SESSION["buffer_alert"];
     unset($_SESSION["buffer_alert"]);
 }
+
+$verify_link        = $module->getUrl("pages/registration.php", true, true)."&email=irvins@stanford.edu&verify=JRC4M7RJFT";
+$module->emDebug($verify_link);
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-100">

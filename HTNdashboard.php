@@ -175,7 +175,7 @@ class HTNdashboard {
             }
 
             //5 possible fields for names
-            //3 possible fields for consent date.  what the fuck
+            //3 possible fields for consent date
 
             $temp["patient_consent_name"]   = $patient_name;
             $temp["consent_date"]           = $consent_date ? date("m/d/y" , strtotime($consent_date)) : null;
@@ -285,7 +285,8 @@ class HTNdashboard {
 
 
             //GET PATIENT BP READINGS DATA OVER LAST 2 WEEKS
-            $bp_filter  = "[omron_bp_id] != '' AND [bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-20 weeks')) . "'";
+            $measure_date_range = date("Y-m-d H:i:s", strtotime('-2 weeks'));
+            $bp_filter  = "[omron_bp_id] != '' AND [bp_reading_ts] > '" . $measure_date_range  . "'";
             $bp_params  = array(
                 'project_id'    => $this->patients_project,
                 "records"       => array($result["record_id"]),
