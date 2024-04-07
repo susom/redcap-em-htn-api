@@ -722,18 +722,19 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
             // Retrieve the value from the textbox
             var externalAvg = $('#external_avg_input').val();
+            var params = {
+                "action": "manual_eval_bp",
+                "record_id": patient["record_id"],
+                "external_avg": externalAvg // Include the external_avg in the data object
+            };
 
             $.ajax({
                 url: _this["ajax_endpoint"],
                 method: 'POST',
-                data: {
-                    "action": "manual_eval_bp",
-                    "record_id": patient["record_id"],
-                    "external_avg": externalAvg // Include the external_avg in the data object
-                },
+                data: params,
                 dataType: 'json'
             }).done(function(result) {
-                console.log("yay it did it", result);
+                console.log("yay it did it",params,  result);
                 // Refresh dashboard data to reflect any changes
                 _this.refreshData();
             }).fail(function() {

@@ -3,7 +3,7 @@
 </style>
 <div id="alerts" class="container mt-0">
     <div class="row">
-        <h1 class="mt-0 mb-2 mr-3 ml-3 d-inline-block align-middle">Pending Patient Consent</h1>
+        <h1 class="mt-0 mb-2 mr-3 ml-3 d-inline-block align-middle">Pending Patient Setup</h1>
     </div>
 
     <div class="row">
@@ -19,7 +19,7 @@
             </tr>
         </thead>
         <tbody id="alerts_tbody">
-            
+
         </tbody>
         <!-- <tfoot>
             <tr>
@@ -50,7 +50,7 @@ $(document).ready(function(){
         }).done(function (result) {
             if(!result.errors.length){
                 var current_alerts_count = $("#filters .alerts .stat i").text();
-                $("#filters .alerts .stat i").text(current_alerts_count - $("#alerts_tbody input:checked").length) ; 
+                $("#filters .alerts .stat i").text(current_alerts_count - $("#alerts_tbody input:checked").length) ;
 
                 $("#alerts_tbody input:checked").each(function(){
                     $(this).parents("tr").slideUp("slow", function(){

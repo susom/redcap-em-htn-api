@@ -54,11 +54,11 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	 }
 
 	//Get All Patients
-	public function dashBoardInterface($provider_id, $super_delegate=null){
+	public function dashBoardInterface($provider_id, $super_delegate=null, $dag_admin=null){
 		$this->loadEM();
 
 		// $this->emDebug("super delegate", $_SESSION["logged_in_user"]['super_delegate']);
-		$intf = $this->dashboard->getAllPatients($provider_id, $super_delegate);
+		$intf = $this->dashboard->getAllPatients($provider_id, $super_delegate, $dag_admin);
 		$intf["ptree"] 			= $this->treeLogic($provider_id);
 		$intf["super_delegate"] = !empty($_SESSION["logged_in_user"]['super_delegate']) ? $this->dashboard->getAllProviders() : array();
 		return $intf;

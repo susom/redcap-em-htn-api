@@ -51,13 +51,14 @@ class HTNdashboard {
             'project_id'    => $this->providers_project,
 			'return_format' => 'json',
 			'fields'        => $fields,
-			'filterLogic'   => $filter
+			'filterLogic'   => $filter,
+            'exportDataAccessGroups' => true
 		);
 		$q 			        = \REDCap::getData($params);
         $providers          = json_decode($q, true);
         return $providers;
     }
-    public function getAllPatients($provider_id, $super_delegate=null){
+    public function getAllPatients($provider_id, $super_delegate=null, $dag_admin=null){
         // $this->getProviderbyId($provider_id)
 
         //NEED TO KEEP THE PEOPLE THAT HAVE BEEN SENT CONSENT, CONSENTED BUT NOT ADDED MRN SEPERATE FROM COMPLETED
@@ -70,19 +71,32 @@ class HTNdashboard {
 
         //FOR CONSENTED PATIENTS WITH MRN ADDED
         $filter	= "[patient_physician_id] = '$provider_id' && ([patient_remove_flag] = '' || [patient_remove_flag] = 0) && ([patient_mrn] != '')";
+
+        //NOT SURE WHAT A "SUPER" DELEGATE WAS SUPPOSED TO BE?
         if($super_delegate){
             $filter	= "([patient_remove_flag] = '' || [patient_remove_flag] = 0) && ([patient_mrn] != '')";
         }
+
         $fields	= array("record_id", "patient_physician_id", "patient_fname", "patient_lname" , "patient_email", "patient_birthday", "sex", "patient_photo", "filter");
 		$params	= array(
             'project_id'    => $this->patients_project,
 			'return_format' => 'json',
 			'fields'        => $fields,
-			'filterLogic'   => $filter
+			'filterLogic'   => $filter,
+            'groups'=> $dag_admin,
+            'exportDataAccessGroups' => true
 		);
+
+        //DAG ADMIN MEANS THEY CAN SEE ALL PATIENTS IN A DAG, REGARDLESS OF PROVIDER
+        if($dag_admin){
+            //SO REMOVE ALL THE FILTERS and ADD "groups" to the PARAM
+            $params["filterLogic"]	= "";
+            $params["groups"]       = $dag_admin;
+        }
+
 		$q 			        = \REDCap::getData($params);
         $patient_results    = json_decode($q, true);
-
+//$this->module->emDebug("hi getAllPatients($provider_id, $super_delegate, $dag_admin) ",$params,  $patient_results);
         foreach($patient_results as $i => $result){
             //FIRST DEFAULT VALUES THEN FILL IN
             $result["patient_photo"]    = $this->module->getUrl('assets/images/icon_anon.gif', true, true);
@@ -148,7 +162,7 @@ class HTNdashboard {
         if($super_delegate){
             $filter	= "([patient_remove_flag] = '' || [patient_remove_flag] = 0) && [patient_mrn] = ''";
         }
-        $fields	= array("record_id", "patient_physician_id" ,"paper_icf_v2", "paper_name_v2", "paper_poc_v2" , "participant_print_name_esp_v2", "cooper_icf_eng_subj_v2", "cooper_icf_eng_subj_v3", "patient_email", "consent_sent", "paper_date_v2", "participant_signature_date_esp_v2", "cooper_icf_datetime_v2");
+        $fields	= array("record_id", "print_name_participant", "consent_date", "patient_physician_id" ,"paper_icf_v2", "paper_name_v2", "paper_poc_v2" , "participant_print_name_esp_v2", "cooper_icf_eng_subj_v2", "cooper_icf_eng_subj_v3", "patient_email", "consent_sent", "paper_date_v2", "participant_signature_date_esp_v2", "cooper_icf_datetime_v2");
 		$params	= array(
             'project_id'    => $this->patients_project,
 			'return_format' => 'json',
@@ -165,10 +179,14 @@ class HTNdashboard {
                 "consent_sent"  => ($pending["consent_sent"] ? date("m/d/y" , strtotime($pending["consent_sent"])) : null)
             );
 
+            $edc_consent_name = $pending["print_name_participant"];
             $paper_consent = $pending["paper_icf_v2"];
             if($paper_consent){
                 $patient_name = $pending["paper_name_v2"];
                 $consent_date = $pending["paper_date_v2"];
+            }elseif($edc_consent_name){
+                $patient_name = $pending["print_name_participant"];
+                $consent_date = $edc_consent_name;
             }else{
                 $patient_name = $pending["participant_print_name_esp_v2"];
                 $consent_date =$pending["participant_signature_date_esp_v2"];
@@ -213,6 +231,7 @@ class HTNdashboard {
                         ,"patient_fname"
                         ,"patient_mname"
                         ,"patient_lname"
+                        ,"print_name_participant"
                         ,"patient_mrn"
                         ,"patient_phone"
                         ,"patient_photo"
@@ -263,15 +282,22 @@ class HTNdashboard {
             $result["planning_pregnancy"]   = $result["planning_pregnancy"] == "1" ? "Yes" : "No";
 
 
+            $fname = "";
+            $lname = "";
+            if(!empty($result["print_name_participant"])){
+                $names = explode(" ", $result["print_name_participant"]);
+                $fname = $names[0];
+                $lname = array_pop($names);
 
-            $result["patient_mrn"]  = empty($result["patient_mrn"]) ? "n/a" : $result["patient_mrn"];
-            $result["patient_fname"] = empty($result["patient_fname"]) ? "n/a" : $result["patient_fname"];
-            $result["patient_lname"] = empty($result["patient_lname"]) ? "n/a" : $result["patient_lname"];
-            $result["patient_email"] = empty($result["patient_email"]) ? "email n/a" : $result["patient_email"];
-            $result["patient_phone"] = empty($result["patient_phone"]) ? "phone n/a" : $result["patient_phone"];
-            $result["patient_bp_target_pulse"] = empty($result["patient_bp_target_pulse"]) ? "n/a" : $result["patient_bp_target_pulse"];
-            $result["patient_bp_target_systolic"]  = empty($result["patient_bp_target_systolic"]) ? "n/a" : $result["patient_bp_target_systolic"];
-            $result["patient_bp_target_diastolic"] = empty($result["patient_bp_target_diastolic"]) ? "n/a" : $result["patient_bp_target_diastolic"];
+            }
+            $result["patient_mrn"]  = empty($result["patient_mrn"]) ? "" : $result["patient_mrn"];
+            $result["patient_fname"] = empty($result["patient_fname"]) ? $fname : $result["patient_fname"];
+            $result["patient_lname"] = empty($result["patient_lname"]) ? $lname : $result["patient_lname"];
+            $result["patient_email"] = empty($result["patient_email"]) ? "" : $result["patient_email"];
+            $result["patient_phone"] = empty($result["patient_phone"]) ? "" : $result["patient_phone"];
+            $result["patient_bp_target_pulse"] = empty($result["patient_bp_target_pulse"]) ? "" : $result["patient_bp_target_pulse"];
+            $result["patient_bp_target_systolic"]  = empty($result["patient_bp_target_systolic"]) ? "" : $result["patient_bp_target_systolic"];
+            $result["patient_bp_target_diastolic"] = empty($result["patient_bp_target_diastolic"]) ? "" : $result["patient_bp_target_diastolic"];
             $result["patient_group"] = empty($result["patient_group"]) ? "n/a" : $result["patient_group"];
             $result["patient_birthday"] = empty($result["patient_birthday"]) ? "dob n/a" : $result["patient_birthday"];
             $result["sex"] = empty($result["sex"]) ? "sex n/a" : $result["sex"];
@@ -281,8 +307,6 @@ class HTNdashboard {
             $result["ckd"] = (!isset($result["ckd"]) || $result["ckd"] === null) ? "CKD n/a" : $result["ckd"];
             $result["comorbidity"] = empty($result["comorbidity"]) ? "comorbidity n/a" : $result["comorbidity"];
             $result["pharmacy_info"] = empty($result["pharmacy_info"]) ? "pharmacy n/a" : $result["pharmacy_info"];
-
-
 
             //GET PATIENT BP READINGS DATA OVER LAST 2 WEEKS
             $measure_date_range = date("Y-m-d H:i:s", strtotime('-2 weeks'));
@@ -393,17 +417,18 @@ class HTNdashboard {
 
 
         $filter     = "[provider_email] = '" . $salt . "' && [verification_ts] <> ''"; //TODO CHHECKK AGAINST PW TOO HAHAHA
-        $fields     = array("record_id", "provider_email", "provider_pw", "provider_fname", "provider_mname", "provider_lname", "sponsor_id", "super_delegate");
+        $fields     = array("record_id", "provider_email", "provider_pw", "provider_fname", "provider_mname", "provider_lname", "sponsor_id", "super_delegate", "dag_admin");
         $params     = array(
             'project_id'    => $this->providers_project,
             'fields'        => $fields,
             'filterLogic'   => $filter,
+            'exportDataAccessGroups' => true,
             'return_format' => 'json'
         );
         $raw        = \REDCap::getData($params);
         $results    = json_decode($raw,1);
 
-        $this->module->emDebug("login user", $params);
+//        $this->module->emDebug("login user", $results);
 
         $errors     = array();
         if(!empty($results)){
@@ -413,7 +438,7 @@ class HTNdashboard {
             if($this->pwVerify($input, $db_pw_hash) || $already_hashed){
                 session_start();
                 $_SESSION["logged_in_user"] = $result;
-                $this->module->emDebug($_SESSION["logged_in_user"]);
+//                $this->module->emDebug("SESSION logged_in_user", $_SESSION["logged_in_user"]);
                 return true;
             }else{
                 $this->module->emDebug("not pwverified?");
@@ -832,7 +857,6 @@ class HTNdashboard {
         $script_fieldnames = $this->module->getPatientBaselineFields(); //\REDCap::getFieldNames("patient_baseline");
         $required = array(
              "patient_mrn"
-            ,"patient_email"
             ,"patient_bp_target_systolic"
             ,"patient_bp_target_diastolic"
             ,"patient_bp_target_pulse"

@@ -39,7 +39,7 @@ $oauth_url      = $module->getOAUTHurl($record_id);
         #main { margin-bottom:55px; }
         .omron_logo{
             float:left;
-            background:url(https://ohi-oauth.numerasocial.com/static/omron-logo.png) no-repeat;
+            background:url(https://tool.omronwellness.com/images/logo.png) no-repeat;
             background-size:contain;
             width:107px;
             height:23px;

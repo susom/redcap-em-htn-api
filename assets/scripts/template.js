@@ -451,10 +451,6 @@ var patient_details = `
                     <dd class="d-inline-block k"><span><input class="form-control input-sm k_reading" type="text"></span> <i>last updated: <span>n/a</span></i></dd>
                     </dl>
                     <dl class="mb-2">
-                    <dt class="d-inline-block">Calculated EGFR</dt>
-                    <dd class="d-inline-block egfr"></dd>
-                    </dl>
-                    <dl class="mb-2">
                     <dt class="d-inline-block">Planning Pregnancy</dt>
                     <dd class="d-inline-block planning_pregnancy"><?=$patient["planning_pregnancy"]?></dd>
                     </dl>
@@ -465,6 +461,7 @@ var patient_details = `
                 </div>
             </div>
         </div>
+
         <div class="patient_data col-md-12 py-2">
             <section class="bp_threshold">
                 <h3 class="text-center p-3">BP Threshold</h3>

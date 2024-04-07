@@ -234,7 +234,7 @@ class HTNtree  {
 			'project_id'	=> $this->tree_templates_project,
             'return_format' => 'json',
             'fields'        => $fields,
-            'filterLogic'   => $filter 
+            'filterLogic'   => $filter
 		);
         $q      = \REDCap::getData($params);
         $trees  = json_decode($q, true);
@@ -334,14 +334,14 @@ class HTNtree  {
                         $temp               = array(
                             "record_id"                 => $med_id,
                             "redcap_repeat_instance" 	=> $edit_instance_id,
-                            "redcap_repeat_instrument" 	=> "doses", 
+                            "redcap_repeat_instrument" 	=> "doses",
                             "dose_value"    => $new_dose
                         );
                         array_push($med_instance,$temp);
                     }
                     $edit_instance_id++;
                 }
-            }   
+            }
             $this->module->emDebug("Final Updates for tree_id $next_id", $med_instance);
         }else{
             $next_med_id  = $this->module->getNextAvailableRecordId($this->meds_project);
@@ -352,13 +352,13 @@ class HTNtree  {
                     $unit           = array_shift($doses);
                     $meddata        = array(
                         "record_id" => $next_med_id
-                        ,"tree_id"   => $next_id 
+                        ,"tree_id"   => $next_id
                         ,"med_class" => $med_class
                         ,"med_name"  => $post[$temp[0]."_class"]
                         ,"med_unit"  => $unit
                     );
                     $r = \REDCap::saveData($this->meds_project, 'json', json_encode(array($meddata)) );
-            
+
                     $field  = "dose_value";
                     $params	= array(
                         'project_id'	=> $this->meds_project,
@@ -375,7 +375,7 @@ class HTNtree  {
                         $temp               = array(
                             "record_id"                 => $next_med_id,
                             "redcap_repeat_instance" 	=> $last_instance_id,
-                            "redcap_repeat_instrument" 	=> "doses", 
+                            "redcap_repeat_instrument" 	=> "doses",
                             "dose_value"    => $dose
                     );
                     array_push($med_instance,$temp);
@@ -392,7 +392,7 @@ class HTNtree  {
 
     public function getDrugList(){
         return array(
-            
+
             "ACEI" => array("label" => "ACE Inhibitor" , "drugs" => array(
                      array( "name" => "Lisinopril" , "unit" => "mg" , "common_dosage" => array(10,20,30,40) , "note" => "" )
                     ,array( "name" => "Benazaril" , "unit" => "mg" , "common_dosage" => array(5,10,20,40) , "note" => "" )
@@ -432,7 +432,7 @@ class HTNtree  {
             )
 
             ,"CCB" => array("label"=> "Calcium Channel Blockers" , "drugs" => array(
-                    array( "name" => "Amlodipine" , "unit" => "mg" , "common_dosage" => array(2.5,5,10) , "note" => "" )    
+                    array( "name" => "Amlodipine" , "unit" => "mg" , "common_dosage" => array(2.5,5,10) , "note" => "" )
                     ,array( "name" => "Nifedipine ER" , "unit" => "mg" , "common_dosage" => array(30,60,90) , "note" => "" )
                     ,array( "name" => "Diltiazem ER" , "unit" => "mg" , "common_dosage" => array(180,240,300,360) , "note" => "" )
                     ,array( "name" => "Verapamil" , "unit" => "mg" , "common_dosage" => array(80,120) , "note" => "" , "frequency" => 3)
@@ -452,7 +452,7 @@ class HTNtree  {
             )
         );
     }
-    
+
     public function getTemplateDrugs($tree){
         //matches radio values from redcap
         $map_med_class = array(
@@ -465,7 +465,7 @@ class HTNtree  {
             7 => "BB",
         );
         $tree_id = $tree["record_id"];
-        
+
         $filter = "[tree_id] = $tree_id";
         $fields = array("record_id");
 		$params	= array(
@@ -473,11 +473,11 @@ class HTNtree  {
             'return_format' => 'json',
             'records'       => array(),
             'fields'        => $fields,
-            'filterLogic'   => $filter 
+            'filterLogic'   => $filter
 		);
         $q      = \REDCap::getData($params);
         $meds   = json_decode($q, true);
-        
+
         if(!empty($meds)){
             $med_ids = array();
             foreach($meds as $i => $med){
@@ -502,7 +502,7 @@ class HTNtree  {
                 if(empty($el["redcap_repeat_instrument"])){
                     //top level meds instrument
                     $drug_class     = $map_med_class[$el["med_class"]];
-                    $med_unit       = $el["med_unit"]; //this will be what it is until the next  
+                    $med_unit       = $el["med_unit"]; //this will be what it is until the next
                     $drug_name      = $tree[strtolower($drug_class)."_class"];
                     $template_drugs[$drug_class] = array("raw" => array(), "pretty" => array());
                     continue;
@@ -523,7 +523,7 @@ class HTNtree  {
         $default_trees      = $this->getDefaultTrees();
         $provider_trees     = $this->getDefaultTrees($provider_id);
         $default_trees      = array_merge($default_trees,$provider_trees);
-        
+
         $provider_logic_trees = array();
         foreach($default_trees as $tree){
             $tree_id            = $tree["tree_meta"]["record_id"];
@@ -538,16 +538,16 @@ class HTNtree  {
             $tree["logicTree"]  = $logicTree;
             $provider_logic_trees[$tree_id] = $tree;
         }
-        $this->module->emDebug("This Providers custom Logic trees, including the default ones");
+//        $this->module->emDebug("This Providers custom Logic trees, including the default ones");
 
         return $provider_logic_trees;
     }
 
     public function defaultLogicTree1($template_drugs){
-        //TODO - STILL NOT SUPER CLeAR, THIS IS WEIRD 
+        //TODO - STILL NOT SUPER CLeAR, THIS IS WEIRD
         $template_drugs["SPIRNO"]["pretty"] = array_merge($template_drugs["SPIRNO"]["pretty"], $template_drugs["EPLER"]["pretty"]);
         $drug_classes   = array("ACEI" => 3, "ARB" => 2, "DIURETIC" => 3, "SPIRNO" => 4, "CCB" => 3, "BB" => 4);
-        
+
         $ACEI           = array();
         $ARB            = array();
         $DIURETIC       = array();
@@ -572,8 +572,8 @@ class HTNtree  {
             ,"side_effects"     => array(
                 "cough"             => 13,
                 "elevated_cr"       => 28,
-                "hyperkalemia"      => 28, 
-                "slow_hr"           => null, 
+                "hyperkalemia"      => 28,
+                "slow_hr"           => null,
                 "angioedema"        => 41,
                 "breast_discomfort" => null,
                 "rash_other"        => "Stop, call doctor",
@@ -588,14 +588,14 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => 14,
                 "elevated_cr" => 25,
-                "hyperkalemia" => 25, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 25,
+                "slow_hr" => null,
                 "angioedema" => 41,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
                 "asthma" => null
             )
-        ); 
+        );
         $logicTree[] = array(
             "step_id" => 2,
             "drugs" => array($ACEI[1],$DIURETIC[1] ),
@@ -604,8 +604,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => 15,
                 "elevated_cr" => 25,
-                "hyperkalemia" => 25, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 25,
+                "slow_hr" => null,
                 "angioedema" => 41,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -620,8 +620,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => 15,
                 "elevated_cr" => 64,
-                "hyperkalemia" => 25, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 25,
+                "slow_hr" => null,
                 "angioedema" => 41,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -636,8 +636,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => 16,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => null, 
+                "hyperkalemia" => null,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => array("Uncontrolled, K < 4.5" => 69, "Uncontrolled, K > 4.5" => 65),
@@ -652,8 +652,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => 17,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => null, 
+                "hyperkalemia" => null,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => array("Uncontrolled, K < 4.5" => 69, "Uncontrolled, K > 4.5" => 65),
@@ -668,8 +668,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => 18,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => null, 
+                "hyperkalemia" => null,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => array("Uncontrolled, K < 4.5" => 69, "Uncontrolled, K > 4.5" => 65),
@@ -684,8 +684,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => 19,
                 "elevated_cr" => "Stop, Cr elevated or hyperkalemia present",
-                "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present", 
-                "slow_hr" => null, 
+                "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present",
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => 56,
                 "rash_other" => "Stop, call doctor",
@@ -700,8 +700,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => 20,
                 "elevated_cr" => 7,
-                "hyperkalemia" => 7, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 7,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => 56,
                 "rash_other" => "Stop, call doctor",
@@ -716,8 +716,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => 21,
                 "elevated_cr" => null,
-                "hyperkalemia" => "Stop, hyperkalemia present", 
-                "slow_hr" => "Stop, call doctor", 
+                "hyperkalemia" => "Stop, hyperkalemia present",
+                "slow_hr" => "Stop, call doctor",
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -732,8 +732,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => 22,
                 "elevated_cr" => null,
-                "hyperkalemia" => 9, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 9,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -748,8 +748,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => 23,
                 "elevated_cr" => null,
-                "hyperkalemia" => 10, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 10,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -764,8 +764,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => 24,
                 "elevated_cr" => null,
-                "hyperkalemia" => 11, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 11,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -780,8 +780,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 28,
-                "hyperkalemia" => 28, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 28,
+                "slow_hr" => null,
                 "angioedema" => 41,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -796,8 +796,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 31,
-                "hyperkalemia" => 31, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 31,
+                "slow_hr" => null,
                 "angioedema" => 41,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -812,8 +812,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 31,
-                "hyperkalemia" => 31, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 31,
+                "slow_hr" => null,
                 "angioedema" => 41,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -828,8 +828,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => null, 
+                "hyperkalemia" => null,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => array("Uncontrolled, K < 4.5" => 71, "Uncontrolled, K > 4.5" => 73),
@@ -844,8 +844,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => null, 
+                "hyperkalemia" => null,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => array("Uncontrolled, K < 4.5" => 71, "Uncontrolled, K > 4.5" => 73),
@@ -860,8 +860,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => null, 
+                "hyperkalemia" => null,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => array("Uncontrolled, K < 4.5" => 71, "Uncontrolled, K > 4.5" => 73),
                 "rash_other" => "Stop, call doctor",
@@ -876,8 +876,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => "Stop, Cr elevatedor hyperkalemia present",
-                "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present", 
-                "slow_hr" => null, 
+                "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present",
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => 58,
                 "rash_other" => "Stop, call doctor",
@@ -892,8 +892,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 19,
-                "hyperkalemia" => 19, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 19,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => 58,
                 "rash_other" => "Stop, call doctor",
@@ -908,8 +908,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => "Stop, hyperkalemia present", 
-                "slow_hr" => null, 
+                "hyperkalemia" => "Stop, hyperkalemia present",
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -924,8 +924,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => 21, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 21,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -940,8 +940,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => 22, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 22,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -956,8 +956,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => 23, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 23,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -972,8 +972,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 28,
-                "hyperkalemia" => 28, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 28,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -988,8 +988,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 29,
-                "hyperkalemia" => null, 
-                "slow_hr" => null, 
+                "hyperkalemia" => null,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1004,8 +1004,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => null, 
+                "hyperkalemia" => null,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1021,7 +1021,7 @@ class HTNtree  {
                 "cough" => null,
                 "elevated_cr" => 38,
                 "hyperkalemia" => "hyperkalemia still present",
-                "slow_hr" => null, 
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1036,8 +1036,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 28,
-                "hyperkalemia" => 28, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 28,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1052,8 +1052,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 28,
-                "hyperkalemia" => 28, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 28,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1068,8 +1068,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 28,
-                "hyperkalemia" => 28, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 28,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1084,8 +1084,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 29,
-                "hyperkalemia" => 29, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 29,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1100,8 +1100,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 30,
-                "hyperkalemia" => 30, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 30,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1116,8 +1116,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 38,
-                "hyperkalemia" => 38, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 38,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1132,8 +1132,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 38,
-                "hyperkalemia" => 38, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 38,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1148,8 +1148,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 39,
-                "hyperkalemia" => "hyperkalemia still present", 
-                "slow_hr" => null, 
+                "hyperkalemia" => "hyperkalemia still present",
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1164,8 +1164,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 40,
-                "hyperkalemia" => "hyperkalemia still present", 
-                "slow_hr" => null, 
+                "hyperkalemia" => "hyperkalemia still present",
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1180,8 +1180,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => "Cr still elevated",
-                "hyperkalemia" => "hyperkalemia still present", 
-                "slow_hr" => null, 
+                "hyperkalemia" => "hyperkalemia still present",
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1196,8 +1196,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => "Cr still elevated",
-                "hyperkalemia" => "hyperkalemia still present", 
-                "slow_hr" => null, 
+                "hyperkalemia" => "hyperkalemia still present",
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1212,8 +1212,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => "Cr still elevated",
-                "hyperkalemia" => "hyperkalemia still present", 
-                "slow_hr" => null, 
+                "hyperkalemia" => "hyperkalemia still present",
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1228,8 +1228,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 38,
-                "hyperkalemia" => 34, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 34,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1244,8 +1244,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 38,
-                "hyperkalemia" => 34, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 34,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1260,8 +1260,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 38,
-                "hyperkalemia" => 34, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 34,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1276,8 +1276,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => "Stop, Cr elevatedor hyperkalemia present",
-                "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present", 
-                "slow_hr" => null, 
+                "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present",
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => "change to Eplerenone",
                 "rash_other" => "Stop, call doctor",
@@ -1292,8 +1292,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 44,
-                "hyperkalemia" => 44, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 44,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => "change to Eplerenone",
                 "rash_other" => "Stop, call doctor",
@@ -1308,8 +1308,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => "Cr still elevated",
-                "hyperkalemia" => "Stop, hyperkalemia present", 
-                "slow_hr" => null, 
+                "hyperkalemia" => "Stop, hyperkalemia present",
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1324,8 +1324,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => "Cr still elevated",
-                "hyperkalemia" => 46, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 46,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1340,8 +1340,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => "Cr still elevated",
-                "hyperkalemia" => 47, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 47,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1356,8 +1356,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => "Cr still elevated",
-                "hyperkalemia" => 48, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 48,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1372,8 +1372,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => "Stop, Cr elevatedor hyperkalemia present",
-                "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present", 
-                "slow_hr" => null, 
+                "hyperkalemia" => "Stop, Cr elevated or hyperkalemia present",
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => 62,
                 "rash_other" => "Stop, call doctor",
@@ -1388,8 +1388,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 50,
-                "hyperkalemia" => 50, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 50,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => 62,
                 "rash_other" => "Stop, call doctor",
@@ -1404,8 +1404,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 40,
-                "hyperkalemia" => "Stop, hyperkalemia present", 
-                "slow_hr" => null, 
+                "hyperkalemia" => "Stop, hyperkalemia present",
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1420,8 +1420,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 40,
-                "hyperkalemia" => 52, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 52,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1436,8 +1436,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 40,
-                "hyperkalemia" => 53, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 53,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1452,8 +1452,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 40,
-                "hyperkalemia" => 54, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 54,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1469,7 +1469,7 @@ class HTNtree  {
                 "cough" => null,
                 "elevated_cr" => null,
                 "hyperkalemia" => null,
-                "slow_hr" => null, 
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => "Stop, Call Doctor",
                 "rash_other" => "Stop, call doctor",
@@ -1485,7 +1485,7 @@ class HTNtree  {
                 "cough" => null,
                 "elevated_cr" => null,
                 "hyperkalemia" => null,
-                "slow_hr" => null, 
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => "Stop, Call Doctor",
                 "rash_other" => "Stop, call doctor",
@@ -1501,7 +1501,7 @@ class HTNtree  {
                 "cough" => null,
                 "elevated_cr" => null,
                 "hyperkalemia" => null,
-                "slow_hr" => null, 
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => "Stop, Call Doctor",
                 "rash_other" => "Stop, call doctor",
@@ -1517,7 +1517,7 @@ class HTNtree  {
                 "cough" => null,
                 "elevated_cr" => null,
                 "hyperkalemia" => null,
-                "slow_hr" => null, 
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => "Stop, Call Doctor",
                 "rash_other" => "Stop, call doctor",
@@ -1533,7 +1533,7 @@ class HTNtree  {
                 "cough" => null,
                 "elevated_cr" => null,
                 "hyperkalemia" => null,
-                "slow_hr" => null, 
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => "Stop, Call Doctor",
                 "rash_other" => "Stop, call doctor",
@@ -1549,7 +1549,7 @@ class HTNtree  {
                 "cough" => null,
                 "elevated_cr" => null,
                 "hyperkalemia" => null,
-                "slow_hr" => null, 
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => "Stop, Call Doctor",
                 "rash_other" => "Stop, call doctor",
@@ -1564,8 +1564,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => null, 
+                "hyperkalemia" => null,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => "Stop, Call Doctor",
                 "rash_other" => "Stop, call doctor",
@@ -1580,8 +1580,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => null, 
+                "hyperkalemia" => null,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => "Stop, Call Doctor",
                 "rash_other" => "Stop, call doctor",
@@ -1596,8 +1596,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => 25,
-                "hyperkalemia" => 25, 
-                "slow_hr" => null, 
+                "hyperkalemia" => 25,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1612,8 +1612,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => "Stop, Call Doctor", 
+                "hyperkalemia" => null,
+                "slow_hr" => "Stop, Call Doctor",
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1628,8 +1628,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => 65, 
+                "hyperkalemia" => null,
+                "slow_hr" => 65,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1644,8 +1644,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => 66, 
+                "hyperkalemia" => null,
+                "slow_hr" => 66,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1660,8 +1660,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => 67, 
+                "hyperkalemia" => null,
+                "slow_hr" => 67,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1676,8 +1676,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => null, 
+                "hyperkalemia" => null,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => 56,
                 "rash_other" => "Stop, call doctor",
@@ -1692,8 +1692,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => null, 
+                "hyperkalemia" => null,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => 56,
                 "rash_other" => "Stop, call doctor",
@@ -1708,8 +1708,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => null, 
+                "hyperkalemia" => null,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => 58,
                 "rash_other" => "Stop, call doctor",
@@ -1724,8 +1724,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => null, 
+                "hyperkalemia" => null,
+                "slow_hr" => null,
                 "angioedema" => null,
                 "breast_discomfort" => 58,
                 "rash_other" => "Stop, call doctor",
@@ -1740,8 +1740,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => "Stop, Call Doctor", 
+                "hyperkalemia" => null,
+                "slow_hr" => "Stop, Call Doctor",
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1756,8 +1756,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => 73, 
+                "hyperkalemia" => null,
+                "slow_hr" => 73,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1772,8 +1772,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => 74, 
+                "hyperkalemia" => null,
+                "slow_hr" => 74,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",
@@ -1788,8 +1788,8 @@ class HTNtree  {
             "side_effects" => array(
                 "cough" => null,
                 "elevated_cr" => null,
-                "hyperkalemia" => null, 
-                "slow_hr" => 75, 
+                "hyperkalemia" => null,
+                "slow_hr" => 75,
                 "angioedema" => null,
                 "breast_discomfort" => null,
                 "rash_other" => "Stop, call doctor",

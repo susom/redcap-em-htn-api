@@ -5,7 +5,7 @@ namespace Stanford\HTNtree;
 header("Access-Control-Allow-Origin: *");
 
 if(!empty($_POST)){
-    $module->emDebug("ajax_handler", $_POST);
+//    $module->emDebug("ajax_handler", $_POST);
     $action = $_POST["action"];
     switch($action){
         case "update_cr_reading":
@@ -127,12 +127,11 @@ if(!empty($_POST)){
 
         default:
             session_start();
-            $_SESSION['logged_in_user'] = $_SESSION['logged_in_user'];
-            $provider_id                = $_POST["record_id"];
+            $provider_id    = $_POST["record_id"];
 
-            //refresh dashboard INTF
-            // $module->emDebug($provider_id,$_SESSION["logged_in_user"]);
-            $result         = $module->dashBoardInterface($provider_id,$_SESSION["logged_in_user"]["super_delegate"]);
+            //refresh dashboard INTF for this provider
+            $dag_admin      = $_SESSION["logged_in_user"]["dag_admin"] ? $_SESSION["logged_in_user"]["redcap_data_access_group"] : null;
+            $result         = $module->dashBoardInterface($provider_id,$_SESSION["logged_in_user"]["super_delegate"], $dag_admin);
         break;
     }
 

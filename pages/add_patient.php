@@ -36,11 +36,10 @@ if(!empty($_POST)){
 
 }
 
-if(!empty($_GET["patient"])){
+if(empty($patient) && !empty($_GET["patient"])){
     $patient_id         = $_GET["patient"];
     $newly_consented    = isset($_GET["consented"]) ? true : false;
     $patient    = $module->getPatientDetails($patient_id);
-
     $patient_name       = $patient["patient_fname"] . " "  . $patient["patient_mname"] . " " . $patient["patient_lname"];
     $tree_id            = $patient["current_treatment_plan_id"];
     $current_step_idx   = $patient["patient_treatment_status"];
@@ -154,15 +153,15 @@ $showhide   = $page !== "dashboard" ? "hide" : "";
                                                 <h3 class="col-sm-12"><b>Blood Pressure Goals</b></h3>
                                                 <div class="form-group col-sm-4">
                                                     <label for="patient_bp_target_systolic"><b>Systolic Target*</b></label>
-                                                    <input type="text" class="form-control" name="patient_bp_target_systolic" value="<?=$patient["patient_bp_target_systolic"] ?? 120?>" id="patient_bp_target_systolic" aria-describedby="patient_bp_target_systolic">
+                                                    <input type="text" class="form-control" name="patient_bp_target_systolic" placeholder="eg; 120" value="<?=$patient["patient_bp_target_systolic"] ?? 120?>" id="patient_bp_target_systolic" aria-describedby="patient_bp_target_systolic">
                                                 </div>
                                                 <div class="form-group col-sm-4">
                                                     <label for="patient_bp_target_diastolic"><b>Diastolic Target*</b></label>
-                                                    <input type="text" class="form-control" name="patient_bp_target_diastolic" value="<?=$patient["patient_bp_target_diastolic"] ?? 80?>" id="patient_bp_target_diastolic" aria-describedby="patient_bp_target_diastolic">
+                                                    <input type="text" class="form-control" name="patient_bp_target_diastolic" placeholder="eg; 80" value="<?=$patient["patient_bp_target_diastolic"] ?? 80?>" id="patient_bp_target_diastolic" aria-describedby="patient_bp_target_diastolic">
                                                 </div>
                                                 <div class="form-group col-sm-4">
                                                     <label for="patient_bp_target_pulse"><b>Pulse Target*</b></label>
-                                                    <input type="text" class="form-control" name="patient_bp_target_pulse" value="<?=$patient["patient_bp_target_pulse"] ?? 65?>" id="patient_bp_target_pulse" aria-describedby="patient_bp_target_pulse">
+                                                    <input type="text" class="form-control" name="patient_bp_target_pulse" placeholder="eg; 65" value="<?=$patient["patient_bp_target_pulse"] ?? 65?>" id="patient_bp_target_pulse" aria-describedby="patient_bp_target_pulse">
                                                 </div>
                                             </div>
                                         </figcaption>

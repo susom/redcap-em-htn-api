@@ -11,8 +11,12 @@ if(isset($_SESSION["buffer_alert"])){
 }
 
 // $module->evaluateOmronBPavg(1);
+//$module->dailyOmronDataPull();
+
 $provider_id    = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
 $sponsored      = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? true : false;
+
+$dag_admin      = $_SESSION["logged_in_user"]["dag_admin"] ? "<span> - ".ucwords($_SESSION["logged_in_user"]["redcap_data_access_group"])."</span>"  : "";
 $page           = "dashboard";
 $home_active    = "active";
 ?>
@@ -33,9 +37,9 @@ $home_active    = "active";
 
         <div id="patients" class="container mt-1">
             <div class="row">
-                <h1 class="mt-0 mb-4 mr-3 ml-3 d-inline-block align-middle">Patients</h1>
+                <h1 class="mt-0 mb-4 mr-3 ml-3 d-inline-block align-middle">Patients<?= $dag_admin ?></h1>
                 <div class="filter d-inline-block mt-0 pl-3">
-                    <b class="filtered  d-inline-block align-middle pl-3 mr-3 "><span class="all_patients">All Patients</span></b>
+                    <b class="filtered  d-inline-block align-middle pl-3 mr-3 "><span class="all_patients">All Patients</o></span></b>
                 </div>
             </div>
 
