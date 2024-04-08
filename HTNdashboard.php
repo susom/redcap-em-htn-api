@@ -411,12 +411,12 @@ class HTNdashboard {
         $pepper     = $this->pepper;
         $input      = $salt.$pw_input.$pepper;
         $pw_hash    = $this->pwHash($input);
+
         if($already_hashed){
             $pw_hash = $pw_input;
         }
 
-
-        $filter     = "[provider_email] = '" . $salt . "' && [verification_ts] <> ''"; //TODO CHHECKK AGAINST PW TOO HAHAHA
+        $filter     = "[provider_email] = '" . $salt . "' && [verification_ts] <> ''";
         $fields     = array("record_id", "provider_email", "provider_pw", "provider_fname", "provider_mname", "provider_lname", "sponsor_id", "super_delegate", "dag_admin");
         $params     = array(
             'project_id'    => $this->providers_project,
@@ -468,6 +468,7 @@ class HTNdashboard {
         $provider_pw    = in_array("provider_pw", $dict_keys) ? strtolower(trim(filter_var($_POST["provider_pw"], FILTER_SANITIZE_STRING))) : null;
         $provider_pw2   = in_array("provider_pw", $dict_keys) ? strtolower(trim(filter_var($_POST["provider_pw2"], FILTER_SANITIZE_STRING))) : null;
         $edit_id        = empty($_POST["record_id"]) ? null : $_POST["record_id"];
+        $complete_reg   = $_POST["complete_registration"];
 
         $error_str  = "";
         foreach($required as $req_var){
@@ -531,6 +532,10 @@ class HTNdashboard {
             $record_id                  = !empty($edit_id) ? $edit_id :  $this->module->getNextAvailableRecordId($this->providers_project);
             $data["record_id"]          = $record_id;
             $data["verification_token"] = $edit_id ? null : $this->module->makeEmailVerifyToken();
+
+            if($complete_reg){
+                $data["verification_ts"] = Date("Y-m-d H:i:s");
+            }
 
             $new_account = array();
             $new_account[] = $data;
@@ -791,7 +796,7 @@ class HTNdashboard {
 
     public function getProviderbyEmail($provider_email){
         $filter     = "[provider_email] = '" . $provider_email . "'";
-        $fields     = array("record_id", "provider_email", "provider_pw", "provider_fname");
+        $fields     = array("record_id", "provider_email", "provider_pw", "provider_fname", "provider_specialty", "employer_name", "provider_name_consent","provider_consent_date","verification_ts");
         $params     = array(
             'project_id'    => $this->providers_project,
             'fields'        => $fields,

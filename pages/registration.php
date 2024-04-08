@@ -11,11 +11,11 @@ if(isset($_REQUEST)){
     }else{
         $action = $_POST["action"];
     }
-    
+
     switch($action){
-        case "register_provider": 
+        case "register_provider":
             $module->emDebug("delegate passes through here right?", $_POST);
-            $error = $module->registerProvider($_POST); 
+            $error = $module->registerProvider($_POST);
             if(empty($error["errors"])){
                 if(empty($_POST["record_id"])){
                     $_SESSION["buffer_alert"] = array("errors" => null , "success" => "Account succesfully created.  Please check your email to verify.");
@@ -28,7 +28,7 @@ if(isset($_REQUEST)){
             $pf     = "provider_profession_" . $provider["provider_profession"];
             $$pf    = "checked";
         break;
-    
+
         case "verify":
             //THIS IS THE POINT WHERE THEY SHOULD BE CONSENTING
             $verify_account = $module->verifyAccount($verification_email,$verification_token);
@@ -48,7 +48,7 @@ if(isset($_REQUEST)){
                     $need_consent_link  = $verify_account["consent_link"];
                     $provider_fname     = $verify_account["provider"]["provider_fname"];
                 }
-            }  
+            }
         break;
 
         case "consented":
@@ -65,6 +65,8 @@ if(isset($_SESSION["buffer_alert"])){
 
 $edit_provider = !empty($_SESSION["logged_in_user"]) ? "show_reg" : "hide_reg";
 $edit_delegate = empty($provider["record_id"]) ? "show_del" : "hide_del";
+
+$ajax_endpoint = $module->getURL("endpoints/ajax_handler.php", true, true);
 $page = "login_reg";
 ?>
 <!DOCTYPE html>
@@ -89,7 +91,7 @@ $page = "login_reg";
         <div id="registration" class="container mt-5">
             <div class="row">
                 <?php
-                    //MAN I NEED MORE TIME 
+                    //MAN I NEED MORE TIME
                     if(!empty($need_consent_link)){
                         $consent_hack =  '
                             <div class="col-md-10 offset-md-1 mt-5">
@@ -114,11 +116,13 @@ $page = "login_reg";
                     <form action=<?=$module->getUrl("pages/registration.php", true, true);?> method="POST" class="mr-3 ml-3">
                         <input type="hidden" name="action" value="register_provider"/>
                         <input type="hidden" name="record_id" value="<?=$provider["record_id"]?>"/>
+                        <input type="hidden" name="complete_registration" value="false"/>
                         <h4 class="pt-4 pb-1 mb-4">Create an Account</h4>
                         <aside>
                             <div class="form-group">
                                 <label for="exampleInputEmail1">Email address*</label>
                                 <input type="email" class="form-control" id="provider_email" name="provider_email" placeholder="johndoe@stanford.edu" aria-describedby="emailHelp" value="<?=$provider["provider_email"]?>">
+                                <em id="emailFeedback" class="form-text"></em>
                             </div>
                             <div class="form-group">
                                 <label for="exampleInputPassword1">Password*</label>
@@ -208,7 +212,7 @@ $page = "login_reg";
                                 <div class="form-group row">
                                     <label for="exampleInputEmail1" class="col-md-6">Healthcare Specialty</label>
                                     <input type="text" class="form-control col-md-5" id="provider_specialty" name="provider_specialty"  placeholder="Specialty" >
-                                </div> 
+                                </div>
                             </aside>
 
                             <h4 class="pt-4 pb-1 mb-4">Employer</h4>
@@ -262,7 +266,7 @@ $page = "login_reg";
                                     <label for="exampleInputEmail1">Selected Personnel<span>**</span></label>
                                 </div>
                                 <div class="delegates">
-                                    
+
                                 </div>
                             </aside>
                         </div>
@@ -282,6 +286,61 @@ $page = "login_reg";
 </html>
 <script>
 $(document).ready(function(e){
+    $('#provider_email').on('blur', function() {
+        var email           = $(this).val(); // Get the value of the email input field
+        var feedbackElement = $('#emailFeedback');
+        console.log("chekcing provider email", email);
+
+        if(email) { // Check if the email field is not empty
+            // Disable all input fields in the form
+            $('form input, form select, form button, form textarea').prop('disabled', true);
+
+            $.ajax({
+                type: 'POST',
+                url: '<?=$ajax_endpoint?>',
+                data: { 'action': 'check_provider_email', 'provider_email': email },
+                dataType: 'json',
+                success: function(response) {
+                    if(response.length) { // If the response is not empty
+                        response = response[0];
+
+                        // Update UI based on the response
+                        let verification_ts         = response['verification_ts'];
+                        let provider_consent_date   = response['provider_consent_date'];
+
+                        // IF ALREADY EXISTS BUT NOT YET VERIFIED
+                        if(!verification_ts && provider_consent_date){
+                            let provider_name_consent   = response['provider_name_consent'];
+                            let provider_specialty      = response['provider_specialty'];
+                            let employer_name           = response['employer_name'];
+                            let record_id               = response['record_id'];
+
+                            let [firstName, ...lastName] = provider_name_consent.split(" ");
+                            lastName = lastName.join(" ");
+
+                            $('input[name="record_id"]').val(record_id);
+                            $('input[name="complete_registration"]').val(true);
+                            $("#provider_fname").val(firstName);
+                            $("#provider_lname").val(lastName);
+
+                            feedbackElement.html('<strong>Notice:</strong> This email belongs to an already consented but unverified provider. Complete this form to activate & verify the account').css('color', 'red');
+                        }
+                    }else{
+                        feedbackElement.html('<strong>Available:</strong> This email is available for a new account registration.').css('color', 'green');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', error); // Log errors if the AJAX call fails
+                },
+                complete: function() {'' +
+                    // Re-enable all input fields in the form after AJAX call completes
+                    $('form input, form select, form button, form textarea').prop('disabled', false);
+                }
+            });
+        }
+    });
+
+
     $("#add_people").click(function(e){
         e.preventDefault();
         var new_email = $("#exampleInputEmail1").val();
@@ -297,7 +356,7 @@ $(document).ready(function(e){
         $(this).closest(".form-group").fadeOut("medium");
     });
 
-    
+
     let prefill_delegates;
     <?php
         if(!empty($provider["delegates"])){
@@ -322,7 +381,7 @@ $(document).ready(function(e){
         setTimeout(function(){
             $(".alert").slideUp("medium");
         },4000);
-    <?php    
+    <?php
         }
     ?>
 });

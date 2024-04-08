@@ -14,8 +14,9 @@ if(isset($_POST["action"])){
         case "login_provider":
             $login_email    = strtolower(trim(filter_var($_POST["login_email"], FILTER_SANITIZE_STRING)));
             $login_pw       = strtolower(trim(filter_var($_POST["login_pw"], FILTER_SANITIZE_STRING)));
+
             //TODO SO I CAN USE CLEAR TEXT PASSWORD already hashed!
-            $verify         = $module->loginProvider($login_email, $login_pw, true);
+            $verify         = $module->loginProvider($login_email, $login_pw);
             if($verify){
                 if(empty($_SESSION["logged_in_user"]["provider_trees"])){
                     $provider_id    = !empty($_SESSION["logged_in_user"]["sponsor_id"]) ? $_SESSION["logged_in_user"]["sponsor_id"] : $_SESSION["logged_in_user"]["record_id"];
@@ -39,8 +40,8 @@ if(isset($_SESSION["buffer_alert"])){
     unset($_SESSION["buffer_alert"]);
 }
 
-$verify_link        = $module->getUrl("pages/registration.php", true, true)."&email=irvins@stanford.edu&verify=JRC4M7RJFT";
-$module->emDebug($verify_link);
+//$verify_link = $module->getUrl("pages/registration.php", true, true)."&email=irvins@hotmail.com&verify=RCK8JRAA7D";
+//$module->emDebug($verify_link);
 ?>
 <!DOCTYPE html>
 <html lang="en" class="h-100">

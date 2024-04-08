@@ -125,6 +125,13 @@ if(!empty($_POST)){
             $result         = $module->sendPatientConsent($patient_id, $consent_url , $consent_email);
         break;
 
+        case "check_provider_email":
+            $provider_email     = !empty($_POST["provider_email"]) ?  filter_var($_POST["provider_email"], FILTER_SANITIZE_EMAIL): null;
+            $existing_email     = $module->getProviderbyEmail($provider_email);
+            $result = $existing_email;
+            break;
+
+
         default:
             session_start();
             $provider_id    = $_POST["record_id"];
