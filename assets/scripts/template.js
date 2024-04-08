@@ -393,6 +393,7 @@ var patient_details = `
                 <fig class="patient_profile d-block text-center mx-auto">
                     <figure><img src='' class="rounded-circle"/></figure>
                     <figcaption class='h1'></figcaption>
+                    <figcaption class='h5'></figcaption>
                     <figcaption class="contact"></figcaption>
                 </fig>
                 <div class="float-right">

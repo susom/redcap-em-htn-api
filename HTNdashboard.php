@@ -68,6 +68,7 @@ class HTNdashboard {
         $labs_needed        = array();
         $data_needed        = array();
         $messages           = array();
+        $providers          = $this->getProviders();
 
         //FOR CONSENTED PATIENTS WITH MRN ADDED
         $filter	= "[patient_physician_id] = '$provider_id' && ([patient_remove_flag] = '' || [patient_remove_flag] = 0) && ([patient_mrn] != '')";
@@ -92,6 +93,7 @@ class HTNdashboard {
             //SO REMOVE ALL THE FILTERS and ADD "groups" to the PARAM
             $params["filterLogic"]	= "";
             $params["groups"]       = $dag_admin;
+
         }
 
 		$q 			        = \REDCap::getData($params);
@@ -145,6 +147,7 @@ class HTNdashboard {
             $result["bp_readings"] = $bp_results;
 
             $patients[$result["record_id"]] = $result;
+            $patients[$result["record_id"]]["provider_name"] = $providers[$result["patient_physician_id"]];
 
             if($result["filter"] == "rx_change"){
                 $rx_change[] = $result["record_id"];
@@ -269,6 +272,8 @@ class HTNdashboard {
         $raw    = \REDCap::getData($params);
         $result = json_decode($raw,1);
 
+        $providers = $this->getProviders();
+
         if(!empty($result)){
             $result = current($result);
 
@@ -307,6 +312,7 @@ class HTNdashboard {
             $result["ckd"] = (!isset($result["ckd"]) || $result["ckd"] === null) ? "CKD n/a" : $result["ckd"];
             $result["comorbidity"] = empty($result["comorbidity"]) ? "comorbidity n/a" : $result["comorbidity"];
             $result["pharmacy_info"] = empty($result["pharmacy_info"]) ? "pharmacy n/a" : $result["pharmacy_info"];
+            $result["provider_name"] = $providers[$result["patient_physician_id"]];
 
             //GET PATIENT BP READINGS DATA OVER LAST 2 WEEKS
             $measure_date_range = date("Y-m-d H:i:s", strtotime('-2 weeks'));
@@ -691,6 +697,24 @@ class HTNdashboard {
         $raw        = \REDCap::getData($params);
         $results    = json_decode($raw,1);
         return $results;
+    }
+
+    public function getProviders(){
+        $fields     = array("record_id","provider_name_consent");
+        $params     = array(
+            'project_id'    => $this->providers_project,
+            'fields'        => $fields,
+            'return_format' => 'json'
+        );
+        $raw        = \REDCap::getData($params);
+        $results    = json_decode($raw,1);
+
+        $provider_id_fullname_map = array();
+        foreach($results as $result){
+            $provider_id_fullname_map[$result["record_id"]] = $result["provider_name_consent"];
+        }
+
+        return $provider_id_fullname_map;
     }
 
     public function newAccountEmail($providers){

@@ -487,6 +487,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
         tpl.find(".patient_profile img").attr("src",this.anon_profile_src);
         tpl.find(".patient_profile figcaption.h1").text(patient["patient_fname"] + " " + patient["patient_mname"] + " " + patient["patient_lname"]);
+        tpl.find(".patient_profile figcaption.h5").text("Provider : " + patient["provider_name"]);
         tpl.find(".patient_profile figcaption.contact").html("<b>MRN:</b> " + patient["patient_mrn"] + " <span class='mx-2'>|</span> <b>Email:</b> " + patient["patient_email"] + " <span class='mx-2'>|</span> <b>Cell:</b> " + patient["patient_phone"])
         tpl.find(".edit_patient").attr("href", _this["edit_patient"]).data("patient",patient["record_id"]);
         tpl.find(".delete_patient").data("patient",patient["record_id"]).data("patient_name",patient["patient_fname"] + " " + patient["patient_mname"] + " " + patient["patient_lname"]);
