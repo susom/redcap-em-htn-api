@@ -394,6 +394,23 @@ dashboard.prototype.displayPatientDetail = function(record_id){
     record_id = this.cur_patient ? this.cur_patient : record_id;
     if(record_id || this.cur_patient){
         var patient = this.patient_detail[record_id];
+
+        function findLatestReading(lab_name) {
+            var latestReading = null;
+
+            // Iterate over the readings array
+            patient["crk_readings"].forEach(function (reading) {
+                // Check if the current reading's lab name matches what we're looking for
+                if (reading.lab_name === lab_name) {
+                    // Initialize latestReading or update it if the current instance is newer
+                    if (latestReading === null || new Date(reading.lab_ts) > new Date(latestReading.lab_ts)) {
+                        latestReading = reading;
+                    }
+                }
+            });
+            return latestReading;
+        }
+
         var tpl     = $(patient_details);
         var _this   = this;
         // console.log("patient info", patient);
@@ -449,19 +466,19 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                     if(result){
                         setTimeout(function(){
                             _el.addClass("sent");
-                            _el.text("Request Sent");
+                            _el.text("Auth URL :");
 
                             // Create the new text box and copy button
                             var textBox = $('<input>').attr({
                                 type: 'text',
                                 value: result,
                                 readonly: ''
-                            }).css('color', 'red'); // Add your CSS as needed
+                            }).css("width","auto").css('color', '#6495ed').css("font-size","85%").css("margin","0 5px"); // Add your CSS as needed
 
                             var copyButton = $('<button>').text('Copy to clipboard').click(function() {
                                 textBox.select();
                                 document.execCommand('copy');
-                            });
+                            }).css("font-size","77%").css("border-radius","5px");
 
                             // Append the new elements under the original link
                             _el.after(textBox, copyButton);
@@ -637,6 +654,8 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         tpl.find(".presription_tree h3 em b").text(this.intf["ptree"][patient_tree_id]["label"]);
         tpl.find(".presription_tree .content").append(log_step);
 
+
+
         //REC LOG
         tpl.find(".recs_log .content").empty();
         var rec_logs = patient["rec_logs"];
@@ -660,6 +679,28 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                 var rec_p = $("<p>").addClass("summary").html(patient["patient_fname"]+"'s mean systolic reading over the last 2 weeks was <b>"+mean_systolic+bp_units+"</b>. " + diff_systolic + bp_units + " over their goal of <b>" + target_systolic + bp_units + "</b>."+"\r\n");
                 log_step.find(".rec_summaries").append(rec_p);
                 var rec_p = $("<p>").addClass("summary").html(patient["patient_fname"] + " is currently taking <b>" +cur_drugs + "</b>.  It is recommended that they move on to next step and use the new course of medications : <b>"+rec_drugs+"</b>");
+                log_step.find(".rec_summaries").append(rec_p);
+
+                // Find latest readings for Creatinine and Potassium
+                var latestCr    = findLatestReading("cr");
+                var latestK     = findLatestReading("k");
+
+                var rec_p = $("<p>").addClass("summary").html("Some recommendations for titration of antihypertensive medications can modify serum chemistries.");
+                log_step.find(".rec_summaries").append(rec_p);
+                if (latestCr || latestK) {
+                    // Extract the timestamp from the latest relevant reading
+                    var latestDate = latestCr ? latestCr.lab_ts : latestK.lab_ts;
+
+                    // Build the summary text with the latest values
+                    var summaryText = `Your patient's latest lab panel was on ${latestDate} with ` +
+                        `<b>SERUM CREATININE</b> of ${latestCr ? latestCr.lab_value : "N/A"} ` +
+                        `and <b>SERUM POTASSIUM</b> of ${latestK ? latestK.lab_value : "N/A"}.`;
+
+                    // Create the paragraph element and append it to the designated container
+                    var rec_p = $("<p>").addClass("summary").html(summaryText);
+                    log_step.find(".rec_summaries").append(rec_p);
+                }
+                var rec_p = $("<p>").addClass("summary").html("Your patient has automated standing laboratory orders. Please notify us if you would like your patient to have laboratories tests performed after instituting the above medication recommendation.");
                 log_step.find(".rec_summaries").append(rec_p);
 
                 log_step.find(".rec_status b").append(rec_status);
@@ -715,8 +756,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             id: 'external_avg_input',
             placeholder: 'Enter Average BP'
         });
-
-        inputContainer.append(externalAvgInput);
+        // inputContainer.append(externalAvgInput);
 
         tpl.find("#run_bp_eval").click(function(e){
             e.preventDefault();
@@ -769,6 +809,27 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             var rec_p = $("<p>").addClass("summary").html(patient["patient_fname"]+"'s mean systolic reading over the last 2 weeks was <b>"+mean_systolic+bp_units+"</b>. " + diff_systolic + bp_units + " over their goal of <b>" + target_systolic + bp_units + "</b>.");
             rec.find(".summaries").append(rec_p);
             var rec_p = $("<p>").addClass("summary").html(patient["patient_fname"] + " is currently taking <b>" +cur_drugs + "</b>.  It is recommended that they move on to next step and use the new course of medications : <b>"+rec_drugs+"</b>");
+            rec.find(".summaries").append(rec_p);
+
+            var latestCr    = findLatestReading("cr");
+            var latestK     = findLatestReading("k");
+
+            var rec_p = $("<p>").addClass("summary").html("Some recommendations for titration of antihypertensive medications can modify serum chemistries.");
+            rec.find(".summaries").append(rec_p);
+            if (latestCr || latestK) {
+                // Extract the timestamp from the latest relevant reading
+                var latestDate = latestCr ? latestCr.lab_ts : latestK.lab_ts;
+
+                // Build the summary text with the latest values
+                var summaryText = `Your patient's latest lab panel was on ${latestDate} with ` +
+                    `<b>SERUM CREATININE</b> of ${latestCr ? latestCr.lab_value : "N/A"} ` +
+                    `and <b>SERUM POTASSIUM</b> of ${latestK ? latestK.lab_value : "N/A"}.`;
+
+                // Create the paragraph element and append it to the designated container
+                var rec_p = $("<p>").addClass("summary").html(summaryText);
+                rec.find(".summaries").append(rec_p);
+            }
+            var rec_p = $("<p>").addClass("summary").html("Your patient has automated standing laboratory orders. Please notify us if you would like your patient to have laboratories tests performed after instituting the above medication recommendation.");
             rec.find(".summaries").append(rec_p);
 
             var pharmacy = patient["pharmacy_info"] ?? "Pharmacy";
@@ -1077,6 +1138,7 @@ dashboard.prototype.addPatient = function(provider_id){
 
     return;
 }
+
 function copyToClipboard(text) {
     var dummy = document.createElement("textarea");
     document.body.appendChild(dummy);
