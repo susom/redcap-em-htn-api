@@ -943,6 +943,56 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
 		return;
 	}
 
+    public function evaluateOmronBPavg_2($patientData, &$state) {
+        $this->loadEM();
+
+        $wtf                = array_keys($patientData);
+        $target_systolic    = $patientData[$wtf[0]]; //could not find "target_systolic"
+        $systolic_average   = $patientData[$wtf[1]];
+        $k_value            = $patientData[$wtf[2]];
+        $cr_value           = $patientData[$wtf[3]];
+
+        $current_tree       = 1;
+        $provider_id        = 2;
+        $is_above_threshold = $this->checkBPvsThreshold(array(), $target_systolic, .6, $systolic_average );
+
+        // Assume $state['current_step'] carries the accepted recommendation step.
+        $current_step       = $state['current_step'] ?? 0;
+
+        if($current_step != "End of protocol"){
+            $provider_trees     = $this->tree->treeLogic($provider_id);
+            $treelogic          = $provider_trees[$current_tree];
+            $current_tree_step  = $treelogic['logicTree'][$current_step];
+
+
+
+            if ($is_above_threshold) {
+                $uncontrolled_next_step 		= array_key_exists("Uncontrolled", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled"] : $current_step;
+                $uncontrolled_Kplus_next_step 	= array_key_exists("Uncontrolled, K > 4.5", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled, K > 4.5"] : null;
+                $uncontrolled_Kminus_next_step 	= array_key_exists("Uncontrolled, K < 4.5", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled, K < 4.5"] : null;
+
+                if(!empty($uncontrolled_Kplus_next_step) || !empty($uncontrolled_Kminus_next_step) || !empty($cr_sideeffect)){
+                    if(!empty($uncontrolled_Kplus_next_step) || !empty($uncontrolled_Kminus_next_step)){
+                        //then set the uncontrolled_next_step
+                        if(isset($k_value)){
+                            print_r("does it not even get in here?", $k_value);
+                            $uncontrolled_next_step = $k_value >= 4.5 ? $uncontrolled_Kplus_next_step : $uncontrolled_Kminus_next_step;
+                        }
+                    }
+                }
+
+                // Update the current step in the state to the next step
+                $state['current_step'] = $uncontrolled_next_step;
+            }
+
+            print_r($current_tree_step);
+        }
+        print_r("<h5>Next Step : " . $state['current_step'] . "</h5>");
+
+        return $state;
+    }
+    
+
 	public function communicationsCheck(){
 		$this->loadEM();
 

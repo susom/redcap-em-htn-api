@@ -33,27 +33,6 @@
 			"method": "htnAPICron",
 			"cron_frequency": "86400",
 			"cron_max_run_time": "1800"
-		},
-		{
-			"cron_name": "htn_communications_check",
-			"cron_description": "Cron that runs 30 minutes to respond to participant survey responses",
-			"method": "communications_check",
-			"cron_frequency": "1800",
-			"cron_max_run_time": "300"
-		},
-		{
-			"cron_name": "htn_check_weekly_survey",
-			"cron_description": "Cron that runs every morning to see who is on a weekly anniversary",
-			"method": "daily_survey_check",
-			"cron_hour": 6,
-			"cron_minute": 30
-		},
-		{
-			"cron_name": "htn_clear_weekly_survey",
-			"cron_description": "Cron that runs every afternoon to clear out weekly survey",
-			"method": "daily_survey_clear",
-			"cron_hour": 12,
-			"cron_minute": 30
 		}
 	],
 
@@ -76,18 +55,11 @@
 		        "show-header-and-footer": false
 			},
 			{
-		        "name": "HTN - Weekly Surveys Check",
-		        "icon": "fas fa-calendar-week",
-		        "url" : "cron/daily_survey_check.php",
-		        "show-header-and-footer": true
-			},
-			{
-		        "name": "HTN - Weekly Surveys Clear",
+		        "name": "HTN - Test Scripts",
 		        "icon": "fas fa-calendar-week",
 		        "url" : "cron/daily_survey_clear.php",
 		        "show-header-and-footer": true
 			}
-
 		],
 		"control-center": [
 
