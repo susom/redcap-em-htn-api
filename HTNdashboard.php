@@ -330,17 +330,17 @@ class HTNdashboard {
 
             //GET PATIENT CRK MEASUREMENTS AND LAST UPDATED OVER LAST 6 MONTHS
             //TODO LIMIT TO ONLY LATEST ONES
-            $crk_filter  = "([lab_name] = 'cr' OR [lab_name] = 'k') AND [lab_ts] > '" . date("Y-m-d H:i:s", strtotime('-6 months')) . "'";
-            $crk_params  = array(
+            $crkna_filter  = "([lab_name] = 'cr' OR [lab_name] = 'k' OR [lab_name] = 'na') AND [lab_ts] > '" . date("Y-m-d H:i:s", strtotime('-6 months')) . "'";
+            $crkna_params  = array(
                 'project_id'    => $this->patients_project,
                 "records"       => array($result["record_id"]),
                 "fields"        => array("record_id", "lab_name", "lab_value" , "lab_ts"),
                 'return_format' => 'json',
-                'filterLogic'   => $crk_filter
+                'filterLogic'   => $crkna_filter
             );
-            $crk_raw         = \REDCap::getData($crk_params);
-            $crk_results     = json_decode($crk_raw,1);
-            $result["crk_readings"] = $crk_results;
+            $crkna_raw         = \REDCap::getData($crkna_params);
+            $crkna_results     = json_decode($crkna_raw,1);
+            $result["crkna_readings"] = $crkna_results;
 
             //GET PATIENT TREE CHANGE STEPS TAKEN (not including the first step 0)
             $tree_filter  = "[ptree_log_ts] != ''";

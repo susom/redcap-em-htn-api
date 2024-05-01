@@ -433,6 +433,10 @@ var patient_details = `
                     <dt class="d-inline-block">CKD</dt>
                     <dd class="d-inline-block ckd"></dd>
                     </dl>
+                    <dl class="mb-2">
+                    <dt class="d-inline-block">Planning Pregnancy</dt>
+                    <dd class="d-inline-block planning_pregnancy"><?=$patient["planning_pregnancy"]?></dd>
+                    </dl>
                 </div>
                 <div class="col-md-7">
                     <dl class="mb-2">
@@ -452,9 +456,10 @@ var patient_details = `
                     <dd class="d-inline-block k"><span><input class="form-control input-sm k_reading" type="text"></span> <i>last updated: <span>n/a</span></i></dd>
                     </dl>
                     <dl class="mb-2">
-                    <dt class="d-inline-block">Planning Pregnancy</dt>
-                    <dd class="d-inline-block planning_pregnancy"><?=$patient["planning_pregnancy"]?></dd>
+                    <dt class="d-inline-block">Na <i>mEq/L</i></dt>
+                    <dd class="d-inline-block na"><span><input class="form-control input-sm na_reading" type="text"></span> <i>last updated: <span>n/a</span></i></dd>
                     </dl>
+
                     <dl class="mb-2">
                     <dt class="d-inline-block">Pharmacy Info</dt>
                     <dd class="d-inline-block pharmacy_info">CVS</dd>

@@ -134,6 +134,45 @@
 			"required": false,
 			"type": "text"
 		},
+
+
+        {
+            "key": "target-sys-lower",
+            "name": "<b>Default lower bound for - Hypotension</b>",
+            "required": true,
+            "type": "text"
+        },
+        {
+            "key": "lab-target-k-upper",
+            "name": "<b>Default upper bound for K lab value - Hyperkalemia</b>",
+            "required": true,
+            "type": "text"
+        },
+        {
+            "key": "lab-target-k-lower",
+            "name": "<b>Default lower bound for K lab value - Hypokalemia</b>",
+            "required": true,
+            "type": "text"
+        },
+        {
+            "key": "lab-target-cr",
+            "name": "<b>Default upper bound for Cr+ lab value - Elevated Cr</b>",
+            "required": true,
+            "type": "text"
+        },
+        {
+            "key": "lab-target-na",
+            "name": "<b>Default lower bound for Na lab value - Hyponatremia</b>",
+            "required": true,
+            "type": "text"
+        },
+        {
+            "key": "lab-target-slowhr",
+            "name": "<b>Default lower bound for HR value - Slow HR</b>",
+            "required": true,
+            "type": "text"
+        },
+
 		{
 			"key": "em-mode",
 			"name": "<b>EM Mode</b><br>This EM is used in more than one project with different functionality.  Please indicate which project this is?",

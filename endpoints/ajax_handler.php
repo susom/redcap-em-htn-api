@@ -26,6 +26,15 @@ if(!empty($_POST)){
             $result     =$module->updateLabReading($record_id, $lab, $reading);
         break;
 
+        case "update_na_reading":
+            $lab = "na";
+
+            $record_id  = $_POST["record_id"] ?? null;
+            $reading    = $_POST["reading"] ?? null;
+$module->emDebug("update_na_reading", $_POST);
+            $result     =$module->updateLabReading($record_id, $lab, $reading);
+            break;
+
         case "manual_eval_bp":
             $record_id = $_POST["record_id"] ?? null;
             $external_avg = $_POST["external_avg"] ?? null; // Retrieve the external_avg from the POST data

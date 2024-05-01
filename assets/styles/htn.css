@@ -7,8 +7,8 @@ nav .nav a{
     font-size:130%;
     font-weight:500;
 }
-nav .dropdown button{ 
-    background:none; 
+nav .dropdown button{
+    background:none;
 }
 nav .dropdown-toggle::after{
     display: inline-block;
@@ -17,7 +17,7 @@ nav .dropdown-toggle::after{
     border:none;
     background:url(<?php echo $module->getUrl('assets/images/icon_anon.gif', true, true) ?>) 0 0 no-repeat;
     background-size:contain;
-    width:40px; height:40px; 
+    width:40px; height:40px;
 }
 
 .navbar-brand {
@@ -39,8 +39,8 @@ nav .dropdown-toggle::after{
 }
 
 .project_title{
-    color:#fff; 
-    margin:0; 
+    color:#fff;
+    margin:0;
 }
 .tab-content{
     border-color: #DEE1E5;
@@ -53,7 +53,7 @@ nav .dropdown-toggle::after{
     border-style: solid;
     border-width: 1px;
     border-color: #DEE1E5;
-    font-size:92%; 
+    font-size:92%;
 }
 .emtext{
     font-size:77%;
@@ -64,10 +64,10 @@ nav .dropdown-toggle::after{
     text-decoration: none;
     line-height: 85%;
 }
-a.dupe_prev_dose { 
-    line-height:100%; 
+a.dupe_prev_dose {
+    line-height:100%;
 }
-.drug_dose{ 
+.drug_dose{
     width:80px;
     font-size:85%;
 }
@@ -81,17 +81,17 @@ a.dupe_prev_dose {
 }
 #dose_head .drug_dose input{
     width: 30px;
-    font-size: 85%; 
+    font-size: 85%;
 }
-#med_steps > .drug_step ~ .drug_step .trashit { 
-    display:inline-block; 
-    opacity:1;  
+#med_steps > .drug_step ~ .drug_step .trashit {
+    display:inline-block;
+    opacity:1;
 }
-.drug_name .trashit { 
+.drug_name .trashit {
     display:none;
     opacity:0;
     width: 15px;
-    height: 15px;            
+    height: 15px;
     text-decoration: none;
     line-height: 65%;
 }
@@ -113,7 +113,7 @@ a.dupe_prev_dose {
 .alt_med_custom_dose{
     font-size:77%;
 }
-#plan_summary .drug_name, 
+#plan_summary .drug_name,
 #dose_head .drug_name{
     font-size:85%;
 }
@@ -126,19 +126,19 @@ a.dupe_prev_dose {
     color: #333;
 }
 
-.drug_dose.active {  
+.drug_dose.active {
     background:#ffc !important;
 }
 
 
 .drug_dose select{
     font-size:92%;
-    display:block; 
+    display:block;
 }
 .drug_dose i{
     display:block;
     font-size:77%;
-    font-style:normal;  
+    font-style:normal;
 }
 
 .current_tree{ display:none; }
@@ -150,7 +150,7 @@ label + em{
 }
 
 .filtered,
-.patient_count{ 
+.patient_count{
     font-size:120%;
     border-left:2px solid #2f5f73;
     height:50px;
@@ -205,7 +205,7 @@ label + em{
     line-height:100%;
 }
 .stat-text{
-    font-style:normal; 
+    font-style:normal;
     font-size:85%;
 }
 
@@ -222,20 +222,20 @@ label + em{
     margin-right:80px;
 }
 .alerts .stat{
-    background:#2f5f73; 
+    background:#2f5f73;
     color:#E9F0F2;
     position:relative;
 }
 .alerts .stat i{
     color:#fff;
 }
-.data_needed .stat::before, 
+.data_needed .stat::before,
 .alerts .stat::before{
     content:"";
     display:block;
     background:none;
     position:absolute;
-    top:0; right:-40px; 
+    top:0; right:-40px;
     width:0;
     height:180px;
     border-right:2px solid #B1B9BF;
@@ -284,7 +284,7 @@ label + em{
 
 #patient_list,
 .profile .patient_detail{
-    height:100%; 
+    height:100%;
 }
 
 .patient_tab{
@@ -335,7 +335,7 @@ label + em{
     height: 100%;
 }
 .patient_name {
-    position:relative; 
+    position:relative;
 }
 
 .patient_status{
@@ -350,12 +350,12 @@ label + em{
 }
 .delete_patient{
     right:80px;
-    width:20px; 
-    height:20px; 
+    width:20px;
+    height:20px;
 }
 .add_photo{
     width:185px; height:185px; line-height:185px;
-    border:1px dashed #ccc; 
+    border:1px dashed #ccc;
 }
 
 #patient_details .nav-tabs .nav-link {
@@ -367,12 +367,12 @@ label + em{
     border-top-right-radius: .25rem;
 }
 
-#patient_details .nav-tabs .nav-item.show .nav-link, 
+#patient_details .nav-tabs .nav-item.show .nav-link,
 #patient_details .nav-tabs .nav-link.active{
     border:none;
     border-bottom: 1px solid #F8F9FA;
     background:#F8F9FA;
-    font-weight:bold; 
+    font-weight:bold;
 }
 #patient_details{
     min-height:400px;
@@ -429,7 +429,7 @@ section h3{
     font-weight:normal;
 }
 #alerts caption a {
-    display:inline-block; 
+    display:inline-block;
 }
 #alerts table caption{
     padding-bottom:0;
@@ -467,7 +467,7 @@ section h3{
 
 .reg_link{
     display:block;
-    text-align:center; 
+    text-align:center;
     font-weight:bold;
     color:#000;
 }
@@ -491,9 +491,9 @@ section h3{
 
 .rec_log h4, .rec_log h5{
     color:#435F72;
-    font-family:inherit; 
+    font-family:inherit;
     font-size:92%;
-    margin:5px 0 ; 
+    margin:5px 0 ;
 }
 .rec_log h5{
     font-weight:normal;
@@ -540,7 +540,7 @@ section h3{
     color: #a65c43;
     font-size:92%;
     display:block;
-    font-weight:bold; 
+    font-weight:bold;
 }
 .patient_status b{
     color:#435F72;
@@ -568,7 +568,7 @@ i.email.sent{
 }
 
 .clear_patient{
-    position:absolute; 
+    position:absolute;
     right:15px;
     padding:.5rem 0;
 }
@@ -601,8 +601,8 @@ i.email.sent{
 }
 .step ul{
     margin:0; padding:15px 0;
-    list-style:none; 
-    box-shadow:1px 1px 4px 0px #ccc; 
+    list-style:none;
+    box-shadow:1px 1px 4px 0px #ccc;
 }
 .step ul::before{
     content: "";
@@ -625,8 +625,8 @@ i.email.sent{
     position:relative;
 }
 .step li em, .step li span{
-    color:#bbb; 
-    font-style:normal; 
+    color:#bbb;
+    font-style:normal;
     font-size:77%
 }
 .step li span{
@@ -635,7 +635,7 @@ i.email.sent{
 .step li h5, .step li h6{
     font-family:inherit;
     color:#bbb;
-    margin:0; padding:0; 
+    margin:0; padding:0;
 }
 .step:nth-last-child(-n+2) li h5, .step:nth-last-child(-n+2) li h6{
     color:#333;
@@ -643,10 +643,10 @@ i.email.sent{
 .step li.ts:after{
     content:"";
     border:1px solid #efefef;
-    width:1px; 
-    position:absolute; 
+    width:1px;
+    position:absolute;
     height:80%;
-    right:0; 
+    right:0;
     top:50%;
     transform:translateY(-50%);
 }
@@ -654,7 +654,7 @@ i.email.sent{
     max-width:360px;
 }
 .step li.note{
-    position:absolute; 
+    position:absolute;
     right:20px; top:50px;
     color:#bbb;
     font-size:85%;
@@ -664,7 +664,7 @@ i.email.sent{
     color:#4E7AF5;
 }
 .step .comment{
-    margin:20px 20px 0; 
+    margin:20px 20px 0;
     padding:10px 15px;
     border:1px solid #bbb;
     border-radius:3px;
@@ -699,9 +699,9 @@ i.email.sent{
 
 #selectprovider,
 #emailconsent{
-    position:fixed; 
+    position:fixed;
     z-index:10;
-    width:490px; 
+    width:490px;
     top:calc(50% - 245px);
     left:calc(50% - 245px);
     background:#EAF0F2;
@@ -729,3 +729,10 @@ i.email.sent{
     overflow-wrap:break-word;
 }
 
+.form-control.cr_reading, .form-control.k_reading, .form-control.na_reading {
+    width: 25%;
+    height:auto;
+    font-size: 85%;
+    padding: 3px;
+    text-align: center;
+}

@@ -943,55 +943,108 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
 		return;
 	}
 
+    private function evaluateSideEffects($treeStep, $k, $na, $cr, $hr, $systolic_average, $custom_targets = array()) {
+        $target_upper_k         = in_array("k_upper", array_keys($custom_targets)) ? $custom_targets["k_upper"] : $this->getProjectSetting("lab-target-k-upper");
+        $target_lower_k         = in_array("k_lower", array_keys($custom_targets)) ? $custom_targets["k_lower"] :$this->getProjectSetting("lab-target-k-lower");
+        $target_upper_cr        = in_array("cr", array_keys($custom_targets)) ? $custom_targets["cr"] :$this->getProjectSetting("lab-target-cr");
+        $target_lower_na        = in_array("na", array_keys($custom_targets)) ? $custom_targets["na"] :$this->getProjectSetting("lab-target-na");
+        $target_lower_slowhr    = in_array("hr", array_keys($custom_targets)) ? $custom_targets["hr"] :$this->getProjectSetting("lab-target-slowhr");
+        $target_lower_sys       = in_array("sys_avg", array_keys($custom_targets)) ? $custom_targets["sys_avg"] :$this->getProjectSetting("target-sys-lower");
+
+        // they must go in this order of priority
+        if ($systolic_average < $target_lower_sys) { //105
+            $this->emDebug("what the fuck $systolic_average < $target_lower_sys", $treeStep["side_effects"]["hypotension"]);
+            return $treeStep["side_effects"]["hypotension"];
+        }
+
+        if ($na < $target_lower_na) { //135
+            return $treeStep["side_effects"]["hyponatremia"];
+        }
+
+        if ($k < $target_lower_k) { //3.5
+            return $treeStep["side_effects"]["hypokalemia"];
+        }
+
+        if ($cr > $target_upper_cr) { //2.0
+            return $treeStep["side_effects"]["elevated_cr"];
+        }
+
+        if ($k > $target_upper_k) { //5.5
+            return $treeStep["side_effects"]["hyperkalemia"];
+        }
+
+        if ($hr < $target_lower_slowhr) { //55
+            return $treeStep["side_effects"]["slow_hr"];
+        }
+
+        // Additional checks for other side effects...
+        //Hypotension = Average Target SBP over last 2 weeks < 105 mmHg
+        //Hyponatremia = latest serum Na < 135 meq/L
+        //Hypokalemia = latest serum K < 3.5 meq/L
+        //Elevated serum Cr = latest serum Cr > 2.0 mg/dL
+        //Hyperkalemia = latest serum K > 5.5 meq/L
+        //Slow HR = Average HR over last 2 weeks < 55 bpm
+        return null;
+    }
+
     public function evaluateOmronBPavg_2($patientData, &$state) {
         $this->loadEM();
 
-        $wtf                = array_keys($patientData);
-        $target_systolic    = $patientData[$wtf[0]]; //could not find "target_systolic"
-        $systolic_average   = $patientData[$wtf[1]];
-        $k_value            = $patientData[$wtf[2]];
-        $cr_value           = $patientData[$wtf[3]];
+        $target_systolic    = $patientData["target_systolic"];
+        $systolic_average   = $patientData["systolic_average"];
+        $k_value            = $patientData["k"];
+        $cr_value           = $patientData["cr"];
+        $na_value           = $patientData["na"];
+        $hr_value           = $patientData["hr"];
 
         $current_tree       = 1;
         $provider_id        = 2;
-        $is_above_threshold = $this->checkBPvsThreshold(array(), $target_systolic, .6, $systolic_average );
 
         // Assume $state['current_step'] carries the accepted recommendation step.
         $current_step       = $state['current_step'] ?? 0;
+        $provider_trees     = $this->tree->treeLogic($provider_id);
+        $treelogic          = $provider_trees[$current_tree];
 
-        if($current_step != "End of protocol"){
+        // OK EVAULAUTE SIDE EFFECTS FIRST!
+        // BUT IM NOT SURE THATS A GOOD IDEA FOR THE MAIN evaluateOmronBPavg casue what if lab values are year old and doesnt change ?
+        // CHECK FOR K, CR, NA SIDE EFFECTS FIRST
+        // THEN FALL BACK TO REGULAR "UNcontrolled"
+
+        if($current_step != "Refer" && $current_step != "Stop"){
             $provider_trees     = $this->tree->treeLogic($provider_id);
             $treelogic          = $provider_trees[$current_tree];
             $current_tree_step  = $treelogic['logicTree'][$current_step];
+            print_r($current_tree_step);
 
+            //GET PATIENTS CUSTOM TARGETS IF ANY
+//            $custom_targets = array(
+//                "k_upper"   => 5.5,
+//                "k_lower"   => 3.5,
+//                "cr"        => 2.0,
+//                "na"        => 135,
+//                "hr"        => 55,
+//                "sys_avg"   => 105
+//            );
+            $custom_targets= array();
 
+            $side_effects_next_step = $this->evaluateSideEffects($current_tree_step, $k_value, $na_value, $cr_value, $hr_value, $systolic_average, $custom_targets);
+            $is_above_threshold     = $this->checkBPvsThreshold(array(), $target_systolic, .6, $systolic_average );
 
-            if ($is_above_threshold) {
-                $uncontrolled_next_step 		= array_key_exists("Uncontrolled", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled"] : $current_step;
-                $uncontrolled_Kplus_next_step 	= array_key_exists("Uncontrolled, K > 4.5", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled, K > 4.5"] : null;
-                $uncontrolled_Kminus_next_step 	= array_key_exists("Uncontrolled, K < 4.5", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled, K < 4.5"] : null;
-
-                if(!empty($uncontrolled_Kplus_next_step) || !empty($uncontrolled_Kminus_next_step) || !empty($cr_sideeffect)){
-                    if(!empty($uncontrolled_Kplus_next_step) || !empty($uncontrolled_Kminus_next_step)){
-                        //then set the uncontrolled_next_step
-                        if(isset($k_value)){
-                            print_r("does it not even get in here?", $k_value);
-                            $uncontrolled_next_step = $k_value >= 4.5 ? $uncontrolled_Kplus_next_step : $uncontrolled_Kminus_next_step;
-                        }
-                    }
-                }
-
-                // Update the current step in the state to the next step
+            if($side_effects_next_step !== null) {
+                $state['current_step'] = $side_effects_next_step;
+            }elseif ($is_above_threshold) {
+                $uncontrolled_next_step = array_key_exists("Uncontrolled", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled"] : $current_step;
                 $state['current_step'] = $uncontrolled_next_step;
             }
-
-            print_r($current_tree_step);
         }
+
         print_r("<h5>Next Step : " . $state['current_step'] . "</h5>");
 
         return $state;
     }
-    
+
+
+
 
 	public function communicationsCheck(){
 		$this->loadEM();

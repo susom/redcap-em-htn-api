@@ -399,7 +399,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             var latestReading = null;
 
             // Iterate over the readings array
-            patient["crk_readings"].forEach(function (reading) {
+            patient["crkna_readings"].forEach(function (reading) {
                 // Check if the current reading's lab name matches what we're looking for
                 if (reading.lab_name === lab_name) {
                     // Initialize latestReading or update it if the current instance is newer
@@ -432,10 +432,10 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
         tpl.find(".comorbidity").html(comorbid_list.join("\r\n"));
 
-        var need_CRK    = patient["crk_readings"].length ? false : true;
-        if(!need_CRK){
-            for(var i in patient["crk_readings"]){
-                var lab = patient["crk_readings"][i];
+        var need_CRKNA    = patient["crkna_readings"].length ? false : true;
+        if(!need_CRKNA){
+            for(var i in patient["crkna_readings"]){
+                var lab = patient["crkna_readings"][i];
                 var lab_name = lab["lab_name"];
                 var lab_val  = lab["lab_value"];
                 var lab_ts   = lab["lab_ts"];
@@ -600,6 +600,29 @@ dashboard.prototype.displayPatientDetail = function(record_id){
 
         });
 
+        tpl.find(".na_reading").change(function(e){
+            e.preventDefault();
+            console.log("update na reading", $(this).val());
+            $.ajax({
+                url : _this["ajax_endpoint"],
+                method: 'POST',
+                data: { "action" : "update_na_reading" , "reading" : $(this).val() ,"record_id" : patient["record_id"], "patient" : patient },
+                dataType: 'json'
+            }).done(function (result) {
+                var lab      = result["data"];
+                var lab_name = lab["lab_name"];
+                var lab_val  = lab["lab_value"];
+                var lab_ts   = lab["lab_ts"];
+
+                var inputname = "." + lab_name ;
+                tpl.find(inputname + " input").val(lab_val);
+                tpl.find(inputname + " i span").text(lab_ts);
+            }).fail(function () {
+                console.log("something failed");
+            });
+
+        });
+
         // PTREE LOG
         var patient_tree_id = patient["current_treatment_plan_id"];
         patient_tree_id = this.intf["ptree"].hasOwnProperty(patient_tree_id) ? patient_tree_id : 1;
@@ -684,17 +707,19 @@ dashboard.prototype.displayPatientDetail = function(record_id){
                 // Find latest readings for Creatinine and Potassium
                 var latestCr    = findLatestReading("cr");
                 var latestK     = findLatestReading("k");
+                var latestNa     = findLatestReading("na");
 
                 var rec_p = $("<p>").addClass("summary").html("Some recommendations for titration of antihypertensive medications can modify serum chemistries.");
                 log_step.find(".rec_summaries").append(rec_p);
-                if (latestCr || latestK) {
+                if (latestCr || latestK || latestNa) {
                     // Extract the timestamp from the latest relevant reading
-                    var latestDate = latestCr ? latestCr.lab_ts : latestK.lab_ts;
+                    var latestDate = latestCr ? latestCr.lab_ts : latestK ? latestK.lab_ts : latestNa.lab_ts;
 
                     // Build the summary text with the latest values
                     var summaryText = `Your patient's latest lab panel was on ${latestDate} with ` +
                         `<b>SERUM CREATININE</b> of ${latestCr ? latestCr.lab_value : "N/A"} ` +
-                        `and <b>SERUM POTASSIUM</b> of ${latestK ? latestK.lab_value : "N/A"}.`;
+                        `and <b>SERUM POTASSIUM</b> of ${latestK ? latestK.lab_value : "N/A"}.` +
+                        `and <b>SERUM SODIUM</b> of ${latestNa ? latestNa.lab_value : "N/A"}.`;
 
                     // Create the paragraph element and append it to the designated container
                     var rec_p = $("<p>").addClass("summary").html(summaryText);
@@ -835,7 +860,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             var pharmacy = patient["pharmacy_info"] ?? "Pharmacy";
             rec.find(".send_to_pharmacy span").text(pharmacy);
 
-            if(need_CRK){
+            if(need_CRKNA){
                 rec.find(".send_to_pharmacy").prepend($("<b class='mb-2'>* NOTE: check lab test before proceeding</b>"));
             }
 
@@ -1148,4 +1173,18 @@ function copyToClipboard(text) {
     dummy.select();
     document.execCommand("copy");
     document.body.removeChild(dummy);
+}
+
+function getLatestDate(dates) {
+    // Filter out null values and map to retrieve the 'lab_ts' property
+    let validDates = dates.filter(date => date !== null && date.lab_ts).map(date => new Date(date.lab_ts));
+
+    // If no valid dates, return null
+    if (validDates.length === 0) {
+        return null;
+    }
+
+    // Sort dates in descending order and return the latest
+    validDates.sort((a, b) => b - a);
+    return validDates[0];
 }
