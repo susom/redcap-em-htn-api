@@ -953,27 +953,32 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
 
         // they must go in this order of priority
         if ($systolic_average < $target_lower_sys) { //105
-            $this->emDebug("what the fuck $systolic_average < $target_lower_sys", $treeStep["side_effects"]["hypotension"]);
+            print_r("side effect : hypotension");
             return $treeStep["side_effects"]["hypotension"];
         }
 
         if ($na < $target_lower_na) { //135
+            print_r("side effect : hyponatremia");
             return $treeStep["side_effects"]["hyponatremia"];
         }
 
         if ($k < $target_lower_k) { //3.5
+            print_r("side effect : hypokalemia");
             return $treeStep["side_effects"]["hypokalemia"];
         }
 
         if ($cr > $target_upper_cr) { //2.0
+            print_r("side effect : elevated serum Cr");
             return $treeStep["side_effects"]["elevated_cr"];
         }
 
         if ($k > $target_upper_k) { //5.5
+            print_r("side effect : hyperkalemia");
             return $treeStep["side_effects"]["hyperkalemia"];
         }
 
         if ($hr < $target_lower_slowhr) { //55
+            print_r("side effect : slow HR");
             return $treeStep["side_effects"]["slow_hr"];
         }
 
