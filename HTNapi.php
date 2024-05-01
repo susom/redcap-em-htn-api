@@ -758,7 +758,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
             $mean_of_data = $external_avg;
             $is_above = $mean_of_data > $target_threshold ? true : false;
             // Assume each external average represents sufficient data points
-            $this->emDebug("IN checkBPvsThreshold for ", $record_id, $mean_of_data, $target_threshold);
+//            $this->emDebug("IN checkBPvsThreshold for ", $record_id, $mean_of_data, $target_threshold);
             return $is_above ? $mean_of_data : false;
         }
 
@@ -944,53 +944,52 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
 	}
 
     private function evaluateSideEffects($treeStep, $k, $na, $cr, $hr, $systolic_average, $custom_targets = array()) {
-        $target_upper_k         = in_array("k_upper", array_keys($custom_targets)) ? $custom_targets["k_upper"] : $this->getProjectSetting("lab-target-k-upper");
-        $target_lower_k         = in_array("k_lower", array_keys($custom_targets)) ? $custom_targets["k_lower"] :$this->getProjectSetting("lab-target-k-lower");
-        $target_upper_cr        = in_array("cr", array_keys($custom_targets)) ? $custom_targets["cr"] :$this->getProjectSetting("lab-target-cr");
-        $target_lower_na        = in_array("na", array_keys($custom_targets)) ? $custom_targets["na"] :$this->getProjectSetting("lab-target-na");
-        $target_lower_slowhr    = in_array("hr", array_keys($custom_targets)) ? $custom_targets["hr"] :$this->getProjectSetting("lab-target-slowhr");
-        $target_lower_sys       = in_array("sys_avg", array_keys($custom_targets)) ? $custom_targets["sys_avg"] :$this->getProjectSetting("target-sys-lower");
+        // Convert incoming parameters to floats to ensure numeric comparisons
+        $k = floatval($k);
+        $na = floatval($na);
+        $cr = floatval($cr);
+        $hr = floatval($hr);
+        $systolic_average = floatval($systolic_average);
 
-        // they must go in this order of priority
-        if ($systolic_average < $target_lower_sys) { //105
-            print_r("side effect : hypotension");
+        // Retrieve and convert target settings from project settings or custom provided values
+        $target_upper_k = floatval(array_key_exists("k_upper", $custom_targets) ? $custom_targets["k_upper"] : $this->getProjectSetting("lab-target-k-upper"));
+        $target_lower_k = floatval(array_key_exists("k_lower", $custom_targets) ? $custom_targets["k_lower"] : $this->getProjectSetting("lab-target-k-lower"));
+        $target_upper_cr = floatval(array_key_exists("cr_upper", $custom_targets) ? $custom_targets["cr_upper"] : $this->getProjectSetting("lab-target-cr"));
+        $target_lower_na = floatval(array_key_exists("na_lower", $custom_targets) ? $custom_targets["na_lower"] : $this->getProjectSetting("lab-target-na"));
+        $target_lower_slowhr = floatval(array_key_exists("hr_lower", $custom_targets) ? $custom_targets["hr_lower"] : $this->getProjectSetting("lab-target-slowhr"));
+        $target_lower_sys = floatval(array_key_exists("sys_avg_lower", $custom_targets) ? $custom_targets["sys_avg_lower"] : $this->getProjectSetting("target-sys-lower"));
+
+        // Comparisons to determine side effects
+        if ($systolic_average < $target_lower_sys) {
+            print_r("side effect : hypotension $systolic_average < $target_lower_sys");
             return $treeStep["side_effects"]["hypotension"];
         }
-
-        if ($na < $target_lower_na) { //135
-            print_r("side effect : hyponatremia");
+        if ($na < $target_lower_na) {
+            print_r("side effect : hyponatremia $na < $target_lower_na");
             return $treeStep["side_effects"]["hyponatremia"];
         }
-
-        if ($k < $target_lower_k) { //3.5
-            print_r("side effect : hypokalemia");
+        if ($k < $target_lower_k) {
+            print_r("side effect : hypokalemia $k < $target_lower_k");
             return $treeStep["side_effects"]["hypokalemia"];
         }
 
-        if ($cr > $target_upper_cr) { //2.0
-            print_r("side effect : elevated serum Cr");
+        if ($cr > $target_upper_cr) {
+            print_r("side effect : elevated serum Cr $cr > $target_upper_cr");
             return $treeStep["side_effects"]["elevated_cr"];
         }
-
-        if ($k > $target_upper_k) { //5.5
-            print_r("side effect : hyperkalemia");
+        if ($k > $target_upper_k) {
+            print_r("side effect : hyperkalemia $k > $target_upper_k");
             return $treeStep["side_effects"]["hyperkalemia"];
         }
-
-        if ($hr < $target_lower_slowhr) { //55
-            print_r("side effect : slow HR");
+        if ($hr < $target_lower_slowhr) {
+            print_r("side effect : slow HR $hr < $target_lower_slowhr");
             return $treeStep["side_effects"]["slow_hr"];
         }
 
-        // Additional checks for other side effects...
-        //Hypotension = Average Target SBP over last 2 weeks < 105 mmHg
-        //Hyponatremia = latest serum Na < 135 meq/L
-        //Hypokalemia = latest serum K < 3.5 meq/L
-        //Elevated serum Cr = latest serum Cr > 2.0 mg/dL
-        //Hyperkalemia = latest serum K > 5.5 meq/L
-        //Slow HR = Average HR over last 2 weeks < 55 bpm
+        // If no conditions are met, return null
         return null;
     }
+
 
     public function evaluateOmronBPavg_2($patientData, &$state) {
         $this->loadEM();
