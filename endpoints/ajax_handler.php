@@ -146,8 +146,9 @@ $module->emDebug("update_na_reading", $_POST);
             $provider_id    = $_POST["record_id"];
 
             //refresh dashboard INTF for this provider
-            $dag_admin      = $_SESSION["logged_in_user"]["dag_admin"] ? $_SESSION["logged_in_user"]["redcap_data_access_group"] : null;
+            $dag_admin      = $_SESSION["logged_in_user"]["dag_admin"] ? $_SESSION["logged_in_user"]["dag_admin"] : null;
             $result         = $module->dashBoardInterface($provider_id,$_SESSION["logged_in_user"]["super_delegate"], $dag_admin);
+
         break;
     }
 
