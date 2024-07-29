@@ -842,6 +842,7 @@ $this->emDebug("Starting evaluation for record", $record_id);
 		if(!empty($target_systolic)){
 			//GET THE LAST 2 WEEKS WORTH OF BP DATA
 			$filter = "[bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-2 weeks')) . "'";
+            $filter = ""; //allow all time for now
 			$params	= array(
 				'project_id'	=> $this->enabledProjects["patients"]["pid"],
 				'records' 		=> array($record_id),
@@ -1198,7 +1199,7 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
         return null;
     }
 
-    //FOR TESTING SCRIPT 
+    //FOR TESTING SCRIPT
     public function evaluateOmronBPavg_2($patientData, &$state) {
         $this->loadEM();
 
@@ -1678,22 +1679,45 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
 	}
 
 	// cron to refresh omron access tokens expiring within 48 hours
-	public function htnAPICron(){
-		$projects 	= $this->framework->getProjectsWithModuleEnabled();
-		$urls 		= array(
-						 $this->getUrl('cron/refresh_omron_tokens.php', true, true)
-						,$this->getUrl('cron/daily_omron_data_pull.php', true, true)
-					); //has to be page
-		foreach($projects as $index => $project_id){
-			foreach($urls as $url){
-				$thisUrl 	= $url . "&pid=$project_id"; //project specific
-				$client 	= new \GuzzleHttp\Client();
-				$response 	= $client->request('GET', $thisUrl, array(\GuzzleHttp\RequestOptions::SYNCHRONOUS => true));
-				$this->emDebug("running cron for $url on project $project_id");
-			}
+    public function htnAPICron() {
+        $projects = $this->framework->getProjectsWithModuleEnabled();
+        $urls = array(
+            $this->getUrl('cron/refresh_omron_tokens.php', true, true),
+            $this->getUrl('cron/daily_omron_data_pull.php', true, true)
+        ); // These URLs should include the necessary parameters.
 
-		}
-	}
+        foreach ($projects as $index => $project_id) {
+            foreach ($urls as $url) {
+                // Ensure the URL has NOAUTH=1
+                $thisUrl = $this->correctUrlParams($url, $project_id);
+
+                $client = new \GuzzleHttp\Client();
+                $response = $client->request('GET', $thisUrl, array(\GuzzleHttp\RequestOptions::SYNCHRONOUS => true));
+                $this->emDebug("running cron for $thisUrl on project $project_id");
+            }
+        }
+    }
+
+    /**
+     * Ensure the URL is correctly formatted with 'NOAUTH=1'.
+     */
+    private function correctUrlParams($url, $project_id) {
+        $urlComponents = parse_url($url);
+        parse_str($urlComponents['query'], $params);
+        $params['NOAUTH'] = '1'; // Set NOAUTH=1
+        $params['pid'] = $project_id; // Ensure the project ID is correctly set
+
+        // Rebuild the query string and URL
+        $urlComponents['query'] = http_build_query($params);
+        return $this->buildUrl($urlComponents);
+    }
+
+    /**
+     * Helper function to rebuild the URL from its components.
+     */
+    private function buildUrl($urlComponents) {
+        return $urlComponents['scheme'] . '://' . $urlComponents['host'] . $urlComponents['path'] . '?' . $urlComponents['query'];
+    }
 
 	public function daily_survey_check(){
 		$projects 	= $this->framework->getProjectsWithModuleEnabled();
