@@ -1684,19 +1684,28 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
         $urls = array(
             $this->getUrl('cron/refresh_omron_tokens.php', true, true),
             $this->getUrl('cron/daily_omron_data_pull.php', true, true)
-        ); // These URLs should include the necessary parameters.
+        );
 
         foreach ($projects as $index => $project_id) {
             foreach ($urls as $url) {
-                // Ensure the URL has NOAUTH=1
                 $thisUrl = $this->correctUrlParams($url, $project_id);
+                $this->emDebug("Requesting URL: $thisUrl");
 
-                $client = new \GuzzleHttp\Client();
-                $response = $client->request('GET', $thisUrl, array(\GuzzleHttp\RequestOptions::SYNCHRONOUS => true));
-                $this->emDebug("running cron for $thisUrl on project $project_id");
+                try {
+                    $client = new \GuzzleHttp\Client();
+                    $response = $client->request('GET', $thisUrl, [
+                        \GuzzleHttp\RequestOptions::SYNCHRONOUS => true,
+                    ]);
+
+                    $this->emDebug("Response received: " . $response->getBody()->getContents());
+                } catch (\GuzzleHttp\Exception\ClientException $e) {
+                    $this->emDebug("HTTP request failed: " . $e->getMessage());
+                    $this->emDebug("Response: " . $e->getResponse()->getBody()->getContents());
+                }
             }
         }
     }
+
 
     /**
      * Ensure the URL is correctly formatted with 'NOAUTH=1'.
@@ -1704,22 +1713,19 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
     private function correctUrlParams($url, $project_id) {
         $urlComponents = parse_url($url);
         parse_str($urlComponents['query'], $params);
-        $params['NOAUTH'] = '1'; // Set NOAUTH=1
-        $params['pid'] = $project_id; // Ensure the project ID is correctly set
+        $params['NOAUTH'] = '1';
+        $params['pid'] = $project_id;
 
-        // Rebuild the query string and URL
         $urlComponents['query'] = http_build_query($params);
         return $this->buildUrl($urlComponents);
     }
 
-    /**
-     * Helper function to rebuild the URL from its components.
-     */
     private function buildUrl($urlComponents) {
         return $urlComponents['scheme'] . '://' . $urlComponents['host'] . $urlComponents['path'] . '?' . $urlComponents['query'];
     }
 
-	public function daily_survey_check(){
+
+    public function daily_survey_check(){
 		$projects 	= $this->framework->getProjectsWithModuleEnabled();
 		$urls 		= array(
 						$this->getUrl('cron/daily_survey_check.php',true,true)
