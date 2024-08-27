@@ -1030,6 +1030,7 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
         if (!empty($target_systolic)) {
             // Get the last 2 weeks' worth of BP data
             $filter = "[bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-2 weeks')) . "'";
+            $filter = "";
             $params = array(
                 'project_id'    => $this->enabledProjects["patients"]["pid"],
                 'records'       => array($record_id),
