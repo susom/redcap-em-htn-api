@@ -314,9 +314,10 @@ class HTNdashboard {
             $result["pharmacy_info"] = empty($result["pharmacy_info"]) ? "pharmacy n/a" : $result["pharmacy_info"];
             $result["provider_name"] = $providers[$result["patient_physician_id"]];
 
-            //GET PATIENT BP READINGS DATA OVER LAST 2 WEEKS
-            $measure_date_range = date("Y-m-d H:i:s", strtotime('-2 weeks'));
-            $bp_filter  = "[omron_bp_id] != '' AND [bp_reading_ts] > '" . $measure_date_range  . "'";
+            //GET PATIENT BP READINGS DATA OVER LAST 2 WEEKS, REMOVE 2 WEEK FILTER
+//            $measure_date_range = date("Y-m-d H:i:s", strtotime('-2 weeks'));
+//            $bp_filter  = "[omron_bp_id] != '' AND [bp_reading_ts] > '" . $measure_date_range  . "'";
+            $bp_filter  = "[omron_bp_id] != ''";
             $bp_params  = array(
                 'project_id'    => $this->patients_project,
                 "records"       => array($result["record_id"]),
