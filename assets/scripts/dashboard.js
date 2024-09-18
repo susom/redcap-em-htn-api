@@ -505,7 +505,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         tpl.find(".patient_profile img").attr("src",this.anon_profile_src);
         tpl.find(".patient_profile figcaption.h1").text(patient["patient_fname"] + " " + patient["patient_mname"] + " " + patient["patient_lname"]);
         tpl.find(".patient_profile figcaption.h5").text("Provider : " + patient["provider_name"]);
-        tpl.find(".patient_profile figcaption.contact").html("<b>MRN:</b> " + patient["patient_mrn"] + " <span class='mx-2'>|</span> <b>Email:</b> " + patient["patient_email"] + " <span class='mx-2'>|</span> <b>Cell:</b> " + patient["patient_phone"])
+        tpl.find(".patient_profile figcaption.contact").html("<b>MRN:</b> " + patient["patient_mrn"]);
         tpl.find(".edit_patient").attr("href", _this["edit_patient"]).data("patient",patient["record_id"]);
         tpl.find(".delete_patient").data("patient",patient["record_id"]).data("patient_name",patient["patient_fname"] + " " + patient["patient_mname"] + " " + patient["patient_lname"]);
 
@@ -752,7 +752,7 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             // generateBpGraph(patient["bp_readings"]);
             this.graphBpData();
         }else{
-            var nodata = $("<em>").addClass("nodata").text("No BP data within the past 2 weeks");
+            var nodata = $("<em>").addClass("nodata").text("No BP data");
             tpl.find("#bpchart").html(nodata);
         }
 
@@ -783,6 +783,27 @@ dashboard.prototype.displayPatientDetail = function(record_id){
         });
         // inputContainer.append(externalAvgInput);
 
+        tpl.find("#download_all_bpdata").click(function(e){
+            e.preventDefault();
+            var params = {
+                "action": "manual_download_bp",
+                "omron_client_id": patient["omron_client_id"],
+            };
+            console.log("download_all_bpdata not working?", params);
+
+            $.ajax({
+                url: _this["ajax_endpoint"],
+                method: 'POST',
+                data: params,
+                dataType: 'json'
+            }).done(function(result) {
+                console.log("yay it did it", params,  result);
+                // Refresh dashboard data to reflect any changes
+                _this.refreshData();
+            }).fail(function(e) {
+                console.log("something failed",e);
+            });
+        });
         tpl.find("#run_bp_eval").click(function(e){
             e.preventDefault();
 
@@ -978,6 +999,7 @@ dashboard.prototype.graphBpData = function(){
     var datasys     = [];
 
     var htn_bps     = patient["bp_readings"];
+    console.log("all bp readings for graphBpData",htn_bps);
     for(var i in htn_bps){
         var bp      = htn_bps[i];
         var ts      = bp["bp_reading_ts"];

@@ -55,9 +55,9 @@
 		        "show-header-and-footer": false
 			},
 			{
-		        "name": "HTN - Test Scripts",
+		        "name": "HTN - Pull Omron Data for All",
 		        "icon": "fas fa-calendar-week",
-		        "url" : "cron/daily_survey_clear.php",
+		        "url" : "cron/daily_omron_data_pull.php",
 		        "show-header-and-footer": true
 			}
 		],
