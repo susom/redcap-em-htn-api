@@ -67,7 +67,6 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	//Get All Patients
 	public function getPatientDetails($record_id){
 		$this->loadEM();
-
 		return $this->dashboard->getPatientDetails($record_id);
 	}
 
@@ -808,7 +807,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	// NEED TO PROMPT FOR CR & K readings FROM PROVIDER  BEFORE MAKING RX CHANGE ASSESTMENT if not within last 2 weeks.
 	public function evaluateOmronBPavg_old($record_id, $external_avg = null){
 		$this->loadEM();
-$this->emDebug("Starting evaluation for record", $record_id);
+        $this->emDebug("Starting evaluation for record", $record_id);
 
         // GET patient BP data, current filter status, and
 		$params	= array(
@@ -1049,7 +1048,7 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
             $pulse_sum      = 0;
             $pulse_count    = 0;
             foreach ($records as $record) {
-                if (isset($record['bp_pulse'])) {
+                if (!empty($record['bp_pulse'])) {
                     $pulse_sum += $record['bp_pulse'];
                     $pulse_count++;
                 }
@@ -1659,7 +1658,7 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
 	}
 
 	// cron to pull data daily in case the notification ping fails?
-	public function dailyOmronDataPull(){
+	public function dailyOmronDataPull($since_today=null){
 		//GET ALL PATIENTS (REGARDLESS OF PROVIDER) WHO HAVE ACCESS TOKENS
 		//PULL ALL DATA FOR TODAY
 
@@ -1667,12 +1666,10 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
 		$patients_with_tokens   = $this->getPatientsWithTokens();
 
 		foreach($patients_with_tokens as $patient){
-//            $this->emDebug("dailyOmronDataPull foreach", $patients_with_tokens);
-
 			$omron_client_id 	= $patient["omron_client_id"];
 			$record_id 			= $patient["record_id"];
-			$since_today 		= date("Y-m-d");
-			$success 			= $this->recurseSaveOmronApiData($omron_client_id, $since_today);
+            $since_today        = $since_today ?? date("Y-m-d");
+            $success 			= $this->recurseSaveOmronApiData($omron_client_id, $since_today);
 			if($success){
 				$this->emDebug("BP data for $since_today was succesfully downloaded for record_id $record_id");
 			}
@@ -1688,10 +1685,14 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
         );
 
         foreach ($projects as $index => $project_id) {
+            $mode = $this->getProjectSetting("em-mode", $project_id);
+            if($mode != "patients"){
+                continue;
+            }
+
             foreach ($urls as $url) {
                 $thisUrl = $this->correctUrlParams($url, $project_id);
                 $this->emDebug("Requesting URL: $thisUrl");
-
                 try {
                     $client = new \GuzzleHttp\Client();
                     $response = $client->request('GET', $thisUrl, [

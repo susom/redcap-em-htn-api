@@ -31,7 +31,6 @@ if(!empty($_POST)){
 
             $record_id  = $_POST["record_id"] ?? null;
             $reading    = $_POST["reading"] ?? null;
-$module->emDebug("update_na_reading", $_POST);
             $result     =$module->updateLabReading($record_id, $lab, $reading);
             break;
 
@@ -47,6 +46,13 @@ $module->emDebug("update_na_reading", $_POST);
             $result = array("message" => "Evaluation completed.");
             echo json_encode($result); // Send a JSON response back to the client
         break;
+
+        case "manual_download_bp":
+            $omron_client_id = $_POST["omron_client_id"] ?? null;
+            $module->recurseSaveOmronApiData($omron_client_id);
+
+            $result = array("message" => "BP Downloaded");
+            break;
 
         case "sendAuth":
             //email patient a authorization request and link
@@ -85,7 +91,6 @@ $module->emDebug("update_na_reading", $_POST);
             $record_id  = $_POST["record_id"] ?? null;
             $result     = $module->flagPatientForDeletion($record_id);
         break;
-
 
         case "example_in_data_var":
             //refresh dashboard INTF

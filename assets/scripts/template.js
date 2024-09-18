@@ -505,6 +505,7 @@ var patient_details = `
                 <div class="content rounded-bottom bg-light mh-10 mx-1">
                     <div id="bpchart"></div>
                     <div class="instep eval_bp_data" style="text-align: center; padding: 0px 20px 20px;">
+                        <button id="download_all_bpdata" class="btn btn-info btn-large">Download All BP Data</button>
                         <button id="run_bp_eval" class="btn btn-info btn-large">Manually Execute BP Data Eval</button>
                     </div>
                 </div>
