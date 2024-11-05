@@ -59,8 +59,6 @@ class HTNdashboard {
         return $providers;
     }
     public function getAllPatients($provider_id, $super_delegate=null, $dag_admin=null){
-        // $this->getProviderbyId($provider_id)
-
         //NEED TO KEEP THE PEOPLE THAT HAVE BEEN SENT CONSENT, CONSENTED BUT NOT ADDED MRN SEPERATE FROM COMPLETED
         $patients           = array();
         $pending_patients   = array();
@@ -83,11 +81,11 @@ class HTNdashboard {
         , "patient_fname"
         , "patient_lname"
 
-        ,"patient_name_first"
-        ,"patient_name_last"
-        ,"patient_name"
+        , "patient_name_first"
+        , "patient_name_last"
+        , "patient_name"
 
-        ,"print_name_participant"
+        , "print_name_participant"
         , "patient_email"
         , "patient_birthday"
         , "sex"
@@ -103,16 +101,16 @@ class HTNdashboard {
 		);
 
         //DAG ADMIN MEANS THEY CAN SEE ALL PATIENTS IN A DAG, REGARDLESS OF PROVIDER
-        if($dag_admin){
+        if($dag_admin && !empty( $providers[$provider_id]["dag"]) ){
             //SO REMOVE ALL THE FILTERS and ADD "groups" to the PARAM
             $params["filterLogic"]	= "";
-            $params["groups"]       = $dag_admin;
-
+            $params["groups"]       = $providers[$provider_id]["dag"];
         }
 
 		$q 			        = \REDCap::getData($params);
         $patient_results    = json_decode($q, true);
-//$this->module->emDebug("hi getAllPatients($provider_id, $super_delegate, $dag_admin) ",$params,  $patient_results);
+        $this->module->emDebug("should only be 4", $patient_results);
+
         foreach($patient_results as $i => $result){
             //FIRST DEFAULT VALUES THEN FILL IN
             $result["patient_photo"]    = $this->module->getUrl('assets/images/icon_anon.gif', true, true);
@@ -167,7 +165,7 @@ class HTNdashboard {
             $result["bp_readings"] = $bp_results;
 
             $patients[$result["record_id"]] = $result;
-            $patients[$result["record_id"]]["provider_name"] = $providers[$result["patient_physician_id"]];
+            $patients[$result["record_id"]]["provider_name"] = $providers[$result["patient_physician_id"]]["name"];
 
             if($result["filter"] == "rx_change"){
                 $rx_change[] = $result["record_id"];
@@ -348,7 +346,7 @@ class HTNdashboard {
             $result["ckd"] = (!isset($result["ckd"]) || $result["ckd"] === null) ? "CKD n/a" : $result["ckd"];
             $result["comorbidity"] = empty($result["comorbidity"]) ? "comorbidity n/a" : $result["comorbidity"];
             $result["pharmacy_info"] = empty($result["pharmacy_info"]) ? "pharmacy n/a" : $result["pharmacy_info"];
-            $result["provider_name"] = $providers[$result["patient_physician_id"]];
+            $result["provider_name"] = $providers[$result["patient_physician_id"]]["name"];
 
             //GET PATIENT BP READINGS DATA OVER LAST 2 WEEKS, REMOVE 2 WEEK FILTER
 //            $measure_date_range = date("Y-m-d H:i:s", strtotime('-2 weeks'));
@@ -741,6 +739,7 @@ class HTNdashboard {
         $params     = array(
             'project_id'    => $this->providers_project,
             'fields'        => $fields,
+            'exportDataAccessGroups' => true,
             'return_format' => 'json'
         );
         $raw        = \REDCap::getData($params);
@@ -748,7 +747,7 @@ class HTNdashboard {
 
         $provider_id_fullname_map = array();
         foreach($results as $result){
-            $provider_id_fullname_map[$result["record_id"]] = $result["provider_name_consent"];
+            $provider_id_fullname_map[$result["record_id"]] = array("name" => $result["provider_name_consent"], "dag" => $result["redcap_data_access_group"]);
         }
 
         return $provider_id_fullname_map;
