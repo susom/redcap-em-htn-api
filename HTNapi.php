@@ -798,7 +798,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$total_above 	= array_sum($above_thresh);
 		$mean_of_data 	= $total_datapoints ? round(array_sum($total_datapoints)/count($total_datapoints)) : 0;
 
-//		$this->emDebug("target :  $target_threshold, total data points : " . count($above_thresh) . " , control cond : $thresh_check ,  above thresh : $total_above", $total_datapoints);
+		$this->emDebug("target :  $target_threshold, total data points : " . count($above_thresh) . " , control cond : $thresh_check ,  above thresh : $total_above", $total_datapoints, $mean_of_data);
 
 		//IF ABOVE THRESHOLD,RETURN THE MEAN, if "Controlled" , return false
 		return $total_above > $thresh_check && count($above_thresh) >= 4 ? $mean_of_data : false;
@@ -994,9 +994,9 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
 
         $provider_id        = $pat_patient_physician_id;
         $current_tree       = $pat_current_treatment_plan_id;
-        $current_step       = $pat_patient_treatment_status;
-
+        $current_step       = empty($pat_patient_treatment_status) ? 0 : $pat_patient_treatment_status;
         $target_systolic    = $pat_patient_bp_target_systolic;
+
         //THESE ARENT NECESSARY FOR NOW
         $target_diastolic   = $pat_patient_bp_target_diastolic;
         $target_pulse       = $pat_patient_bp_target_pulse;
@@ -1024,7 +1024,7 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
             $custom_targets["hr_lower"] = $pat_custom_target_slowhr;
         }
 
-        $this->emDebug("Pull Initial data for Patient record_id $record_id: ", $patient, $custom_targets);
+        $this->emDebug("Pull Initial data and current step for Patient record_id $record_id", $patient, $current_step, $custom_targets);
 
         if (!empty($target_systolic)) {
             // Get the last 2 weeks' worth of BP data
@@ -1054,10 +1054,11 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
                 }
             }
             $mean_bp_pulse = $pulse_count > 0 ? $pulse_sum / $pulse_count : null;
-            $this->emDebug("Pull last 2 weeks BP Data for Patient record_id $record_id: ", $records, $mean_bp_pulse);
+            $this->emDebug("Pull last 2 weeks BP Data for Patient record_id $record_id: ", $mean_bp_pulse);
 
             // Fetch recent lab values WITHIN THe last 2 weeks(??)
             $filter = "[lab_ts] > '" . date("Y-m-d", strtotime('-2 weeks')) . "'";
+            $filter = "";
             $params = array(
                 'project_id'    => $this->enabledProjects["patients"]["pid"],
                 'records'       => array($record_id),
@@ -1084,8 +1085,11 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
             $treelogic              = $provider_trees[$current_tree];
             $current_tree_step      = $treelogic["logicTree"][$current_step];
 
+            $this->emDebug("what the heck wheres my tree", $provider_id, $current_tree, $current_step, $treelogic["logicTree"][0]);
+
+            $this->emDebug("Check sideeffects first", $current_tree_step, $lab_k, $lab_na, $lab_cr, $mean_bp_pulse, $external_avg, $custom_targets);
             $side_effects_next_step = $this->evaluateSideEffects($current_tree_step, $lab_k, $lab_na, $lab_cr, $mean_bp_pulse, $external_avg, $custom_targets);
-            $this->emDebug("Check sideeffects first", $side_effects_next_step);
+
 
             if ($side_effects_next_step !== null) {
                 $next_step      = $side_effects_next_step;

@@ -38,195 +38,6 @@ class HTNtree  {
         }
     }
 
-    public function getPrescriptionTree($id,$API_TOKEN, $API_URL){
-        $extra_params   = array(
-            "records"   => $id,
-            "events"     => "tree_arm_2"
-        );
-        $results    = RC::callApi($extra_params, true, $API_URL, $API_TOKEN);
-        $trees      = array();
-        $prev_id    = null;
-        foreach($results as $result){
-            $record_id  = $result["record_id"];
-
-            if($prev_id !== $record_id){
-                $trees[$record_id]          = array();
-                $trees[$record_id]["name"]  = $result["htn_tree_name"];
-            }else{
-                $repeat     = $result["redcap_repeat_instrument"];
-                $instance   = $result["redcap_repeat_instance"];
-
-                if(!empty($repeat) && !empty($instance)){
-                    if(!array_key_exists("meds", $trees[$record_id])){
-                        $trees[$record_id]["meds"]  = array();
-                    }
-
-                    $steps = array();
-                    for($i=1; $i < 11; $i++){
-                        $evaluate   = "evaluate_step_" . $i;
-                        $dose       = "step_dose_" .$i;
-                        $freq       = "freq_step_" .$i;
-
-                        $steps[$i]  = array(
-                            $evaluate   => $result[$evaluate],
-                            $dose       => $result[$dose],
-                            $freq       => $result[$freq]
-                        );
-                    }
-
-                    $trees[$record_id]["meds"][]    = array(
-                        "class"     => $result["tree_med_class"],
-                        "name"      => $result["tree_med_name"],
-                        "note"      => $result["tree_med_note"],
-                        "alt"       => $result["tree_med_alt_name"],
-                        "alt_dose"  => $result["tree_med_alt_dose"],
-                        "steps"     => $steps
-                    );
-                }
-            }
-
-            $prev_id = $record_id;
-        }
-
-        return $trees;
-    }
-
-    public function getPrescriptionTrees($API_TOKEN, $API_URL){
-        $extra_params   = array(
-            "fields"     => array("record_id","htn_tree_name"),
-            "events"     => "tree_arm_2"
-        );
-        $results = RC::callApi($extra_params, true, $API_URL, $API_TOKEN);
-
-        $trees = array();
-        foreach($results as $result){
-            $trees[$result["record_id"]] = $result["htn_tree_name"];
-        }
-
-        return $trees;
-    }
-
-    public function logPatientTreeChange($logdata,$API_TOKEN, $API_URL){
-        $edit_id                    = $logdata["patient_id"] ?? null;
-
-        if(is_null($edit_id)){
-            return array("error" => "invalid record id");
-        }
-        $results    = $this->getPatient($edit_id,$API_TOKEN,$API_URL);
-        $log_count  = count($results);
-
-        $data["redcap_repeat_instance"]     = $log_count;
-        $data["redcap_event_name"]          = "patients_arm_1";
-        $data["redcap_repeat_instrument"]   = "tree_log";
-        $data["record_id"]                  = $edit_id;
-
-        $data["ptree_log_ts"]               = date("Y-m-d H:i:s");;
-        $data["ptree_log_current_step"]     = $logdata["step_idx"];
-
-        $cur_meds = array();
-        $eval     = 7;
-        foreach($logdata["current_meds"] as $med){
-            array_push($cur_meds, $med["name"]. " " . $med["dose"] );
-        }
-        $data["ptree_current_meds"]         = implode(", ", $cur_meds);
-
-
-        if($logdata["status"] == "Controlled"){
-            $data["ptree_next_meds"]        = $data["ptree_current_meds"];
-            $data["ptree_log_next_step"]    = $data["ptree_log_current_step"];
-        }else if($logdata["status"] == "side effect"){
-            // is this a repeat of previous step with side effect med? i think so
-            $data["ptree_next_meds"]        = $data["ptree_current_meds"];
-            $data["ptree_log_next_step"]    = $data["ptree_log_current_step"];
-        }else{
-            // not controlled
-            $data["ptree_log_next_step"]  = $logdata["next_idx"];
-            $next_meds = array();
-            foreach($logdata["next_meds"] as $med){
-                array_push($next_meds, $med["name"]. " " . $med["dose"] );
-                $eval = $med["eval"] ?? $eval;
-            }
-            $data["ptree_next_meds"]      = implode(", ", $next_meds);
-        }
-
-        $status = "BP : " . $logdata["status"] ."\r\n\r\n";
-        $status .= "Current meds : ". $data["ptree_current_meds"] ."\r\n" ;
-        $status .= "Recommended next step meds : ". $data["ptree_next_meds"] ."\r\n\r\n" ;
-        $status .= "Re-evaluate in $eval days.";
-
-        $data["ptree_log_comment"]          = $status;
-        $result                             = RC::writeToApi($data, array("overwriteBehavior" => "overwite"), $API_URL, $API_TOKEN);
-
-        return array("result" => $result , "data" => $data);
-    }
-
-    public function savePrescriptionTree($ajax,$API_TOKEN, $API_URL){
-        $response                   = array();
-        $data                       = array();
-        $treearr                    = $ajax;
-        $edit_id                    = $treearr["record_id"] ?? null;
-
-
-        $tree_name                  = $treearr["name"];
-        $next_id                    = $edit_id ?? RC_Util::getNextId("record_id",$API_TOKEN, $API_URL);
-
-        $data["record_id"]          = $next_id;
-        $data["redcap_event_name"]  = "tree_arm_2";
-        $data["htn_tree_name"]      = $tree_name;
-        $result                     = RC::writeToApi($data, array("overwriteBehavior" => "overwite"), $API_URL, $API_TOKEN);
-
-        if(array_key_exists("count", $result)){
-            $response["record_id"]  = $next_id;
-            $response["name"]       = $tree_name;
-        }else{
-            array_push($response, $result);
-        }
-
-        // Save Sub Trees
-        $ladders                    = $treearr["treatment_plan"];
-
-        foreach($ladders as $ladder){
-            $instance_id                        = $instance_id ?? 1;
-
-            $data                               = array();
-            $data["redcap_event_name"]          = "tree_arm_2";
-            $data["record_id"]                  = $next_id;
-            $data["redcap_repeat_instance"]     = $instance_id;
-            $data["redcap_repeat_instrument"]   = "meds";
-
-            $data["tree_med_class"]             = $ladder["tree_med_class"];
-            $data["tree_med_name"]              = $ladder["tree_med_name"];
-            $data["tree_med_note"]              = $ladder["tree_med_note"];
-            $data["tree_med_alt_name"]          = $ladder["tree_med_alt_name"];
-            $data["tree_med_alt_dose"]          = $ladder["tree_med_alt_dose"];
-
-            $steps                      = $ladder["steps"];
-            foreach($steps as $idx => $step){
-                $idx++;
-
-                $evaluation = $step["evaluation"];
-                $dose       = $step["dose"];
-                $freq       = $step["freq"];
-
-                if($dose !== "false" && $freq !== "false" && $evaluation !== "false"){
-                    $data["evaluate_step_" . $idx]  = $evaluation;
-                    $data["step_dose_" . $idx]      = $dose;
-                    $data["freq_step_" . $idx]      = $freq;
-                }
-            }
-
-            // NEED TO SAVE MULTIPLE SUB things
-            $result  = RC::writeToApi($data, array("overwriteBehavior" => "overwite"), $API_URL, $API_TOKEN);
-            if(!array_key_exists("count", $result)){
-                array_push($response, $result);
-            }
-
-            $instance_id++;
-        }
-
-        return $response;
-    }
-
     public function getDefaultTrees($provider_id=0){
         $filter = "[provider_id] = $provider_id";
         $fields = array();
@@ -241,6 +52,7 @@ class HTNtree  {
 
         $labeled_trees = array();
         foreach($trees as $tree){
+//            $this->module->emDebug("what is happening?", $tree);
             $def_tree = $this->getTemplateDrugs($tree);
             if(!empty($def_tree)){
                 $tree_id = $tree["record_id"];
@@ -532,8 +344,25 @@ class HTNtree  {
 
             $logicTree      = array();
             if(!empty($template_drugs)){
-                $logicTree = $this->defaultLogicTree1($template_drugs);
+
+                // Assume 'logic_tree_version' is a field in your template that specifies which logic tree to use
+                if($template_name == "CCB Start (Default)"){
+                    // For defaultLogicTree2, we need to know the tree type
+                    $tree_type = $tree["tree_meta"]["tree_type"];
+                    $logicTree = $this->defaultLogicTree2($template_drugs, $tree_type);
+                } elseif($template_name == "Thiazides + CCB (Default)"){
+                    // For defaultLogicTree2, we need to know the tree type
+                    $tree_type = $tree["tree_meta"]["tree_type"];
+                    $logicTree = $this->defaultLogicTree3($template_drugs, $tree_type);
+                } elseif($template_name == "Thiazides + ARB (Default)"){
+                    // For defaultLogicTree2, we need to know the tree type
+                    $tree_type = $tree["tree_meta"]["tree_type"];
+                    $logicTree = $this->defaultLogicTree4($template_drugs, $tree_type);
+                } else {
+                    $logicTree = $this->defaultLogicTree1($template_drugs);
+                }
             }
+
 
             $tree["logicTree"]  = $logicTree;
             $provider_logic_trees[$tree_id] = $tree;
@@ -544,9 +373,8 @@ class HTNtree  {
     }
 
     public function defaultLogicTree1($template_drugs){
-        //TODO - STILL NOT SUPER CLeAR, THIS IS WEIRD
+        //TODO - DO NOT REMEMBER WHY WE MERGE THESE TWO?
         $template_drugs["SPIRNO"]["pretty"] = array_merge($template_drugs["SPIRNO"]["pretty"], $template_drugs["EPLER"]["pretty"]);
-        $drug_classes   = array("ACEI" => 3, "ARB" => 2, "DIURETIC" => 3, "SPIRNO" => 4, "CCB" => 3, "BB" => 4);
 
         $ACEI           = array();
         $ARB            = array();
@@ -555,16 +383,11 @@ class HTNtree  {
         $CCB            = array();
         $BB             = array();
 
-        foreach($drug_classes as $drug_class => $expected_count){
-            for($i=0; $i < $expected_count; $i++){
-                if(isset($template_drugs[$drug_class]["pretty"][$i])){
-                    $current_drug = $template_drugs[$drug_class]["pretty"][$i];
-                }
-                array_push($$drug_class, $current_drug);
+        foreach ($template_drugs as $drug_class => $drugs) {
+            foreach ($drugs["pretty"] as $drug) {
+                ${$drug_class}[] = $drug;
             }
         }
-
-
 
         $logicTree[] = array(
             "step_id" => 0,
@@ -5304,9 +5127,1963 @@ class HTNtree  {
             )
         );
 
-        // $this->module->emDebug("logictredd", $logicTree);
         return $logicTree;
     }
+
+    public function defaultLogicTree2($template_drugs){
+        //CCB DEFAULT 1
+        $template_drugs["SPIRNO"]["pretty"] = array_merge($template_drugs["SPIRNO"]["pretty"], $template_drugs["EPLER"]["pretty"]);
+
+        $ACEI           = array();
+        $ARB            = array();
+        $DIURETIC       = array();
+        $SPIRNO         = array();
+        $CCB            = array();
+        $BB             = array();
+
+        foreach ($template_drugs as $drug_class => $drugs) {
+            foreach ($drugs["pretty"] as $drug) {
+                ${$drug_class}[] = $drug;
+            }
+        }
+
+        $logicTree[] = array(
+            "step_id" => 0,
+            "drugs" => array($CCB[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 1
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => "Refer",
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 18,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 1,
+            "drugs" => array($CCB[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 2
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 0,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 19,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 2,
+            "drugs" => array($CCB[2]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 3
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 1,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 19,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 3,
+            "drugs" => array($CCB[2], $DIURETIC[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 4
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 2,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 19,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 4,
+            "drugs" => array($CCB[2], $DIURETIC[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 5
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 3,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 20,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 5,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 6
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 4,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 20,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 6,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 7
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 5,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 20,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 7,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $SPIRNO[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 8
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 6,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => 9,
+                "slow_hr" => 20,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 8,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $SPIRNO[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => "Refer"
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 7,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => 10,
+                "slow_hr" => 21,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 9,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $SPIRNO[2]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 10
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 6,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 22,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 10,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $SPIRNO[3]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => "Refer"
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 9,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 23,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 11,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $BB[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 12
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 6,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => "Stop",
+                "asthma" => "Stop",
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 12,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $BB[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 13
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 11,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => "Stop",
+                "asthma" => "Stop",
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 13,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $BB[2]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 14
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 12,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => "Stop",
+                "asthma" => "Stop",
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 14,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $BB[3]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => "Refer"
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 13,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => "Stop",
+                "asthma" => "Stop",
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 18,
+            "drugs" => array($DIURETIC[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 19,
+            "drugs" => array($DIURETIC[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 20,
+            "drugs" => array($DIURETIC[1], $SPIRNO[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => 22,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 21,
+            "drugs" => array($DIURETIC[1], $SPIRNO[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => 23,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 22,
+            "drugs" => array($DIURETIC[1], $SPIRNO[2]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 23,
+            "drugs" => array($DIURETIC[1], $SPIRNO[3]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 24,
+            "drugs" => array($DIURETIC[1], $BB[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 25,
+            "drugs" => array($DIURETIC[1], $BB[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 26,
+            "drugs" => array($DIURETIC[1], $BB[2]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 27,
+            "drugs" => array($DIURETIC[1], $BB[3]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+
+        return $logicTree;
+    }
+
+    public function defaultLogicTree3($template_drugs){
+        //Thiazides CCB DEFAULT 2
+        $template_drugs["SPIRNO"]["pretty"] = array_merge($template_drugs["SPIRNO"]["pretty"], $template_drugs["EPLER"]["pretty"]);
+
+        $ACEI           = array();
+        $ARB            = array();
+        $DIURETIC       = array();
+        $SPIRNO         = array();
+        $CCB            = array();
+        $BB             = array();
+
+        foreach ($template_drugs as $drug_class => $drugs) {
+            foreach ($drugs["pretty"] as $drug) {
+                ${$drug_class}[] = $drug;
+            }
+        }
+
+        $logicTree[] = array(
+            "step_id" => 0,
+            "drugs" => array($CCB[0], $DIURETIC[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 1
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => "Refer",
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 18,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 1,
+            "drugs" => array($CCB[1], $DIURETIC[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 2
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 0,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 19,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 2,
+            "drugs" => array($CCB[1], $DIURETIC[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 3
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 1,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 19,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 3,
+            "drugs" => array($CCB[2], $DIURETIC[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 4
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 2,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 19,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 4,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 5
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 3,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 20,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 5,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 6
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 4,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 20,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 6,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 7
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 5,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 20,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 7,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $SPIRNO[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 8
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 6,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => 9,
+                "slow_hr" => 20,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 8,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $SPIRNO[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => "Refer"
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 7,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => 10,
+                "slow_hr" => 21,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 9,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $SPIRNO[2]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 10
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 6,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 22,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 10,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $SPIRNO[3]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => "Refer"
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 9,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => 23,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 11,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $BB[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 12
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 6,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => "Stop",
+                "asthma" => "Stop",
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 12,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $BB[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 13
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 11,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => "Stop",
+                "asthma" => "Stop",
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 13,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $BB[2]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 14
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 12,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => "Stop",
+                "asthma" => "Stop",
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 14,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $BB[3]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => "Refer"
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 13,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => "Stop",
+                "asthma" => "Stop",
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 18,
+            "drugs" => array($DIURETIC[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 19,
+            "drugs" => array($DIURETIC[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 20,
+            "drugs" => array($DIURETIC[1], $SPIRNO[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => 22,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 21,
+            "drugs" => array($DIURETIC[1], $SPIRNO[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => 23,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 22,
+            "drugs" => array($DIURETIC[1], $SPIRNO[2]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 23,
+            "drugs" => array($DIURETIC[1], $SPIRNO[3]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 24,
+            "drugs" => array($DIURETIC[1], $BB[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 25,
+            "drugs" => array($DIURETIC[1], $BB[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 26,
+            "drugs" => array($DIURETIC[1], $BB[2]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 27,
+            "drugs" => array($DIURETIC[1], $BB[3]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        return $logicTree;
+    }
+
+    public function defaultLogicTree4($template_drugs){
+        //Thiazides ARB Default 3
+        $template_drugs["SPIRNO"]["pretty"] = array_merge($template_drugs["SPIRNO"]["pretty"], $template_drugs["EPLER"]["pretty"]);
+
+        $ACEI           = array();
+        $ARB            = array();
+        $DIURETIC       = array();
+        $SPIRNO         = array();
+        $CCB            = array();
+        $BB             = array();
+
+        foreach ($template_drugs as $drug_class => $drugs) {
+            foreach ($drugs["pretty"] as $drug) {
+                ${$drug_class}[] = $drug;
+            }
+        }
+
+        $logicTree[] = array(
+            "step_id" => 0,
+            "drugs" => array($DIURETIC[0], $ARB[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 1
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => "Refer",
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => 18,
+                "breast_discomfort" => null,
+                "slow_hr" => 18,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 1,
+            "drugs" => array($DIURETIC[0], $ARB[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 2
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 0,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => 18,
+                "breast_discomfort" => null,
+                "slow_hr" => 19,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 2,
+            "drugs" => array($DIURETIC[1], $ARB[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 3
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 1,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => 19,
+                "breast_discomfort" => null,
+                "slow_hr" => 19,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 3,
+            "drugs" => array($CCB[0],$DIURETIC[1], $ARB[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 4
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 2,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => 19,
+                "breast_discomfort" => null,
+                "slow_hr" => 20,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 4,
+            "drugs" => array($CCB[1],$DIURETIC[1], $ARB[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 5
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 3,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => 19,
+                "breast_discomfort" => null,
+                "slow_hr" => 20,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 5,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 6
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 4,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => 20,
+                "breast_discomfort" => null,
+                "slow_hr" => 20,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 6,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $SPIRNO[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 7
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 5,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => 20,
+                "breast_discomfort" => 8,
+                "slow_hr" => 21,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 7,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $SPIRNO[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => "Refer"
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 6,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => 21,
+                "breast_discomfort" => 9,
+                "slow_hr" => 21,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 8,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $SPIRNO[2]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 9
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 5,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => 22,
+                "breast_discomfort" => null,
+                "slow_hr" => 22,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 9,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $SPIRNO[3]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => "Refer"
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 8,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => 23,
+                "breast_discomfort" => null,
+                "slow_hr" => 23,
+                "asthma" => null,
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 10,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $BB[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 11
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 4,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => 24,
+                "breast_discomfort" => null,
+                "slow_hr" => "Stop",
+                "asthma" => "Stop",
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 11,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $BB[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 12
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 10,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => 25,
+                "breast_discomfort" => null,
+                "slow_hr" => "Stop",
+                "asthma" => "Stop",
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 12,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $BB[2]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => 13
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 11,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => 26,
+                "breast_discomfort" => null,
+                "slow_hr" => "Stop",
+                "asthma" => "Stop",
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 13,
+            "drugs" => array($CCB[2], $DIURETIC[1], $ARB[1], $BB[3]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => "Refer"
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => 12,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => 27,
+                "breast_discomfort" => null,
+                "slow_hr" => "Stop",
+                "asthma" => "Stop",
+                "rash_other" => "Stop",
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 18,
+            "drugs" => array($DIURETIC[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 19,
+            "drugs" => array($DIURETIC[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 20,
+            "drugs" => array($DIURETIC[1], $SPIRNO[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => 22,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 21,
+            "drugs" => array($DIURETIC[1], $SPIRNO[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => 23,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 22,
+            "drugs" => array($DIURETIC[1], $SPIRNO[2]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 23,
+            "drugs" => array($DIURETIC[1], $SPIRNO[3]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 24,
+            "drugs" => array($DIURETIC[1], $BB[0]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 25,
+            "drugs" => array($DIURETIC[1], $BB[1]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 26,
+            "drugs" => array($DIURETIC[1], $BB[2]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        $logicTree[] = array(
+            "step_id" => 27,
+            "drugs" => array($DIURETIC[1], $BB[3]),
+            "bp_status" => array(
+                "Controlled" => "Continue current step",
+                "Uncontrolled" => null
+            ),
+            "note" => "",
+            "side_effects" => array(
+                "hypotension" => null,
+                "hyponatremia" => null,
+                "hypokalemia" => null,
+                "cough" => null,
+                "elevated_cr" => null,
+                "hyperkalemia" => null,
+                "angioedema" => null,
+                "breast_discomfort" => null,
+                "slow_hr" => null,
+                "asthma" => null,
+                "rash_other" => null,
+            )
+        );
+
+        return $logicTree;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    public function defaultLogicTreeAlt($template_drugs, $tree_type){
+        // Define drug classes and expected counts
+        $drug_classes = array(
+            "CCB"          => 4,  // Amlodipine doses: 0, 2.5, 5, 10
+            "DIURETIC"     => 3,  // HCTZ doses: 0, 12.5, 25
+            "BB"           => 5,  // Bisoprolol doses: 0, 2.5, 5, 7.5, 10
+            "ARB"          => 3,  // Losartan doses: 0, 50, 100
+            "SPIRNO"       => 3,  // Spironolactone doses: 0, 12.5, 25
+            "EPLER"        => 3   // Eplerenone doses: 0, 1, 2
+        );
+
+        // Initialize drug arrays
+        $initialized_drugs = $this->initializeDrugs($template_drugs, $drug_classes);
+        $CCB      = $initialized_drugs['CCB'];
+        $DIURETIC = $initialized_drugs['DIURETIC'];
+        $BB       = $initialized_drugs['BB'];
+        $ARB      = $initialized_drugs['ARB'];
+        $SPIRNO   = $initialized_drugs['SPIRNO'];
+        $EPLER    = $initialized_drugs['EPLER'];
+
+        $logicTree = array();
+
+        // Build logic tree steps based on $tree_type
+        if($tree_type == 'CCB'){
+            // Logic Tree for CCB
+            $logicTree = $this->buildCCBLogicTree($CCB, $DIURETIC, $BB, $ARB, $SPIRNO, $EPLER);
+        } elseif($tree_type == 'Thiazides_CCB'){
+            // Logic Tree for Thiazides + CCB
+            $logicTree = $this->buildThiazidesCCBLogicTree($CCB, $DIURETIC, $BB, $ARB, $SPIRNO, $EPLER);
+        } elseif($tree_type == 'Thiazides_ARB'){
+            // Logic Tree for Thiazides + ARB
+            $logicTree = $this->buildThiazidesARBLogicTree($CCB, $DIURETIC, $BB, $ARB, $SPIRNO, $EPLER);
+        } else {
+            // Handle unknown tree type
+            throw new Exception("Unknown tree type: " . $tree_type);
+        }
+
+        return $logicTree;
+    }
+
+    /**
+     * Initializes drug arrays based on the provided template drugs.
+     *
+     * @param array $template_drugs The drugs and dosages from the template.
+     * @param array $drug_classes   The expected drug classes and counts.
+     * @return array                The initialized drug arrays.
+     */
+    private function initializeDrugs($template_drugs, $drug_classes) {
+        $initialized_drugs = array();
+
+        foreach ($drug_classes as $drug_class => $expected_count) {
+            $initialized_drugs[$drug_class] = array();
+            for ($i = 0; $i < $expected_count; $i++) {
+                if (isset($template_drugs[$drug_class]["pretty"][$i])) {
+                    $current_drug = $template_drugs[$drug_class]["pretty"][$i];
+                } else {
+                    $current_drug = null;
+                }
+                $initialized_drugs[$drug_class][] = $current_drug;
+            }
+        }
+        return $initialized_drugs;
+    }
+
+    /**
+     * Builds the logic tree for the CCB pathway.
+     *
+     * @return array The logic tree array.
+     */
+    private function buildCCBLogicTree($CCB, $DIURETIC, $BB, $ARB, $SPIRNO, $EPLER) {
+        $logicTree = array();
+
+        // Define steps based on your data
+        // Example for steps 0 to 14
+        $steps = array(
+            array(
+                "step_id" => 0,
+                "drugs" => array($CCB[1], $DIURETIC[0], $BB[0], $ARB[0], $SPIRNO[0], $EPLER[0]),
+                "bp_status" => array("Controlled" => "Continue current step", "Uncontrolled" => 1),
+                "side_effects" => array("hypotension" => "Refer", "rash_other" => "Stop", "breast_discomfort" => 18),
+            ),
+            array(
+                "step_id" => 1,
+                "drugs" => array($CCB[2], $DIURETIC[0], $BB[0], $ARB[0], $SPIRNO[0], $EPLER[0]),
+                "bp_status" => array("Controlled" => "Continue current step", "Uncontrolled" => 2),
+                "side_effects" => array("hypotension" => 0, "rash_other" => "Stop", "breast_discomfort" => 19),
+            ),
+            // Continue adding steps 2 to 14
+            // ...
+        );
+
+        // Build logic tree array
+        foreach ($steps as $step) {
+            $logicTree[] = $step;
+        }
+
+        // Return the logic tree
+        return $logicTree;
+    }
+
+    /**
+     * Builds the logic tree for the Thiazides + CCB pathway.
+     *
+     * @return array The logic tree array.
+     */
+    private function buildThiazidesCCBLogicTree($CCB, $DIURETIC, $BB, $ARB, $SPIRNO, $EPLER) {
+        $logicTree = array();
+
+        // Define steps based on your data
+        // Example for steps 0 to 14
+        $steps = array(
+            array(
+                "step_id" => 0,
+                "drugs" => array($CCB[1], $DIURETIC[1], $BB[0], $ARB[0], $SPIRNO[0], $EPLER[0]),
+                "bp_status" => array("Controlled" => "Continue current step", "Uncontrolled" => 1),
+                "side_effects" => array("hypotension" => "Refer", "rash_other" => "Stop", "breast_discomfort" => 18),
+            ),
+            array(
+                "step_id" => 1,
+                "drugs" => array($CCB[2], $DIURETIC[1], $BB[0], $ARB[0], $SPIRNO[0], $EPLER[0]),
+                "bp_status" => array("Controlled" => "Continue current step", "Uncontrolled" => 2),
+                "side_effects" => array("hypotension" => 0, "rash_other" => "Stop", "breast_discomfort" => 19),
+            ),
+            // Continue adding steps 2 to 14
+            // ...
+        );
+
+        // Build logic tree array
+        foreach ($steps as $step) {
+            $logicTree[] = $step;
+        }
+
+        // Return the logic tree
+        return $logicTree;
+    }
+
+    /**
+     * Builds the logic tree for the Thiazides + ARB pathway.
+     *
+     * @return array The logic tree array.
+     */
+    private function buildThiazidesARBLogicTree($CCB, $DIURETIC, $BB, $ARB, $SPIRNO, $EPLER) {
+        $logicTree = array();
+
+        // Define steps based on your data
+        // Example for steps 0 to 13
+        $steps = array(
+            array(
+                "step_id" => 0,
+                "drugs" => array($CCB[0], $DIURETIC[1], $BB[0], $ARB[1], $SPIRNO[0], $EPLER[0]),
+                "bp_status" => array("Controlled" => "Continue current step", "Uncontrolled" => 1),
+                "side_effects" => array("hypotension" => "Refer", "rash_other" => "Stop", "breast_discomfort" => 18, "angioedema" => 18),
+            ),
+            array(
+                "step_id" => 1,
+                "drugs" => array($CCB[0], $DIURETIC[1], $BB[0], $ARB[2], $SPIRNO[0], $EPLER[0]),
+                "bp_status" => array("Controlled" => "Continue current step", "Uncontrolled" => 2),
+                "side_effects" => array("hypotension" => 0, "rash_other" => "Stop", "breast_discomfort" => 19, "angioedema" => 19),
+            ),
+            // Continue adding steps 2 to 13
+            // ...
+        );
+
+        // Build logic tree array
+        foreach ($steps as $step) {
+            $logicTree[] = $step;
+        }
+
+        // Return the logic tree
+        return $logicTree;
+    }
+
+
+
 }
 
 

@@ -78,7 +78,21 @@ class HTNdashboard {
             $filter	= "([patient_remove_flag] = '' || [patient_remove_flag] = 0) && ([patient_mrn] != '')";
         }
 
-        $fields	= array("record_id", "patient_physician_id", "patient_fname", "patient_lname" , "patient_email", "patient_birthday", "sex", "patient_photo", "filter");
+        $fields	= array("record_id"
+        , "patient_physician_id"
+        , "patient_fname"
+        , "patient_lname"
+
+        ,"patient_name_first"
+        ,"patient_name_last"
+        ,"patient_name"
+
+        ,"print_name_participant"
+        , "patient_email"
+        , "patient_birthday"
+        , "sex"
+        , "patient_photo"
+        , "filter");
 		$params	= array(
             'project_id'    => $this->patients_project,
 			'return_format' => 'json',
@@ -102,7 +116,6 @@ class HTNdashboard {
         foreach($patient_results as $i => $result){
             //FIRST DEFAULT VALUES THEN FILL IN
             $result["patient_photo"]    = $this->module->getUrl('assets/images/icon_anon.gif', true, true);
-            $result["patient_name"]     = "name n/a";
             $result["age"]              = "age n/a";
             $result["sex"]              = empty($result["sex"]) ? "sex n/a" : $result["sex"];
 
@@ -115,8 +128,15 @@ class HTNdashboard {
             if(!empty($result["patient_email"]) ){
                 $result["patient_name"]     = $result["patient_email"] ;
             }
+
             if(!empty($result["patient_lname"]) && !empty($result["patient_fname"])){
                 $result["patient_name"]     = $result["patient_lname"] . ", " . $result["patient_fname"] . " " . substr($result["patient_mname"],0,1);
+            }
+            if(empty($result["patient_name"]) && !empty($result["print_name_participant"])){
+                $result["patient_name"] = $result["print_name_participant"];
+            }
+            if(empty($result["patient_name"])  && !empty($result["patient_name_first"]) && !empty($result["patient_name_last"])){
+                $result["patient_name"] = $result["patient_name_first"] . "  " . $result["patient_name_last"];
             }
 
             if(!empty($result["redcap_repeat_instrument"])){
@@ -234,6 +254,10 @@ class HTNdashboard {
                         ,"patient_fname"
                         ,"patient_mname"
                         ,"patient_lname"
+                        ,"patient_name_first"
+                        ,"patient_name_last"
+                        ,"patient_name"
+
                         ,"print_name_participant"
                         ,"patient_mrn"
                         ,"patient_phone"
@@ -293,11 +317,23 @@ class HTNdashboard {
                 $names = explode(" ", $result["print_name_participant"]);
                 $fname = $names[0];
                 $lname = array_pop($names);
-
             }
+            if(!empty($result["patient_name_first"])){
+                $fname = $result["patient_name_first"];
+            }
+            if(!empty($result["patient_name_last"])){
+                $lname = $result["patient_name_last"];
+            }
+            if(!empty($result["patient_name"]) && empty($fname) && empty($lname)){
+                $names = explode(" ", $result["patient_name"]);
+                $fname = $names[0];
+                $lname = array_pop($names);
+            }
+
             $result["patient_mrn"]  = empty($result["patient_mrn"]) ? "" : $result["patient_mrn"];
             $result["patient_fname"] = empty($result["patient_fname"]) ? $fname : $result["patient_fname"];
             $result["patient_lname"] = empty($result["patient_lname"]) ? $lname : $result["patient_lname"];
+
             $result["patient_email"] = empty($result["patient_email"]) ? "" : $result["patient_email"];
             $result["patient_phone"] = empty($result["patient_phone"]) ? "" : $result["patient_phone"];
             $result["patient_bp_target_pulse"] = empty($result["patient_bp_target_pulse"]) ? "" : $result["patient_bp_target_pulse"];
@@ -895,7 +931,7 @@ class HTNdashboard {
 
 
         if(empty($script_fieldnames)){
-            //WTF NOW? THIS NO LONGER WORKS?
+            //what NOW? THIS NO LONGER WORKS?
             $script_fieldnames = array("record_id","patient_fname","patient_mname","patient_lname","alias_select", "patient_bp_target_pulse", "patient_mrn", "patient_email", "patient_phone", "patient_bp_target_systolic", "patient_bp_target_diastolic");
         }
 

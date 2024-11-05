@@ -55,7 +55,7 @@ $druglist       = $module->getDrugList();
 $tree_logic     = $module->treeLogic($provider_id);
 $name_na        = "None Selected";
 
-$page_hdr       = $is_edit ? "Interactive Tree View" : "Customize Prescription Tree Medications"; 
+$page_hdr       = $is_edit ? "Interactive Tree View" : "Customize Prescription Tree Medications";
 // $tree_active    = "active";
 ?>
 <!DOCTYPE html>
@@ -107,8 +107,8 @@ $page_hdr       = $is_edit ? "Interactive Tree View" : "Customize Prescription T
                             font-size:130%;
                             font-weight:500;
                         }
-                        nav .dropdown button{ 
-                            background:none; 
+                        nav .dropdown button{
+                            background:none;
                         }
                         nav .dropdown-toggle::after{
                             display: inline-block;
@@ -117,7 +117,7 @@ $page_hdr       = $is_edit ? "Interactive Tree View" : "Customize Prescription T
                             border:none;
                             background:url(<?php echo $module->getUrl('assets/images/icon_anon.gif', true, true) ?>) 0 0 no-repeat;
                             background-size:contain;
-                            width:40px; height:40px; 
+                            width:40px; height:40px;
                         }
 
                         .navbar-brand {
@@ -130,19 +130,19 @@ $page_hdr       = $is_edit ? "Interactive Tree View" : "Customize Prescription T
                             height: 39px;
                         }
                         .project_title{
-                            color:#fff; 
-                            margin:0; 
+                            color:#fff;
+                            margin:0;
                         }
-                    
+
                         #template_select {
                         }
 
                         #templates label{
                             width:80px;
-                            height:80px; 
-                            border-radius:50px; 
-                            display:inline-block; 
-                            margin:20px 10px; 
+                            height:80px;
+                            border-radius:50px;
+                            display:inline-block;
+                            margin:20px 10px;
                             background:
                         }
                         #templates input{
@@ -181,14 +181,14 @@ $page_hdr       = $is_edit ? "Interactive Tree View" : "Customize Prescription T
                         }
 
                         .class_drug.alias {
-                            margin-top:20px; 
+                            margin-top:20px;
                         }
 
                         .class_drug label{
-                            font-weight:bold; 
+                            font-weight:bold;
                         }
                         .class_drug label em {
-                            font-weight:normal; 
+                            font-weight:normal;
                             font-style:normal;
                             font-size:77%;
                             display:block;
@@ -201,12 +201,12 @@ $page_hdr       = $is_edit ? "Interactive Tree View" : "Customize Prescription T
                         }
                         #template_form .class_drug select.modified{
                             color:red;
-                            border:1px solid red; 
+                            border:1px solid red;
                         }
 
                         #template_form select{
                                 color:#2f5f73;
-                                padding-left:5px; 
+                                padding-left:5px;
                                 padding-right:5px;
                         }
 
@@ -215,14 +215,14 @@ $page_hdr       = $is_edit ? "Interactive Tree View" : "Customize Prescription T
                                 background:none;
 
                                 -webkit-appearance: none;
-                                -moz-appearance: none;      
+                                -moz-appearance: none;
                                 appearance: none;
                         }
 
 
                         .btns {
-                            margin:20px 0; 
-                            font-size:initial; 
+                            margin:20px 0;
+                            font-size:initial;
                         }
                         .btns label { width:200px; }
 
@@ -234,7 +234,7 @@ $page_hdr       = $is_edit ? "Interactive Tree View" : "Customize Prescription T
                         }
 
                         #alias_select option{
-                            border:1px solid red; 
+                            border:1px solid red;
                         }
 
                         .drugs {
@@ -257,7 +257,7 @@ $page_hdr       = $is_edit ? "Interactive Tree View" : "Customize Prescription T
                                 <div class="col-sm-12">
                                     <h4 class="text-dark">Select a tree to view or edit medications/dosages</h4>
                                     <p class="text-muted lead small">In the dropdown below, there may be several "default" Prescription Trees with preselected medications and dosages.</p>
-                                    
+
                                     <select id="alias_select" class="form-control">
                                         <option value="99">View/Edit Saved Templates</option>
                                         <?php
@@ -271,7 +271,7 @@ $page_hdr       = $is_edit ? "Interactive Tree View" : "Customize Prescription T
                             </div>
 
                             <div class="drugs row p-4">
-                                <p class="text-muted lead small col-sm-12">You may modify the medications or doses and "save as" a custom labeled Prescription Tree for your patients.</p>           
+                                <p class="text-muted lead small col-sm-12">You may modify the medications or doses and "save as" a custom labeled Prescription Tree for your patients.</p>
                                 <?php
                                     foreach($druglist as $med_class => $drugs){
                                         $option_str = "";
@@ -294,7 +294,7 @@ $page_hdr       = $is_edit ? "Interactive Tree View" : "Customize Prescription T
                                         }
 
                                         echo '<div class="class_drug col-sm-12 row input-group pb-4">
-                                                <label class="col-sm-4">'.$med_class.$label.'</label> 
+                                                <label class="col-sm-4">'.$med_class.$label.'</label>
                                                 <div class="col-sm-8 row">
                                                     <select data-med_class="'.$med_class.'" name="'.$med_class_class.'" class="form-control ml-3 col-sm-11 mb-1">
                                                         '.$option_str.'
@@ -305,7 +305,7 @@ $page_hdr       = $is_edit ? "Interactive Tree View" : "Customize Prescription T
                                     }
                                 ?>
                                 <div class="alias class_drug col-sm-12 row input-group  py-3 mb-4 border-top border-bottom">
-                                    <label class="col-sm-4">Template Alias</label> 
+                                    <label class="col-sm-4">Template Alias</label>
                                     <div class="col-sm-8">
                                         <input class="form-control" type="text" id="template_name" name="template_name"/>
                                     </div>
@@ -321,7 +321,7 @@ $page_hdr       = $is_edit ? "Interactive Tree View" : "Customize Prescription T
         </div>
     </main>
 
-    <?php include("components/gl_foot.php"); ?>  
+    <?php include("components/gl_foot.php"); ?>
     <script src="<?php echo $module->getUrl('assets/scripts/template.js', true, true) ?>" crossorigin="anonymous"></script>
     <script src="<?php echo $module->getUrl('assets/scripts/treeLogic.js', true, true) ?>" crossorigin="anonymous"></script>
     <script src="<?php echo $module->getUrl('assets/scripts/treeLogicStep.js', true, true) ?>" crossorigin="anonymous"></script>
@@ -360,7 +360,7 @@ $(document).ready(function(){
             }else{
                 $(this).removeClass("modified");
             }
-            
+
             if($("select.modified").length){
                 $("#save_template").addClass("btn-danger").text("Save Modified Template");
             }else{
@@ -374,46 +374,60 @@ $(document).ready(function(){
             $("#modify_defaults").trigger("click");
         }
     });
-    
+
     $("#alias_select").change(function(){
         resetDrugs();
 
-        if($(this).find(":selected").length && $(this).find(":selected").val() != 99){            
-            var _opt    = $(this).find(":selected");
-            var raw     = _opt.data("raw");
-            var doses   = _opt.data("doses");
+        if($(this).find(":selected").length && $(this).find(":selected").val() != 99){
+            var _opt = $(this).find(":selected");
+            var raw = _opt.data("raw") || {};  // Default to an empty object if undefined
+            var doses = _opt.data("doses") || {};  // Default to an empty object if undefined
 
-            $("#hidden_record_id").val(_opt.data("rc")); //actual redcap record id
-            $("#template_name").val(_opt.text()); // provider alias for this configuration
+            if (Object.keys(raw).length > 0) {
+                console.log(raw);
+            } else {
+                console.log("Raw data is missing or undefined");
+            }
+
+            $("#hidden_record_id").val(_opt.data("rc"));
+            $("#template_name").val(_opt.text());
             $("#hidden_template_name").val(_opt.text());
 
             for(var i in raw){
                 if(i.indexOf("_class") > -1){
                     let med_class = $("select[name='"+i + "']").data("med_class");
-                    if(med_class == "ARA"){
-                        med_class = "SPIRNO";
+
+                    // Handle med_class mappings
+                    if(med_class == "ARA") med_class = "SPIRNO";
+                    if(med_class == "MRA") med_class = "EPLER";
+
+                    // Ensure doses[med_class] and its "raw" property exist
+                    if (doses[med_class] && doses[med_class]["raw"]) {
+                        console.log("selected doses", med_class, doses[med_class]["raw"]);
+
+                        // Set the selected option and dosages
+                        $("select[name='"+i + "'] option[value='"+raw[i]+"']").attr("selected", true);
+                        $("select[name='"+i + "'] option[value='"+raw[i]+"']").data("dosages", doses[med_class]["raw"]);
+
+                        displayDosageSlots($("select[name='"+i + "'] option[value='"+raw[i]+"']"));
+                    } else {
+                        console.log("Missing doses for med_class: ", med_class);
                     }
-                    if(med_class == "MRA"){
-                        med_class = "EPLER"
-                    }
-                    console.log("selected doses", med_class, doses[med_class]["raw"]);
-                    $("select[name='"+i + "'] option[value='"+raw[i]+"']").attr("selected",true);
-                    $("select[name='"+i + "'] option[value='"+raw[i]+"']").data("dosages", doses[med_class]["raw"]);
-                    displayDosageSlots($("select[name='"+i + "'] option[value='"+raw[i]+"']"));
-                    console.log("what is up with spirono", i, raw[i], raw);
                 }
             }
 
             $(".drugs").slideDown("medium");
-            if(!$("#modify_defaults").prop("checked")){
+
+            if (!$("#modify_defaults").prop("checked")) {
                 $("#modify_defaults").trigger("click");
             }
-        }else{
+        } else {
             $("#template_name").val("");
             $("#hidden_record_id").val("");
             $(".tpl").attr("checked", false);
         }
     });
+
 
     $(".tpl").click(function(){
         resetDrugs();
@@ -459,7 +473,7 @@ $(document).ready(function(){
         setTimeout(function(){
             $(".alert").slideUp("medium");
         },5000);
-    <?php    
+    <?php
         }
     ?>
 

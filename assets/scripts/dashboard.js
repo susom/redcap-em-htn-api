@@ -836,11 +836,30 @@ dashboard.prototype.displayPatientDetail = function(record_id){
             var patient_id          = record_id;
             var cur_tree_step_idx   = patient["patient_treatment_status"] ? parseInt(patient["patient_treatment_status"]) : 0;
             var cur_tree_id         = patient["current_treatment_plan_id"] ? patient["current_treatment_plan_id"] : 1;
+
+
             var cur_drugs           = _this.intf["ptree"][cur_tree_id]["logicTree"][cur_tree_step_idx]["drugs"].join(", ");
+            var rec_tree_step_idx, rec_drugs;
 
-
-            var rec_tree_step_idx   = parseInt(patient["patient_rec_tree_step"]);
-            var rec_drugs           = _this.intf["ptree"][cur_tree_id]["logicTree"][rec_tree_step_idx]["drugs"].join(", ");
+            if (patient["patient_rec_tree_step"] === "Refer") {
+                // Handle "Refer" case logic here
+                rec_drugs = "Refer"; // or any specific action
+            } else if (patient["patient_rec_tree_step"] === "Stop") {
+                // Handle "Stop" case logic here
+                rec_drugs = "Stop"; // or any specific action
+            } else {
+                // Assume it's a number if it's not "Refer" or "Stop"
+                rec_tree_step_idx = parseInt(patient["patient_rec_tree_step"], 10);
+                // Optionally, handle cases where parseInt fails to parse a valid number
+                if (isNaN(rec_tree_step_idx)) {
+                    // Default or error handling for unexpected cases
+                    console.error("Unexpected value:", patient["patient_rec_tree_step"]);
+                    rec_tree_step_idx = null; // or a default step
+                    rec_drugs = "Error";
+                }else{
+                    rec_drugs = _this.intf["ptree"][cur_tree_id]["logicTree"][rec_tree_step_idx]["drugs"].join(", ");
+                }
+            }
             rec.find("h6").text(rec_drugs);
 
             var sum_bps = 0;
