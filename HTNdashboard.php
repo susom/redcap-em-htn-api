@@ -109,7 +109,6 @@ class HTNdashboard {
 
 		$q 			        = \REDCap::getData($params);
         $patient_results    = json_decode($q, true);
-        $this->module->emDebug("should only be 4", $patient_results);
 
         foreach($patient_results as $i => $result){
             //FIRST DEFAULT VALUES THEN FILL IN

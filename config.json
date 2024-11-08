@@ -55,9 +55,9 @@
 		        "show-header-and-footer": false
 			},
 			{
-		        "name": "HTN - Pull Omron Data for All",
+		        "name": "HTN - Pull Omron Data/Status",
 		        "icon": "fas fa-calendar-week",
-		        "url" : "cron/daily_omron_data_pull.php",
+		        "url" : "cron/daily_survey_check.php",
 		        "show-header-and-footer": true
 			}
 		],

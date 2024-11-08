@@ -645,110 +645,91 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 	}
 
 	// get data via API and recurse if pagination
-	public function recurseSaveOmronApiData($omron_client_id, $since_ts=null, $token_details=array()){
-		$this->loadEM();
+    public function recurseSaveOmronApiData($omron_client_id, $since_ts = null, $token_details = array()) {
+        $this->loadEM();
 
-		$first_pass = false;
-		if(empty($token_details)){
-			$first_pass = true;
-			//should only need on first pass
-			$token_details 	= $this->getTokenDetails($omron_client_id);
-			if(!$token_details){
-				return false;
-			}
-		}
+        $first_pass = false;
+        if (empty($token_details)) {
+            $first_pass = true;
+            $token_details = $this->getTokenDetails($omron_client_id);
+            if (!$token_details) {
+                return false;
+            }
+        }
 
-		$record_id 			= $token_details["record_id"];
-		$omron_access_token = $token_details["omron_access_token"];
-		$omron_token_type 	= $token_details["omron_token_type"];
+        $record_id = $token_details["record_id"];
+        $omron_access_token = $token_details["omron_access_token"];
+        $omron_token_type = $token_details["omron_token_type"];
 
-		if(!empty($since_ts) || $first_pass){
-			//USING THE TOKEN , HIT OMRON API TO GET LATEST READINGS SINCE (hook timestamp?)
-			$adjusted_since_ts 	= date("Y-m-d", strtotime($since_ts .' -1 day'));
-			// $this->emDebug("Since the newdata hook gets posted with THEIR server ts, but for some stupid reason, searches the data by LOCAL ts, to be safe I will adjust the ts - 1 day", $adjusted_since_ts);
+        if (!empty($since_ts) || $first_pass) {
+            $adjusted_since_ts = date("Y-m-d", strtotime($since_ts .' -1 day'));
+            $result = $this->getOmronAPIData($omron_access_token, $omron_token_type, $adjusted_since_ts);
+            $api_data = json_decode($result, true);
 
-			$result             = $this->getOmronAPIData($omron_access_token, $omron_token_type, $adjusted_since_ts);
-			$api_data           = json_decode($result, true);
+            // Check status
+            if ($api_data["status"] !== 0) {
+                $this->emDebug("Error fetching data for Omron ID $omron_client_id: " . $api_data["reason"]);
+                return [
+                    'status' => false,
+                    'reason' => $api_data["reason"] ?? 'Unknown error',
+                    'errorCode' => $api_data["errorCode"] ?? null,
+                ];
+            }
 
-			$status             = $api_data["status"];
-			$truncated          = $api_data["result"]["truncated"];
-			$bp_readings        = $api_data["result"]["bloodPressure"];
-			$measurementCount   = $api_data["result"]["measurementCount"];
+            // Process API data if status is successful
+            $truncated = $api_data["result"]["truncated"];
+            $bp_readings = $api_data["result"]["bloodPressure"];
+            $bp_instance_data = $this->getBPInstanceData($record_id);
+            $next_instance_id = $bp_instance_data["next_instance_id"];
+            $used_bp_id = $bp_instance_data["used_bp_id"];
+            $data = [];
 
-			// $this->emDebug("in recurseSaveOmronApiData() here is API data since $since_ts", $api_data);
-			if($status == 0){
-				$bp_instance_data = $this->getBPInstanceData($record_id);
-				$next_instance_id = $bp_instance_data["next_instance_id"];
-				$used_bp_id 	  = $bp_instance_data["used_bp_id"];
+            foreach ($bp_readings as $reading) {
+                $omron_bp_id = $reading["id"];
+                if (in_array($omron_bp_id, $used_bp_id)) continue;
 
-				$data = array();
-				foreach($bp_readings as $reading){
-					$omron_bp_id            = $reading["id"];
+                $data[] = [
+                    "redcap_repeat_instance" => $next_instance_id++,
+                    "redcap_repeat_instrument" => "bp_readings_log",
+                    "record_id" => $record_id,
+                    "omron_bp_id" => $omron_bp_id,
+                    "bp_reading_ts" => date("Y-m-d H:i:s", strtotime($reading["dateTime"])),
+                    "bp_reading_local_ts" => date("Y-m-d H:i:s", strtotime($reading["dateTimeLocal"])),
+                    "bp_systolic" => $reading["systolic"],
+                    "bp_diastolic" => $reading["diastolic"],
+                    "bp_units" => $reading["bloodPressureUnits"],
+                    "bp_pulse" => $reading["pulse"],
+                    "bp_pulse_units" => $reading["pulseUnits"],
+                    "bp_device_type" => $reading["deviceType"],
+                ];
+            }
 
-					if(in_array($omron_bp_id, $used_bp_id) ){
-						//reading already in RC, skip
-						continue;
-					}
+            $save_result = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode($data));
+            if (empty($save_result["errors"])) {
+                $this->emDebug("Saved Omron BP readings for record_id $record_id");
 
-					$bp_reading_ts          = date("Y-m-d H:i:s", strtotime($reading["dateTime"]));
-					$bp_reading_local_ts    = date("Y-m-d H:i:s", strtotime($reading["dateTimeLocal"]));
-					$bp_systolic            = $reading["systolic"];
-					$bp_diastolic           = $reading["diastolic"];
-					$bp_units               = $reading["bloodPressureUnits"];
-					$bp_pulse               = $reading["pulse"];
-					$bp_pulse_units         = $reading["pulseUnits"];
-					$bp_device_type         = $reading["deviceType"];
+                // Get the most recent reading if data was saved successfully
+                $most_recent_reading = end($bp_readings);
 
-					$temp = array(
-						"redcap_repeat_instance" 	=> $next_instance_id,
-						"redcap_repeat_instrument" 	=> "bp_readings_log",
-						"record_id"             	=> $record_id,
-						"omron_bp_id"           	=> $omron_bp_id,
-						"bp_reading_ts"         	=> $bp_reading_ts,
-						"bp_reading_local_ts"   	=> $bp_reading_local_ts,
-						"bp_systolic"           	=> $bp_systolic,
-						"bp_diastolic"          	=> $bp_diastolic,
-						"bp_units"              	=> $bp_units,
-						"bp_pulse"              	=> $bp_pulse,
-						"bp_pulse_units"        	=> $bp_pulse_units,
-						"bp_device_type"        	=> $bp_device_type
-					);
-					$next_instance_id++;
-					$data[] = $temp;
-
-					//Im trying to save lives DAMNIT!
-					//If the reading timestamp is TODAY, then urgency is HIGH, email and text patient to Call 911
-					$bp_reading_today  	= date("Y-m-d", strtotime($reading["dateTime"]));
-					$todate 			= date("Y-m-d");
-					if($bp_reading_today == $todate && $bp_systolic > 180){
-						$this->emDebug("woops patient bp reading too dang high");
-						// $this->contactPatient($record_id, "Warning : Abnormal Blood Pressure Reading Detected", "<p>We received your blood pressure cuff data from Omron.</p><p>The reading is at a dangerously high level : $bp_systolic/$bp_diastolic.</p><p>Please call 911 or Go to Urgent Care.</p>");
-					}
-				}
+                // Handle pagination if necessary
+                if ($truncated) {
+                    return $this->recurseSaveOmronApiData($omron_client_id, $most_recent_reading["dateTime"], $token_details);
+                } else {
+                    $this->evaluateOmronBPavg($record_id);
+                    return [
+                        'status' => $most_recent_reading,
+                    ];
+                }
+            } else {
+                $this->emDebug("Error saving data for record_id $record_id", $save_result["errors"]);
+                return ['status' => false, 'reason' => 'Error saving data', 'details' => $save_result["errors"]];
+            }
+        }
+    }
 
 
-				$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode($data) );
-                if(empty($r["errors"])){
-					$readings_saved = count($r["ids"]);
-					$this->emDebug("Saved $readings_saved Omron BP readings for RC $record_id");
 
-					if($truncated){
-						//last bp_reading_ts from the foreach will be the paginating ts
-                        $this->recurseSaveOmronApiData($omron_client_id, $bp_reading_ts, $token_details);
-					}else{
-						$this->emDebug("recurseSaveOmronApiData done, now evaluate the last 2 weeks data to see if need rx change");
-						$this->evaluateOmronBPavg($record_id);
-						return true;
-					}
-				}else{
-					$this->emDebug("ERROR trying to save $readings_saved Omron BP readings for RC $record_id", $r["errrors"], $data);
-					return false;
-				}
-        	}
-		}
-	}
-
-	public function checkBPvsThreshold($bp_data, $target_threshold, $control_condition=.6, $external_avg=null){
+    public function checkBPvsThreshold($bp_data, $target_threshold, $control_condition=.6, $external_avg=null){
 		// $this->emDebug("all BP data in last 2 weeks", $bp_data);
 
         // FOR TESTING A HARD CODED AVERAGE SYSTOLIC
@@ -1085,7 +1066,7 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
             $treelogic              = $provider_trees[$current_tree];
             $current_tree_step      = $treelogic["logicTree"][$current_step];
 
-            $this->emDebug("what the heck wheres my tree", $provider_id, $current_tree, $current_step, $treelogic["logicTree"][0]);
+            $this->emDebug("what the heck wheres my tree", $provider_id, $current_step, $current_tree, $current_tree_step);
 
             $this->emDebug("Check sideeffects first", $current_tree_step, $lab_k, $lab_na, $lab_cr, $mean_bp_pulse, $external_avg, $custom_targets);
             $side_effects_next_step = $this->evaluateSideEffects($current_tree_step, $lab_k, $lab_na, $lab_cr, $mean_bp_pulse, $external_avg, $custom_targets);
@@ -1098,16 +1079,22 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
                 $is_above       = $this->checkBPvsThreshold($records, $target_systolic, .6, $external_avg);
                 $systolic_mean  = $is_above ? $is_above : false; // If uncontrolled, return the mean of the last 2 weeks
                 $this->emDebug("if falls thruogh side effects, then do controlled/uncontrolled", $is_above, $systolic_mean);
+
                 if ($is_above) {
-                    $uncontrolled_next_step = array_key_exists("Uncontrolled", $current_tree_step["bp_status"])  ?  $current_tree_step["bp_status"]["Uncontrolled"] : null;
-                    $next_step  = $uncontrolled_next_step;
-                    $this->emDebug("if uncontrolled go to next step", $next_step);
+                    $uncontrolled_next_step = (isset($current_tree_step["bp_status"]) && is_array($current_tree_step["bp_status"]) && array_key_exists("Uncontrolled", $current_tree_step["bp_status"]))
+                        ? $current_tree_step["bp_status"]["Uncontrolled"]
+                        : null;
+
+                    $next_step = $uncontrolled_next_step;
+                    $this->emDebug("if uncontrolled go to next step", $current_tree_step);
                 }
             }
+            $this->emDebug("Hey its Uncontrolled a", $next_step);
 
             if (isset($next_step)) {
                 $current_update_ts = date("Y-m-d H:i:s");
                 $need_lab = false;
+                $this->emDebug("Hey its Uncontrolled b", $next_step);
 
                 if (empty($lab_values)) {
                     $need_lab = true;
@@ -1132,9 +1119,10 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
 
                 // Save the recommendation step whether it will be accepted or not
                 if ($filter_tag == "rx_change") {
-                    $current_meds   = implode(", ", $current_tree_step["drugs"]);
                     $next_tree_step = $treelogic["logicTree"][$next_step];
-                    $rec_meds       = implode(", ", $next_tree_step["drugs"]);
+                    $current_meds = is_array($current_tree_step["drugs"]) ? implode(", ", $current_tree_step["drugs"]) : '';
+                    $rec_meds = is_array($next_tree_step["drugs"]) ? implode(", ", $next_tree_step["drugs"]) : '';
+
 
                     $next_instance_id               = $this->getNextInstanceId($record_id, "recommendations_log", "rec_ts");
                     $data = array(
@@ -1592,7 +1580,7 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
 		global $project_id;
 
 		$filter	= "[omron_token_expire] != '' ";
-		$fields	= array("record_id","omron_client_id","omron_access_token","omron_refresh_token", "omron_token_expire", "omron_token_type");
+		$fields	= array("record_id","patient_fname","patient_lname", "omron_client_id","omron_access_token","omron_refresh_token", "omron_token_expire", "omron_token_type");
 		$params	= array(
 			'project_id'	=> $project_id,
             'return_format' => 'json',
@@ -1662,25 +1650,49 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
 	}
 
 	// cron to pull data daily in case the notification ping fails?
-	public function dailyOmronDataPull($since_today=null){
-		//GET ALL PATIENTS (REGARDLESS OF PROVIDER) WHO HAVE ACCESS TOKENS
-		//PULL ALL DATA FOR TODAY
+    public function dailyOmronDataPull($since_today = null, $testMode = false) {
+        $patients_with_tokens = $this->getPatientsWithTokens();
+        $since_today = $since_today ?? date("Y-m-d");
+        if($testMode){
+            $since_today = date("Y-m-d", strtotime("-100 days"));
+        }
+        $data = [];
 
-		$data = array();
-		$patients_with_tokens   = $this->getPatientsWithTokens();
+        foreach ($patients_with_tokens as $patient) {
+            $omron_client_id = $patient["omron_client_id"];
+            $record_id = $patient["record_id"];
+            $expiration_date = $patient["omron_token_expire"];
 
-		foreach($patients_with_tokens as $patient){
-			$omron_client_id 	= $patient["omron_client_id"];
-			$record_id 			= $patient["record_id"];
-            $since_today        = $since_today ?? date("Y-m-d");
-            $success 			= $this->recurseSaveOmronApiData($omron_client_id, $since_today);
-			if($success){
-				$this->emDebug("BP data for $since_today was succesfully downloaded for record_id $record_id");
-			}
-		}
-	}
+            // Attempt to save Omron data and get status
+            $result = $this->recurseSaveOmronApiData($omron_client_id, $since_today);
+            $status = is_array($result) && isset($result['status']) ? $result['status'] : false;
 
-	// cron to refresh omron access tokens expiring within 48 hours
+            // Collect data for display if in testMode
+            if ($testMode) {
+                $data[] = [
+                    'record_id' => $record_id,
+                    'patient_name' => $patient["patient_fname"] . " " . $patient["patient_lname"],
+                    'omron_id' => $omron_client_id,
+                    'expiration_date' => $expiration_date,
+                    'status' => $status
+                ];
+            }
+
+            if ($status) {
+                $this->emDebug("BP data for $since_today was successfully downloaded for record_id $record_id");
+            } else {
+                $this->emDebug("Failed to download BP data for record_id $record_id");
+            }
+        }
+
+        // Return collected data if in testMode
+        if ($testMode) {
+            return $data;
+        }
+    }
+
+
+    // cron to refresh omron access tokens expiring within 48 hours
     public function htnAPICron() {
         $projects = $this->framework->getProjectsWithModuleEnabled();
         $urls = array(
