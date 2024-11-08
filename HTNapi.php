@@ -729,63 +729,70 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
 
 
-    public function checkBPvsThreshold($bp_data, $target_threshold, $control_condition=.6, $external_avg=null){
-		// $this->emDebug("all BP data in last 2 weeks", $bp_data);
+    public function checkBPvsThreshold($bp_data, $target_threshold, $control_condition = 0.6, $external_avg = null) {
+        // Filter for data within the last 2 weeks
+        $two_weeks_ago = strtotime('-2 weeks');
+        $recent_bp_data = array_filter($bp_data, function($bp) use ($two_weeks_ago) {
+            return strtotime($bp["bp_reading_ts"]) >= $two_weeks_ago;
+        });
 
-        // FOR TESTING A HARD CODED AVERAGE SYSTOLIC
-        // Use the external average if provided
+        // If there are at least 4 recent data points, use those; otherwise, use all data
+        if (count($recent_bp_data) >= 4) {
+            $bp_data = $recent_bp_data;
+        }
+
+        // Use external average if provided
         if ($external_avg !== null) {
             $mean_of_data = $external_avg;
             $is_above = $mean_of_data > $target_threshold ? true : false;
-            // Assume each external average represents sufficient data points
-//            $this->emDebug("IN checkBPvsThreshold for ", $record_id, $mean_of_data, $target_threshold);
             return $is_above ? $mean_of_data : false;
         }
 
-		//FIRST SPLIT THE DATA INTO DATES + MORNING OR NIGHT
-		$ampm_datapoints = array();
-		foreach($bp_data as $bp){
-			$sys_ts 		= $bp["bp_reading_ts"];
-            $sys_reading 	= $bp["bp_systolic"];
+        // Split data into dates + AM/PM
+        $ampm_datapoints = array();
+        $this->emDebug("last two weeks or alltime?", $bp_data);
+        foreach ($bp_data as $bp) {
+            $sys_ts = $bp["bp_reading_ts"];
+            $sys_reading = $bp["bp_systolic"];
+            $am_pm = date("a", strtotime($sys_ts));
+            $daykey = date("ymd", strtotime($sys_ts));
+            if (!array_key_exists($daykey, $ampm_datapoints)) {
+                $ampm_datapoints[$daykey] = array("am" => [], "pm" => []);
+            }
+            array_push($ampm_datapoints[$daykey][$am_pm], $sys_reading);
+        }
 
-			$am_pm 			= date("a", strtotime($sys_ts));
-			$daykey 		= date("ymd", strtotime($sys_ts));
-			if(!array_key_exists($daykey, $ampm_datapoints) ){
-				$ampm_datapoints[$daykey] = array("am"=>[], "pm"=>[]);
-			}
-			array_push($ampm_datapoints[$daykey][$am_pm], $sys_reading);
-		}
+        // Average each day's AM/PM splits (max 2 data points per day)
+        $total_datapoints = array();
+        $above_thresh = array();
+        foreach ($ampm_datapoints as $daydata) {
+            if (!empty($daydata["am"])) {
+                $am_data = array_sum($daydata["am"]) / count($daydata["am"]);
+                $above = $am_data > $target_threshold ? 1 : 0;
+                array_push($total_datapoints, $am_data);
+                array_push($above_thresh, $above);
+            }
+            if (!empty($daydata["pm"])) {
+                $pm_data = array_sum($daydata["pm"]) / count($daydata["pm"]);
+                $above = $pm_data > $target_threshold ? 1 : 0;
+                array_push($total_datapoints, $pm_data);
+                array_push($above_thresh, $above);
+            }
+        }
+        $this->emDebug("total datapoints and above_thresh", $total_datapoints, $above_thresh);
 
-		//SECOND AVERAGE OUT THE READINS FOR EACH DAYS AM/PM SPLITS, FOR MAX OF 2 data points per day
-		$total_datapoints 	= array();
-		$above_thresh 		= array();
-		foreach($ampm_datapoints as $daydata){
-			if(!empty($daydata["am"])){
-				$am_data 	= array_sum($daydata["am"])/count($daydata["am"]);
-				$above 		= $am_data > $target_threshold ? 1 : 0;
-				array_push($total_datapoints, $am_data);
-				array_push($above_thresh, $above);
-			}
+        // Calculate control condition % and mean of data
+        $thresh_check = count($above_thresh) * $control_condition;
+        $total_above = array_sum($above_thresh);
+        $mean_of_data = $total_datapoints ? round(array_sum($total_datapoints) / count($total_datapoints)) : 0;
+        $this->emDebug("mean data, threshcheck, ttoal", $mean_of_data, $thresh_check, $total_above);
 
-			if(!empty($daydata["pm"])){
-				$pm_data 	= array_sum($daydata["pm"])/count($daydata["pm"]);
-				$above 		= $pm_data > $target_threshold ? 1 : 0;
-				array_push($total_datapoints, $pm_data);
-				array_push($above_thresh, $above);
-			}
-		}
-		//THIRD, NOW FIGURE OUT WHAT THE CONTROL CONDITION % IS , AND DO AN ARRAY SUM OF total_datapoints
-		$thresh_check 	= count($above_thresh)*$control_condition;
-		$total_above 	= array_sum($above_thresh);
-		$mean_of_data 	= $total_datapoints ? round(array_sum($total_datapoints)/count($total_datapoints)) : 0;
+        // Return mean if above threshold; otherwise, return false
+        return $total_above > $thresh_check && count($above_thresh) >= 4 ? $mean_of_data : false;
+    }
 
-		$this->emDebug("target :  $target_threshold, total data points : " . count($above_thresh) . " , control cond : $thresh_check ,  above thresh : $total_above", $total_datapoints, $mean_of_data);
 
-		//IF ABOVE THRESHOLD,RETURN THE MEAN, if "Controlled" , return false
-		return $total_above > $thresh_check && count($above_thresh) >= 4 ? $mean_of_data : false;
-	}
-
-	// NEED TO PROMPT FOR CR & K readings FROM PROVIDER  BEFORE MAKING RX CHANGE ASSESTMENT if not within last 2 weeks.
+    // NEED TO PROMPT FOR CR & K readings FROM PROVIDER  BEFORE MAKING RX CHANGE ASSESTMENT if not within last 2 weeks.
 	public function evaluateOmronBPavg_old($record_id, $external_avg = null){
 		$this->loadEM();
         $this->emDebug("Starting evaluation for record", $record_id);
