@@ -1658,21 +1658,34 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
 
 	// cron to pull data daily in case the notification ping fails?
     public function dailyOmronDataPull($since_today = null, $testMode = false) {
+        // Get patients with tokens
         $patients_with_tokens = $this->getPatientsWithTokens();
         $since_today = $since_today ?? date("Y-m-d");
-        if($testMode){
+        if ($testMode) {
             $since_today = date("Y-m-d", strtotime("-100 days"));
         }
         $data = [];
 
         foreach ($patients_with_tokens as $patient) {
+            // Ensure provider_id and omron_client_id are valid
+            if (empty($patient["provider_id"]) || empty($patient["omron_client_id"])) {
+                $this->emDebug("Skipping record due to missing provider_id or omron_client_id for record_id: " . ($patient["record_id"] ?? 'unknown'));
+                continue;  // Skip this patient if essential data is missing
+            }
+
+            // Extract required fields
             $omron_client_id = $patient["omron_client_id"];
             $record_id = $patient["record_id"];
             $expiration_date = $patient["omron_token_expire"];
 
             // Attempt to save Omron data and get status
-            $result = $this->recurseSaveOmronApiData($omron_client_id, $since_today);
-            $status = is_array($result) && isset($result['status']) ? $result['status'] : false;
+            try {
+                $result = $this->recurseSaveOmronApiData($omron_client_id, $since_today);
+                $status = is_array($result) && isset($result['status']) ? $result['status'] : false;
+            } catch (Exception $e) {
+                $this->emDebug("Error processing record_id $record_id: " . $e->getMessage());
+                $status = false;  // Set status to false if an error occurs
+            }
 
             // Collect data for display if in testMode
             if ($testMode) {
@@ -1685,6 +1698,7 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
                 ];
             }
 
+            // Log success or failure for each patient
             if ($status) {
                 $this->emDebug("BP data for $since_today was successfully downloaded for record_id $record_id");
             } else {
@@ -1697,7 +1711,6 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
             return $data;
         }
     }
-
 
     // cron to refresh omron access tokens expiring within 48 hours
     public function htnAPICron() {
