@@ -1667,9 +1667,10 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
         $data = [];
 
         foreach ($patients_with_tokens as $patient) {
+            $this->emDebug("patient", $patient);
             // Ensure provider_id and omron_client_id are valid
-            if (empty($patient["provider_id"]) || empty($patient["omron_client_id"])) {
-                $this->emDebug("Skipping record due to missing provider_id or omron_client_id for record_id: " . ($patient["record_id"] ?? 'unknown'));
+            if (empty($patient["omron_client_id"])) {
+                $this->emDebug("Skipping record due to missing omron_client_id for record_id: " . ($patient["record_id"] ?? 'unknown'));
                 continue;  // Skip this patient if essential data is missing
             }
 
