@@ -330,10 +330,9 @@ class HTNtree  {
         return $template_drugs;
     }
 
-    public function treeLogic($provider_id){
-        //TODO FIX THIS FOR NEW WORKFLOW
+    public function treeLogic($provider_id = null){
         $default_trees      = $this->getDefaultTrees();
-        $provider_trees     = $this->getDefaultTrees($provider_id);
+        $provider_trees     = empty($provider_id) ? [] : $this->getDefaultTrees($provider_id);
         $default_trees      = array_merge($default_trees,$provider_trees);
 
         $provider_logic_trees = array();
@@ -363,12 +362,9 @@ class HTNtree  {
                 }
             }
 
-
             $tree["logicTree"]  = $logicTree;
             $provider_logic_trees[$tree_id] = $tree;
         }
-//        $this->module->emDebug("This Providers custom Logic trees, including the default ones");
-
         return $provider_logic_trees;
     }
 
