@@ -3101,7 +3101,7 @@ class HTNtree  {
 
         $logicTree[] = array(
             "step_id" => 118,
-            "drugs" => array($CCB[0], $CCB[1]),
+            "drugs" => array($CCB[1]),
             "bp_status" => array(
                 "Controlled" => "Continue current step",
                 "Uncontrolled" => 119
