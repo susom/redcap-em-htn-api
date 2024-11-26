@@ -619,6 +619,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
         $info 	= curl_getinfo($ch);
 		$result = curl_exec($ch);
+        $this->emDebug("curl call", $result);
         curl_close($ch);
 
         return $result;
@@ -637,7 +638,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 		$q 			= \REDCap::getData($params);
 		$records 	= json_decode($q, true);
 		if(empty($records)){
-			$this->emDebug("Omron getTokenDetail() : Could not find Patient with omron_client_id = $omron_client_id");
+			$this->emDebug("Omron getTokenDetail() : Could not find Patient with omron_client_id = $omron_client_id", $params);
 			return false;
 		}
 		$this->emDebug("found token details");
@@ -728,8 +729,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
     }
 
 
-
-    public function checkBPvsThreshold($bp_data, $target_threshold, $control_condition = 0.6, $external_avg = null) {
+    //DELETE AFTER VERIfY
+    public function checkBPvsThreshold_old($bp_data, $target_threshold, $control_condition = 0.6, $external_avg = null) {
         // Filter for data within the last 2 weeks
         $two_weeks_ago = strtotime('-2 weeks');
         $recent_bp_data = array_filter($bp_data, function($bp) use ($two_weeks_ago) {
@@ -791,164 +792,51 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
         return $total_above > $thresh_check && count($above_thresh) >= 4 ? $mean_of_data : false;
     }
 
+    public function checkBPvsThreshold($bp_data, $target_threshold, $control_condition = 0.6, $external_avg = null) {
+        // Filter BP data to the last 2 weeks
+        $two_weeks_ago = strtotime('-2 weeks');
+        $recent_bp_data = array_filter($bp_data, fn($bp) => strtotime($bp["bp_reading_ts"]) >= $two_weeks_ago);
 
-    // NEED TO PROMPT FOR CR & K readings FROM PROVIDER  BEFORE MAKING RX CHANGE ASSESTMENT if not within last 2 weeks.
-	public function evaluateOmronBPavg_old($record_id, $external_avg = null){
-		$this->loadEM();
-        $this->emDebug("Starting evaluation for record", $record_id);
+        // Use recent data if there are at least 4 records, otherwise use all data
+        $bp_data = count($recent_bp_data) >= 4 ? $recent_bp_data : $bp_data;
 
-        // GET patient BP data, current filter status, and
-		$params	= array(
-			'project_id'	=> $this->enabledProjects["patients"]["pid"],
-			'records' 		=> array($record_id),
-			'return_format' => 'json',
-			'fields'        => array("record_id",
-                "filter",
-                "patient_bp_target_systolic",
-                "patient_bp_target_diastolic",
-                "patient_bp_target_pulse",
-                "current_treatment_plan_id",
-                "patient_treatment_status",
-                "patient_physician_id",
-                "last_update_ts")
-		);
-		$q 					= \REDCap::getData($params);
-		$records			= json_decode($q, true);
-		$patient 			= current($records);
+        // Use external average if provided and determine if it's above the threshold
+        if ($external_avg !== null) {
+            return $external_avg > $target_threshold ? $external_avg : false;
+        }
 
-		$target_pulse 		= $patient["patient_bp_target_pulse"];
-		$target_systolic 	= $patient["patient_bp_target_systolic"];
-		$target_diastolic 	= $patient["patient_bp_target_diastolic"];
+        // Organize data into AM/PM readings for each day
+        $ampm_data = [];
+        foreach ($bp_data as $bp) {
+            $date_key = date("ymd", strtotime($bp["bp_reading_ts"]));
+            $am_pm_key = date("a", strtotime($bp["bp_reading_ts"]));
+            $ampm_data[$date_key][$am_pm_key][] = $bp["bp_systolic"];
+        }
 
-		$provider_id 		= $patient["patient_physician_id"];
-		$current_tree 		= $patient["current_treatment_plan_id"];
-		$current_step 		= $patient["patient_treatment_status"];
-		$rec_step 			= $patient["patient_rec_tree_step"];
-		$dash_filter 		= json_decode($patient["filter"],1);
+        // Calculate daily averages and whether each average is above the threshold
+        $total_datapoints = [];
+        $above_threshold_counts = 0;
+        foreach ($ampm_data as $day_data) {
+            foreach (['am', 'pm'] as $period) {
+                if (!empty($day_data[$period])) {
+                    $average = array_sum($day_data[$period]) / count($day_data[$period]);
+                    $total_datapoints[] = $average;
+                    $above_threshold_counts += ($average > $target_threshold) ? 1 : 0;
+                }
+            }
+        }
 
-		if(!empty($target_systolic)){
-			//GET THE LAST 2 WEEKS WORTH OF BP DATA
-			$filter = "[bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-2 weeks')) . "'";
-            $filter = ""; //allow all time for now
-			$params	= array(
-				'project_id'	=> $this->enabledProjects["patients"]["pid"],
-				'records' 		=> array($record_id),
-				'return_format' => 'json',
-				'fields'        => array("record_id",
-                    "patient_bp_target_systolic",
-                    "patient_bp_target_diastolic",
-                    "patient_bp_target_pulse",
-                    "bp_reading_ts",
-                    "omron_bp_id",
-                    "bp_systolic",
-                    "bp_diastolic",
-                    "bp_pulse"),
-				'filterLogic' 	=> $filter
-			);
-			$q 			    = \REDCap::getData($params);
-			$records	    = json_decode($q, true);
+        // Calculate the control threshold and mean
+        $required_above_count = ceil(count($total_datapoints) * $control_condition);
+        $mean_of_data = !empty($total_datapoints) ? round(array_sum($total_datapoints) / count($total_datapoints)) : 0;
+        $this->emDebug("Data points and above-threshold counts", $total_datapoints, $above_threshold_counts);
 
-			//CHECK IF DATA OVER LAST 2 WEEKS IS "ABOVE" ThreSHOLD?
-			$is_above 		= $this->checkBPvsThreshold($records, $target_systolic,.6,  $external_avg);
-			$systolic_mean 	= $is_above; //if "uncontrolled", return the mean of the last 2 weeks, otherwise "false" is "controlled"
-$this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $systolic_mean);
-            if($is_above){
-				$provider_trees 		= $this->tree->treeLogic($provider_id);
-				$treelogic 				= $provider_trees[$current_tree];
-				$current_tree_step 		= $treelogic["logicTree"][$current_step];
-				$this->emDebug("IS ABOVE current tree, current tree step", $current_tree, $current_step, $current_tree_step);
-                $this->emDebug("IN evaluateOmronBPavg", $current_tree_step["bp_status"], $current_tree_step["bp_status"]["Uncontrolled"] );
+        // Return mean if threshold met; otherwise, return false
+        return $above_threshold_counts >= $required_above_count && count($total_datapoints) >= 4 ? $mean_of_data : false;
+    }
 
-                $uncontrolled_next_step 		= array_key_exists("Uncontrolled", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled"] : null;
-
-                $this->emDebug("IN evaluateOmronBPavg", $current_tree_step["bp_status"], $current_tree_step["bp_status"]["Uncontrolled"] );
-
-                $uncontrolled_Kplus_next_step 	= array_key_exists("Uncontrolled, K > 4.5", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled, K > 4.5"] : null;
-				$uncontrolled_Kminus_next_step 	= array_key_exists("Uncontrolled, K < 4.5", $current_tree_step["bp_status"]) ?  $current_tree_step["bp_status"]["Uncontrolled, K < 4.5"] : null;
-				$cr_sideeffect 					= $current_tree_step["side_effects"]["elevated_cr"];
-
-				//NEED TO CHECK IF THIS STEP HAS AN "elevated_cr" Side FX or a "K < or K >" check
-				$this->emDebug("rx change recommendation, Use current tree, find the uncontrolled next step, check if needs labs first though", $current_tree_step, $uncontrolled_next_step);
-
-				$current_update_ts		= date("Y-m-d H:i:s");
-				$lab_values 			= array();
-				$need_lab 				= false;
-
-				if(!empty($uncontrolled_Kplus_next_step) || !empty($uncontrolled_Kminus_next_step) || !empty($cr_sideeffect)){
-					//UNCONTROLLED STEP HAS A LAB CHECK (K) OR a POSSIBLE ELEVATED CR Side EFFECT
-					//NEED RECENT LABS ( 2 weeks )
-					$this->emDebug("possible labs needed, K or CR" , $uncontrolled_Kplus_next_step, $uncontrolled_Kminus_next_step, $cr_sideeffect);
-					$filter = "[lab_ts] > '" . date("Y-m-d", strtotime('-2 weeks')) . "'";
-					$params	= array(
-						'project_id'	=> $this->enabledProjects["patients"]["pid"],
-						'records' 		=> array($record_id),
-						'return_format' => 'json',
-						'fields'        => array("record_id", "lab_name", "lab_value", "lab_ts"),
-						'filterLogic' 	=> $filter
-					);
-					$q 		= \REDCap::getData($params);
-					$labs	= json_decode($q, true);
-					if(!empty($labs)){
-						foreach($labs as $lab){
-							$lab_values[$lab["lab_name"]] = $lab["lab_value"];
-						}
-					}
-					$this->emDebug("recent lab values?", $lab_values);
-					if(empty($lab_values)){
-						$need_lab = true;
-					}elseif(!empty($uncontrolled_Kplus_next_step) || !empty($uncontrolled_Kminus_next_step)){
-						//then set the uncontrolled_next_step
-						$this->emdebug("this is K check step, if have K, then use that as recommended step");
-						if(isset($lab_values["k"])){
-							$uncontrolled_next_step = $lab_values["k"] > 4.5 ? $uncontrolled_Kplus_next_step : $uncontrolled_Kminus_next_step;
-						}else{
-							$need_lab = true;
-						}
- 					}elseif(!empty($cr_sideeffect) && !isset($lab_values["cr"])){
-						$need_lab = true;
-					}
-				}
-
-				$filter_tag = $need_lab ? "labs_needed" : "rx_change";
-				$data 		= array(
-					"record_id"             	=> $record_id,
-					"patient_rec_tree_step" 	=> (!$need_lab ? $uncontrolled_next_step : null),
-					"last_update_ts"			=> $current_update_ts,
-					"filter"      				=> $filter_tag,
-				);
-
-                $this->emDebug('this is just before the first saveData with recommendation or lab needed/rx change', $data);
-				$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
-				$this->emDebug("update patient baseline data", $data);
-
-				//SAVE THE RECOMMENDATION STEP WHETHER IT WILL BE ACCEPTED OR NOT
-				if($filter_tag == "rx_change"){
-					$current_meds 	= implode(", ",$current_tree_step["drugs"]);
-					$next_tree_step = $treelogic["logicTree"][$uncontrolled_next_step];
-					$rec_meds 		= implode(", ",$next_tree_step["drugs"]);
-
-					$next_instance_id 				= $this->getNextInstanceId($record_id, "recommendations_log", "rec_ts");
-					$data = array(
-						"record_id"             	=> $record_id,
-						"redcap_repeat_instance" 	=> $next_instance_id,
-						"redcap_repeat_instrument" 	=> "recommendations_log",
-						"rec_current_meds" 			=> $current_meds,
-						"rec_step" 					=> $next_tree_step["step_id"],
-						"rec_meds" 					=> $rec_meds,
-						"rec_accepted"				=> 0,
-						"rec_mean_systolic"			=> $systolic_mean,
-						"rec_ts"					=> $current_update_ts
-					);
-					$r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite" );
-					$this->emDebug("store a recommendation log!",  $data);
-				}
-			}
-		}
-
-		return;
-	}
-
-    public function evaluateOmronBPavg($record_id, $external_avg = null) {
+    //DELETE AFTER VERIFY
+    public function evaluateOmronBPavg_old($record_id, $external_avg = null) {
         $this->loadEM();
         $this->emDebug("Starting evaluation for record", $record_id);
 
@@ -1151,7 +1039,133 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
         return;
     }
 
-    private function evaluateSideEffects($treeStep, $k, $na, $cr, $hr, $systolic_average, $custom_targets = array()) {
+    public function evaluateOmronBPavg($record_id, $external_avg = null) {
+        $this->loadEM();
+        $this->emDebug("Starting evaluation for record", $record_id);
+
+        // Prepare parameters to retrieve patient data
+        $params = array(
+            'project_id'    => $this->enabledProjects["patients"]["pid"],
+            'records'       => array($record_id),
+            'return_format' => 'json',
+            'fields'        => array(
+                "record_id", "filter", "patient_bp_target_systolic", "patient_bp_target_diastolic",
+                "patient_bp_target_pulse", "custom_target_sys_lower", "custom_target_k_upper",
+                "custom_target_k_lower", "custom_target_slowhr", "custom_target_cr", "custom_target_na",
+                "current_treatment_plan_id", "patient_treatment_status", "patient_physician_id", "last_update_ts"
+            )
+        );
+
+        // Retrieve and decode patient data
+        $q = \REDCap::getData($params);
+        $records = json_decode($q, true);
+        $patient = current($records);
+        extract($patient, EXTR_PREFIX_ALL, 'pat');
+
+        // Extract key patient data
+        $provider_id = $pat_patient_physician_id;
+        $current_tree = $pat_current_treatment_plan_id;
+        $current_step = $pat_patient_treatment_status;
+        $target_systolic = $pat_patient_bp_target_systolic;
+
+        // Set custom target values if available
+        $custom_targets = array_filter([
+            "sys_avg_lower" => $pat_custom_target_sys_lower,
+            "k_upper"       => $pat_custom_target_k_upper,
+            "k_lower"       => $pat_custom_target_k_lower,
+            "cr_upper"      => $pat_custom_target_cr,
+            "na_lower"      => $pat_custom_target_na,
+            "hr_lower"      => $pat_custom_target_slowhr,
+        ]);
+
+//        $this->emDebug("Initial data for Patient", $patient, $custom_targets);
+
+        if (!empty($target_systolic)) {
+            // Retrieve recent BP readings (last 2 weeks)
+            $filter = "[bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-2 weeks')) . "'";
+            $params = array(
+                'project_id'    => $this->enabledProjects["patients"]["pid"],
+                'records'       => array($record_id),
+                'return_format' => 'json',
+                'fields'        => array("record_id", "omron_bp_id", "bp_reading_ts", "bp_systolic", "bp_diastolic", "bp_pulse"),
+                'filterLogic'   => $filter
+            );
+
+            $q = \REDCap::getData($params);
+            $records = json_decode($q, true);
+
+            // Calculate mean pulse over the last 2 weeks
+            $pulse_sum = array_sum(array_column($records, 'bp_pulse'));
+            $pulse_count = count(array_filter(array_column($records, 'bp_pulse')));
+            $mean_bp_pulse = $pulse_count > 0 ? $pulse_sum / $pulse_count : null;
+
+//            $this->emDebug("BP Data for Patient", $records, $mean_bp_pulse);
+
+            // Retrieve recent lab values (last 2 weeks)
+            $filter = "[lab_ts] > '" . date("Y-m-d", strtotime('-2 weeks')) . "'";
+            $params = array(
+                'project_id'    => $this->enabledProjects["patients"]["pid"],
+                'records'       => array($record_id),
+                'return_format' => 'json',
+                'fields'        => array("record_id", "lab_name", "lab_value", "lab_ts"),
+                'filterLogic'   => $filter
+            );
+
+            $q = \REDCap::getData($params);
+            $labs = json_decode($q, true);
+            $lab_values = array_column($labs, 'lab_value', 'lab_name');
+
+            // Extract relevant lab values
+            $lab_k  = $lab_values["k"] ?? null;
+            $lab_na = $lab_values["na"] ?? null;
+            $lab_cr = $lab_values["cr"] ?? null;
+
+            // Access current treatment tree and step logic
+            $provider_trees = $this->tree->treeLogic($provider_id);
+            $treelogic = $provider_trees[$current_tree];
+            $current_tree_step = $treelogic["logicTree"][$current_step];
+
+            // Evaluate side effects based on labs and BP averages
+            $side_effects_next_step = $this->evaluateSideEffects($current_tree_step, $lab_k, $lab_na, $lab_cr, $mean_bp_pulse, $external_avg, $custom_targets);
+
+            if ($side_effects_next_step !== null) {
+                $next_step = $side_effects_next_step;
+            } else {
+                // Evaluate BP against threshold if no side effects
+                $is_above = $this->checkBPvsThreshold($records, $target_systolic, 0.6, $external_avg);
+                if ($is_above) {
+                    $next_step = $current_tree_step["bp_status"]["Uncontrolled"] ?? null;
+                }
+            }
+
+            // Determine lab requirements and update record with recommendations or lab needs
+            if (isset($next_step)) {
+                $current_update_ts = date("Y-m-d H:i:s");
+                $need_lab = empty($lab_values) || !isset($lab_values["k"], $lab_values["cr"], $lab_values["na"]);
+
+                $filter_tag = $need_lab ? "labs_needed" : "rx_change";
+                $data = array(
+                    "record_id"              => $record_id,
+                    "patient_rec_tree_step"  => !$need_lab ? $next_step : null,
+                    "last_update_ts"         => $current_update_ts,
+                    "filter"                 => $filter_tag,
+                );
+
+//                $this->emDebug('Save recommendation or lab needed status', $data);
+                \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite");
+
+                // Log recommendations if no labs needed
+                if ($filter_tag == "rx_change") {
+                    $this->logRecommendations($record_id, $next_step, $current_tree_step, $treelogic, $systolic_mean ?? false);
+                }
+            }
+        }
+        return;
+    }
+
+
+    //DELETE after VERIFY NEW ONE
+    private function evaluateSideEffects_old($treeStep, $k, $na, $cr, $hr, $systolic_average, $custom_targets = array()) {
         // Convert incoming parameters to floats to ensure numeric comparisons
         $k                      = floatval($k);
         $na                     = floatval($na);
@@ -1197,6 +1211,86 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
         // If no conditions are met, return null
         return null;
     }
+
+    private function evaluateSideEffects($treeStep, $k, $na, $cr, $hr, $systolic_average, $custom_targets = array()) {
+        // Convert incoming parameters to floats for numeric comparisons
+        $values = [
+            'k'           => floatval($k),
+            'na'          => floatval($na),
+            'cr'          => floatval($cr),
+            'hr'          => floatval($hr),
+            'systolic'    => floatval($systolic_average)
+        ];
+
+        // Retrieve and set target limits, preferring custom targets if provided
+        $targets = [
+            'k_upper'     => floatval($custom_targets['k_upper'] ?? $this->getProjectSetting("lab-target-k-upper")),
+            'k_lower'     => floatval($custom_targets['k_lower'] ?? $this->getProjectSetting("lab-target-k-lower")),
+            'cr_upper'    => floatval($custom_targets['cr_upper'] ?? $this->getProjectSetting("lab-target-cr")),
+            'na_lower'    => floatval($custom_targets['na_lower'] ?? $this->getProjectSetting("lab-target-na")),
+            'hr_lower'    => floatval($custom_targets['hr_lower'] ?? $this->getProjectSetting("lab-target-slowhr")),
+            'sys_lower'   => floatval($custom_targets['sys_avg_lower'] ?? $this->getProjectSetting("target-sys-lower"))
+        ];
+
+        // Define side effect checks with corresponding conditions
+        $side_effects_checks = [
+            'hypotension'      => ['value' => $values['systolic'], 'condition' => $values['systolic'] < $targets['sys_lower']],
+            'hyponatremia'     => ['value' => $values['na'],       'condition' => $values['na'] < $targets['na_lower']],
+            'hypokalemia'      => ['value' => $values['k'],        'condition' => $values['k'] < $targets['k_lower']],
+            'elevated_cr'      => ['value' => $values['cr'],       'condition' => $values['cr'] > $targets['cr_upper']],
+            'hyperkalemia'     => ['value' => $values['k'],        'condition' => $values['k'] > $targets['k_upper']],
+            'slow_hr'          => ['value' => $values['hr'],       'condition' => $values['hr'] < $targets['hr_lower']]
+        ];
+
+        // Evaluate side effects and return the appropriate step if any condition is met
+        foreach ($side_effects_checks as $effect => $check) {
+            if (!empty($check['value']) && $check['condition']) {
+                $this->emDebug("Side effect detected: $effect with value {$check['value']}");
+                return $treeStep["side_effects"][$effect];
+            }
+        }
+
+        // Return null if no side effects are detected
+        return null;
+    }
+
+
+    private function logRecommendations($record_id, $next_step, $current_tree_step, $treelogic, $systolic_mean) {
+        $current_meds = implode(", ", $current_tree_step["drugs"]);
+        $next_tree_step = $treelogic["logicTree"][$next_step];
+        $rec_meds = implode(", ", $next_tree_step["drugs"]);
+
+        // Fetch existing recommendations for this record
+        $existing_recommendations = \REDCap::getData($this->enabledProjects["patients"]["pid"], 'array', [
+            "record_id" => $record_id
+        ]);
+
+        // Check if the current recommendation exists
+        foreach ($existing_recommendations as $instance) {
+            if ($instance["rec_step"] == $next_tree_step["step_id"] && $instance["rec_meds"] == $rec_meds) {
+                $this->emDebug("Duplicate recommendation found for record {$record_id}, step {$next_tree_step["step_id"]}");
+                return; // Exit to avoid duplication
+            }
+        }
+
+        // If no duplicates, log the new recommendation
+        $next_instance_id = $this->getNextInstanceId($record_id, "recommendations_log", "rec_ts");
+        $data = array(
+            "record_id"                 => $record_id,
+            "redcap_repeat_instance"    => $next_instance_id,
+            "redcap_repeat_instrument"  => "recommendations_log",
+            "rec_current_meds"          => $current_meds,
+            "rec_step"                  => $next_tree_step["step_id"],
+            "rec_meds"                  => $rec_meds,
+            "rec_accepted"              => 0,
+            "rec_mean_systolic"         => $systolic_mean,
+            "rec_ts"                    => date("Y-m-d H:i:s")
+        );
+
+        $this->emDebug("Logging new recommendation", $data);
+        \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite");
+    }
+
 
     //FOR TESTING SCRIPT
     public function evaluateOmronBPavg_2($patientData, &$state) {
@@ -1667,7 +1761,7 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
         $data = [];
 
         foreach ($patients_with_tokens as $patient) {
-            $this->emDebug("patient", $patient);
+//            $this->emDebug("patient", $patient);
             // Ensure provider_id and omron_client_id are valid
             if (empty($patient["omron_client_id"])) {
                 $this->emDebug("Skipping record due to missing omron_client_id for record_id: " . ($patient["record_id"] ?? 'unknown'));
@@ -1679,9 +1773,14 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
             $record_id = $patient["record_id"];
             $expiration_date = $patient["omron_token_expire"];
 
+            if(!in_array($record_id ,["stanford_8196","stanford_8234", "stanford_9397"] )){
+                continue;
+            }
+
             // Attempt to save Omron data and get status
             try {
                 $result = $this->recurseSaveOmronApiData($omron_client_id, $since_today);
+                $this->emDebug("omron api status?", $result);
                 $status = is_array($result) && isset($result['status']) ? $result['status'] : false;
             } catch (Exception $e) {
                 $this->emDebug("Error processing record_id $record_id: " . $e->getMessage());
@@ -1744,7 +1843,6 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
             }
         }
     }
-
 
     /**
      * Ensure the URL is correctly formatted with 'NOAUTH=1'.
@@ -1812,3 +1910,5 @@ $this->emDebug("checkBPvsThreshold using STUB, only action if 'is_above'", $syst
 		}
 	}
 }
+
+
