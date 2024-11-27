@@ -827,9 +827,8 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
         }
 
         // Calculate the control threshold and mean
-        $required_above_count = ceil(count($total_datapoints) * $control_condition);
+        $required_above_count = floor(count($total_datapoints) * $control_condition);
         $mean_of_data = !empty($total_datapoints) ? round(array_sum($total_datapoints) / count($total_datapoints)) : 0;
-        $this->emDebug("Data points and above-threshold counts", $total_datapoints, $above_threshold_counts);
 
         // Return mean if threshold met; otherwise, return false
         return $above_threshold_counts >= $required_above_count && count($total_datapoints) >= 4 ? $mean_of_data : false;
@@ -1135,6 +1134,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
                 $is_above = $this->checkBPvsThreshold($records, $target_systolic, 0.6, $external_avg);
                 if ($is_above) {
                     $next_step = $current_tree_step["bp_status"]["Uncontrolled"] ?? null;
+                    $this->emDebug("bp is above threshold!!!", $next_step, $current_tree_step["step_id"]);
                 }
             }
 
@@ -1151,11 +1151,12 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
                     "filter"                 => $filter_tag,
                 );
 
-//                $this->emDebug('Save recommendation or lab needed status', $data);
                 \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite");
+                $this->emDebug('Save recommendation or lab needed status', $data);
 
                 // Log recommendations if no labs needed
                 if ($filter_tag == "rx_change") {
+                    $this->emDebug("ok rx_change, logRecommendations", $record_id, $next_step, $current_tree_step, $treelogic, $systolic_mean);
                     $this->logRecommendations($record_id, $next_step, $current_tree_step, $treelogic, $systolic_mean ?? false);
                 }
             }
@@ -1257,8 +1258,20 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
     private function logRecommendations($record_id, $next_step, $current_tree_step, $treelogic, $systolic_mean) {
         $current_meds = implode(", ", $current_tree_step["drugs"]);
-        $next_tree_step = $treelogic["logicTree"][$next_step];
-        $rec_meds = implode(", ", $next_tree_step["drugs"]);
+
+        $this->emDebug("Handling recommendation for next step", [
+            "current_meds" => $current_meds,
+            "next_step" => $next_step
+        ]);
+
+        // Check if $next_step is a valid key in the logic tree
+        if (!isset($treelogic["logicTree"][$next_step])) {
+            $this->emDebug("Next step '{$next_step}' is not a valid tree key (Stop or Refer). Proceeding with default logging.");
+            $rec_meds = $next_step; // Save the literal "Stop" or "Refer" as the recommendation
+        } else {
+            $next_tree_step = $treelogic["logicTree"][$next_step];
+            $rec_meds = implode(", ", $next_tree_step["drugs"]);
+        }
 
         // Fetch existing recommendations for this record
         $existing_recommendations = \REDCap::getData($this->enabledProjects["patients"]["pid"], 'array', [
@@ -1267,8 +1280,11 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
         // Check if the current recommendation exists
         foreach ($existing_recommendations as $instance) {
-            if ($instance["rec_step"] == $next_tree_step["step_id"] && $instance["rec_meds"] == $rec_meds) {
-                $this->emDebug("Duplicate recommendation found for record {$record_id}, step {$next_tree_step["step_id"]}");
+            if (
+                $instance["rec_step"] == $next_step &&
+                $instance["rec_meds"] == $rec_meds
+            ) {
+                $this->emDebug("Duplicate recommendation found for record {$record_id}, step {$next_step}");
                 return; // Exit to avoid duplication
             }
         }
@@ -1280,7 +1296,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
             "redcap_repeat_instance"    => $next_instance_id,
             "redcap_repeat_instrument"  => "recommendations_log",
             "rec_current_meds"          => $current_meds,
-            "rec_step"                  => $next_tree_step["step_id"],
+            "rec_step"                  => $next_step,
             "rec_meds"                  => $rec_meds,
             "rec_accepted"              => 0,
             "rec_mean_systolic"         => $systolic_mean,

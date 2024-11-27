@@ -39,7 +39,10 @@ class HTNtree  {
     }
 
     public function getDefaultTrees($provider_id=0){
-        $filter = "[provider_id] = $provider_id";
+        //NO LONGER FILTER, JUST SHOW ALL TREES
+        //$filter = "[provider_id] = $provider_id";
+        $filter = "";
+
         $fields = array();
 		$params	= array(
 			'project_id'	=> $this->tree_templates_project,
@@ -59,7 +62,6 @@ class HTNtree  {
                 $labeled_trees[$tree_id] = array("label" => $tree["template_name"], "tree_meta" => $tree, "doses" => $def_tree);
             }
         }
-
         return $labeled_trees;
     }
 
@@ -332,8 +334,10 @@ class HTNtree  {
 
     public function treeLogic($provider_id = null){
         $default_trees      = $this->getDefaultTrees();
-        $provider_trees     = empty($provider_id) ? [] : $this->getDefaultTrees($provider_id);
-        $default_trees      = array_merge($default_trees,$provider_trees);
+
+        // NO LONGER FILTER BY PROVIDER TREES AS DELEGATES DO MOST OF THE TREE CREATION AND THE TREES WILL BE UNDER THEIR "provider_id"
+        // $provider_trees     = empty($provider_id) ? [] : $this->getDefaultTrees($provider_id);
+        // $default_trees      = array_merge($default_trees,$provider_trees);
 
         $provider_logic_trees = array();
         foreach($default_trees as $tree){
