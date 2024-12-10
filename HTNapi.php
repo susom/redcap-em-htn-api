@@ -1776,6 +1776,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
         }
         $data = [];
 
+        ini_set('max_execution_time', 3000);
         foreach ($patients_with_tokens as $patient) {
 //            $this->emDebug("patient", $patient);
             // Ensure provider_id and omron_client_id are valid
@@ -1788,10 +1789,6 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
             $omron_client_id = $patient["omron_client_id"];
             $record_id = $patient["record_id"];
             $expiration_date = $patient["omron_token_expire"];
-
-            if(!in_array($record_id ,["stanford_8196","stanford_8234", "stanford_9397"] )){
-                continue;
-            }
 
             // Attempt to save Omron data and get status
             try {
@@ -1820,6 +1817,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
             } else {
                 $this->emDebug("Failed to download BP data for record_id $record_id");
             }
+            usleep(100000);
         }
 
         // Return collected data if in testMode
