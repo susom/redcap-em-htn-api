@@ -1770,13 +1770,13 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
     public function dailyOmronDataPull($since_today = null, $testMode = false) {
         // Get patients with tokens
         $patients_with_tokens = $this->getPatientsWithTokens();
-        $since_today = $since_today ?? date("Y-m-d");
+        $since_today = $since_today ?? date("Y-m-d", strtotime("-3 days"));
         if ($testMode) {
             $since_today = date("Y-m-d", strtotime("-100 days"));
         }
         $data = [];
 
-        ini_set('max_execution_time', 3000);
+        ini_set('max_execution_time', 300);
         foreach ($patients_with_tokens as $patient) {
 //            $this->emDebug("patient", $patient);
             // Ensure provider_id and omron_client_id are valid
