@@ -329,9 +329,12 @@ dashboard.prototype.buildNav = function(){
         displayed++;
 
         var newnav = $(patient_nav);
+        var record_id = patient.record_id.split("_");
+        record_id = record_id[1];
         newnav.data("record_id",patient["record_id"]);
         newnav.addClass(patient["filter"]);
         newnav.find("b").text(patient["patient_name"]);
+        // newnav.find("b").text(patient["patient_name"] + " (" + record_id + ")");
         newnav.find("i").text(patient["age"] + ", " + patient["sex"]);
         newnav.find("img").attr("src", patient["patient_photo"]);
         newnav.click(function(e, isAutoClick){
@@ -1008,11 +1011,21 @@ dashboard.prototype.deleteSession = function(key){
         sessionStorage.clear();
     }
 }
+
+var parseTime = function (ts) {
+    var formats = [d3.time.format("%Y-%m-%dT%H:%M:%S"), d3.time.format("%Y-%m-%d")];
+    for (var i = 0; i < formats.length; i++) {
+        var parsed = formats[i].parse(ts);
+        if (parsed) return parsed;
+    }
+    console.warn("Invalid timestamp:", ts);
+    return null;
+};
+
 dashboard.prototype.graphBpData = function(){
     var record_id   = this.cur_patient;
     var patient     = this.patient_detail[record_id];
 
-    var parseTime   = d3.time.format("%Y-%m-%dT%H:%M:%S").parse;
     var xaxis       = [];
     var datadia     = [];
     var datasys     = [];
@@ -1027,7 +1040,7 @@ dashboard.prototype.graphBpData = function(){
         var puls    = bp["bp_pulse"];
         var pu_un   = bp["bp_pulse_units"];
         var bp_un   = bp["bp_units"];
-
+        
         ts          = ts.replace(" ","T");
         xaxis.push(parseTime(ts));
         datasys.push(sys);

@@ -728,74 +728,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
         }
     }
 
-
-    //DELETE AFTER VERIfY
-    public function checkBPvsThreshold_old($bp_data, $target_threshold, $control_condition = 0.6, $external_avg = null) {
-        // Filter for data within the last 2 weeks
-        $two_weeks_ago = strtotime('-2 weeks');
-        $recent_bp_data = array_filter($bp_data, function($bp) use ($two_weeks_ago) {
-            return strtotime($bp["bp_reading_ts"]) >= $two_weeks_ago;
-        });
-
-        // If there are at least 4 recent data points, use those; otherwise, use all data
-        if (count($recent_bp_data) >= 4) {
-            $bp_data = $recent_bp_data;
-        }
-
-        // Use external average if provided
-        if ($external_avg !== null) {
-            $mean_of_data = $external_avg;
-            $is_above = $mean_of_data > $target_threshold ? true : false;
-            return $is_above ? $mean_of_data : false;
-        }
-
-        // Split data into dates + AM/PM
-        $ampm_datapoints = array();
-        $this->emDebug("last two weeks or alltime?", $bp_data);
-        foreach ($bp_data as $bp) {
-            $sys_ts = $bp["bp_reading_ts"];
-            $sys_reading = $bp["bp_systolic"];
-            $am_pm = date("a", strtotime($sys_ts));
-            $daykey = date("ymd", strtotime($sys_ts));
-            if (!array_key_exists($daykey, $ampm_datapoints)) {
-                $ampm_datapoints[$daykey] = array("am" => [], "pm" => []);
-            }
-            array_push($ampm_datapoints[$daykey][$am_pm], $sys_reading);
-        }
-
-        // Average each day's AM/PM splits (max 2 data points per day)
-        $total_datapoints = array();
-        $above_thresh = array();
-        foreach ($ampm_datapoints as $daydata) {
-            if (!empty($daydata["am"])) {
-                $am_data = array_sum($daydata["am"]) / count($daydata["am"]);
-                $above = $am_data > $target_threshold ? 1 : 0;
-                array_push($total_datapoints, $am_data);
-                array_push($above_thresh, $above);
-            }
-            if (!empty($daydata["pm"])) {
-                $pm_data = array_sum($daydata["pm"]) / count($daydata["pm"]);
-                $above = $pm_data > $target_threshold ? 1 : 0;
-                array_push($total_datapoints, $pm_data);
-                array_push($above_thresh, $above);
-            }
-        }
-        $this->emDebug("total datapoints and above_thresh", $total_datapoints, $above_thresh);
-
-        // Calculate control condition % and mean of data
-        $thresh_check = count($above_thresh) * $control_condition;
-        $total_above = array_sum($above_thresh);
-        $mean_of_data = $total_datapoints ? round(array_sum($total_datapoints) / count($total_datapoints)) : 0;
-        $this->emDebug("mean data, threshcheck, ttoal", $mean_of_data, $thresh_check, $total_above);
-
-        // Return mean if above threshold; otherwise, return false
-        return $total_above > $thresh_check && count($above_thresh) >= 4 ? $mean_of_data : false;
-    }
-
     public function checkBPvsThreshold($bp_data, $target_threshold, $control_condition = 0.6, $external_avg = null) {
         // Filter BP data to the last 2 weeks
-        $two_weeks_ago = strtotime('-2 weeks');
-        $recent_bp_data = array_filter($bp_data, fn($bp) => strtotime($bp["bp_reading_ts"]) >= $two_weeks_ago);
+        $time_window = strtotime('-2 weeks');
+        $recent_bp_data = array_filter($bp_data, fn($bp) => strtotime($bp["bp_reading_ts"]) >= $time_window);
 
         // Use recent data if there are at least 4 records, otherwise use all data
         $bp_data = count($recent_bp_data) >= 4 ? $recent_bp_data : $bp_data;
@@ -830,212 +766,19 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
         $required_above_count = floor(count($total_datapoints) * $control_condition);
         $mean_of_data = !empty($total_datapoints) ? round(array_sum($total_datapoints) / count($total_datapoints)) : 0;
 
+        $calcs = array(
+            "total data points" => $total_datapoints, 
+            "above threshold counts" => $above_threshold_counts,
+            "required above count" => $required_above_count,
+            "mean of data?" => $mean_of_data
+        );
+        $this->emDebug('calculated convoluted bp threshold', 
+            $calcs,
+            $above_threshold_counts >= $required_above_count,
+            count($total_datapoints) >= 4
+        );
         // Return mean if threshold met; otherwise, return false
         return $above_threshold_counts >= $required_above_count && count($total_datapoints) >= 4 ? $mean_of_data : false;
-    }
-
-    //DELETE AFTER VERIFY
-    public function evaluateOmronBPavg_old($record_id, $external_avg = null) {
-        $this->loadEM();
-        $this->emDebug("Starting evaluation for record", $record_id);
-
-        // Get patient Misc Data data, AND threshold targets
-        $params = array(
-            'project_id'    => $this->enabledProjects["patients"]["pid"],
-            'records'       => array($record_id),
-            'return_format' => 'json',
-            'fields'        => array("record_id",
-                "filter",
-                "patient_bp_target_systolic",
-                "patient_bp_target_diastolic",
-                "patient_bp_target_pulse",
-
-                "custom_target_sys_lower",
-                "custom_target_k_upper",
-                "custom_target_k_lower",
-                "custom_target_slowhr",
-                "custom_target_cr",
-                "custom_target_na",
-
-                "current_treatment_plan_id",
-                "patient_treatment_status",
-                "patient_physician_id",
-                "last_update_ts")
-        );
-        $q                  = \REDCap::getData($params);
-        $records            = json_decode($q, true);
-        $patient            = current($records);
-        extract($patient, EXTR_PREFIX_ALL, 'pat');
-
-        $provider_id        = $pat_patient_physician_id;
-        $current_tree       = $pat_current_treatment_plan_id;
-        $current_step       = empty($pat_patient_treatment_status) ? 0 : $pat_patient_treatment_status;
-        $target_systolic    = $pat_patient_bp_target_systolic;
-
-        //THESE ARENT NECESSARY FOR NOW
-        $target_diastolic   = $pat_patient_bp_target_diastolic;
-        $target_pulse       = $pat_patient_bp_target_pulse;
-        $rec_step           = $pat_patient_rec_tree_step;
-        $dash_filter        = json_decode($pat_filter, 1);
-
-        // Prepare custom targets
-        $custom_targets = [];
-        if (!empty($pat_custom_target_sys_lower)) {
-            $custom_targets["sys_avg_lower"] = $pat_custom_target_sys_lower;
-        }
-        if (!empty($pat_custom_target_k_upper)) {
-            $custom_targets["k_upper"] = $pat_custom_target_k_upper;
-        }
-        if (!empty($pat_custom_target_k_lower)) {
-            $custom_targets["k_lower"] = $pat_custom_target_k_lower;
-        }
-        if (!empty($pat_custom_target_cr)) {
-            $custom_targets["cr_upper"] = $pat_custom_target_cr;
-        }
-        if (!empty($pat_custom_target_na)) {
-            $custom_targets["na_lower"] = $pat_custom_target_na;
-        }
-        if (!empty($pat_custom_target_slowhr)) {
-            $custom_targets["hr_lower"] = $pat_custom_target_slowhr;
-        }
-
-        $this->emDebug("Pull Initial data and current step for Patient record_id $record_id", $patient, $current_step, $custom_targets);
-
-        if (!empty($target_systolic)) {
-            // Get the last 2 weeks' worth of BP data
-            $filter = "[bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-2 weeks')) . "'";
-            $filter = "";
-            $params = array(
-                'project_id'    => $this->enabledProjects["patients"]["pid"],
-                'records'       => array($record_id),
-                'return_format' => 'json',
-                'fields'        => array("record_id",
-                    "omron_bp_id",
-                    "bp_reading_ts",
-                    "bp_systolic",
-                    "bp_diastolic",
-                    "bp_pulse"),
-                'filterLogic'   => $filter
-            );
-            $q              = \REDCap::getData($params);
-            $records        = json_decode($q, true);
-
-            $pulse_sum      = 0;
-            $pulse_count    = 0;
-            foreach ($records as $record) {
-                if (!empty($record['bp_pulse'])) {
-                    $pulse_sum += $record['bp_pulse'];
-                    $pulse_count++;
-                }
-            }
-            $mean_bp_pulse = $pulse_count > 0 ? $pulse_sum / $pulse_count : null;
-            $this->emDebug("Pull last 2 weeks BP Data for Patient record_id $record_id: ", $mean_bp_pulse);
-
-            // Fetch recent lab values WITHIN THe last 2 weeks(??)
-            $filter = "[lab_ts] > '" . date("Y-m-d", strtotime('-2 weeks')) . "'";
-            $filter = "";
-            $params = array(
-                'project_id'    => $this->enabledProjects["patients"]["pid"],
-                'records'       => array($record_id),
-                'return_format' => 'json',
-                'fields'        => array("record_id", "lab_name", "lab_value", "lab_ts"),
-                'filterLogic'   => $filter
-            );
-            $q              = \REDCap::getData($params);
-            $labs           = json_decode($q, true);
-            $lab_values     = array();
-            if (!empty($labs)) {
-                foreach ($labs as $lab) {
-                    $lab_values[$lab["lab_name"]] = $lab["lab_value"];
-                }
-            }
-            $this->emDebug("Pull last 2 weeks lab values?", $lab_values);
-
-            $lab_k  = isset($lab_values["k"])  ? $lab_values["k"] : null;
-            $lab_na = isset($lab_values["na"]) ? $lab_values["na"] : null;
-            $lab_cr = isset($lab_values["cr"]) ? $lab_values["cr"] : null;
-
-            // Check for side effects first
-            $provider_trees         = $this->tree->treeLogic($provider_id);
-            $treelogic              = $provider_trees[$current_tree];
-            $current_tree_step      = $treelogic["logicTree"][$current_step];
-
-            $this->emDebug("what the heck wheres my tree", $provider_id, $current_step, $current_tree, $current_tree_step);
-
-            $this->emDebug("Check sideeffects first", $current_tree_step, $lab_k, $lab_na, $lab_cr, $mean_bp_pulse, $external_avg, $custom_targets);
-            $side_effects_next_step = $this->evaluateSideEffects($current_tree_step, $lab_k, $lab_na, $lab_cr, $mean_bp_pulse, $external_avg, $custom_targets);
-
-
-            if ($side_effects_next_step !== null) {
-                $next_step      = $side_effects_next_step;
-            } else {
-                // Evaluate BP vs Threshold only if no side effects detected
-                $is_above       = $this->checkBPvsThreshold($records, $target_systolic, .6, $external_avg);
-                $systolic_mean  = $is_above ? $is_above : false; // If uncontrolled, return the mean of the last 2 weeks
-                $this->emDebug("if falls thruogh side effects, then do controlled/uncontrolled", $is_above, $systolic_mean);
-
-                if ($is_above) {
-                    $uncontrolled_next_step = (isset($current_tree_step["bp_status"]) && is_array($current_tree_step["bp_status"]) && array_key_exists("Uncontrolled", $current_tree_step["bp_status"]))
-                        ? $current_tree_step["bp_status"]["Uncontrolled"]
-                        : null;
-
-                    $next_step = $uncontrolled_next_step;
-                    $this->emDebug("if uncontrolled go to next step", $current_tree_step);
-                }
-            }
-            $this->emDebug("Hey its Uncontrolled a", $next_step);
-
-            if (isset($next_step)) {
-                $current_update_ts = date("Y-m-d H:i:s");
-                $need_lab = false;
-                $this->emDebug("Hey its Uncontrolled b", $next_step);
-
-                if (empty($lab_values)) {
-                    $need_lab = true;
-                } elseif (!empty($next_step["k"]) && !isset($lab_values["k"])) {
-                    $need_lab = true;
-                } elseif (!empty($next_step["cr"]) && !isset($lab_values["cr"])) {
-                    $need_lab = true;
-                } elseif (!empty($next_step["na"]) && !isset($lab_values["na"])) {
-                    $need_lab = true;
-                }
-
-                $filter_tag = $need_lab ? "labs_needed" : "rx_change";
-                $data = array(
-                    "record_id"              => $record_id,
-                    "patient_rec_tree_step"  => (!$need_lab ? $next_step : null),
-                    "last_update_ts"         => $current_update_ts,
-                    "filter"                 => $filter_tag,
-                );
-                $this->emDebug('this is just before the first saveData with recommendation or lab needed/rx change', $data);
-                $r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite");
-                $this->emDebug("update patient baseline data", $data);
-
-                // Save the recommendation step whether it will be accepted or not
-                if ($filter_tag == "rx_change") {
-                    $next_tree_step = $treelogic["logicTree"][$next_step];
-                    $current_meds = is_array($current_tree_step["drugs"]) ? implode(", ", $current_tree_step["drugs"]) : '';
-                    $rec_meds = is_array($next_tree_step["drugs"]) ? implode(", ", $next_tree_step["drugs"]) : '';
-
-
-                    $next_instance_id               = $this->getNextInstanceId($record_id, "recommendations_log", "rec_ts");
-                    $data = array(
-                        "record_id"                 => $record_id,
-                        "redcap_repeat_instance"    => $next_instance_id,
-                        "redcap_repeat_instrument" => "recommendations_log",
-                        "rec_current_meds"          => $current_meds,
-                        "rec_step"                  => $next_tree_step["step_id"],
-                        "rec_meds"                  => $rec_meds,
-                        "rec_accepted"              => 0,
-                        "rec_mean_systolic"         => $systolic_mean,
-                        "rec_ts"                    => $current_update_ts
-                    );
-                    $this->emDebug("No need for labvalues! so do rx_change", $data);
-                    $r = \REDCap::saveData($this->enabledProjects["patients"]["pid"], 'json', json_encode(array($data)), "overwrite");
-                }
-            }
-        }
-        return;
     }
 
     public function evaluateOmronBPavg($record_id, $external_avg = null) {
@@ -1059,29 +802,30 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
         $q = \REDCap::getData($params);
         $records = json_decode($q, true);
         $patient = current($records);
-        extract($patient, EXTR_PREFIX_ALL, 'pat');
 
         // Extract key patient data
-        $provider_id = $pat_patient_physician_id;
-        $current_tree = $pat_current_treatment_plan_id;
-        $current_step = $pat_patient_treatment_status;
-        $target_systolic = $pat_patient_bp_target_systolic;
+        $provider_id = $patient["patient_physician_id"];
+        $current_tree = $patient["current_treatment_plan_id"];
+        $current_step = !empty($patient["patient_treatment_status"]) ? $patient["patient_treatment_status"]: 1;
+        $target_systolic = $patient["patient_bp_target_systolic"];
 
         // Set custom target values if available
         $custom_targets = array_filter([
-            "sys_avg_lower" => $pat_custom_target_sys_lower,
-            "k_upper"       => $pat_custom_target_k_upper,
-            "k_lower"       => $pat_custom_target_k_lower,
-            "cr_upper"      => $pat_custom_target_cr,
-            "na_lower"      => $pat_custom_target_na,
-            "hr_lower"      => $pat_custom_target_slowhr,
+            "sys_avg_lower" => $patient["custom_target_sys_lower"],
+            "k_upper"       => $patient["custom_target_k_upper"],
+            "k_lower"       => $patient["custom_target_k_lower"],
+            "cr_upper"      => $patient["custom_target_cr"],
+            "na_lower"      => $patient["custom_target_na"],
+            "hr_lower"      => $patient["custom_target_slowhr"],
         ]);
-
-//        $this->emDebug("Initial data for Patient", $patient, $custom_targets);
+        
+       $this->emDebug("Initial data for Patient", array($provider_id,$current_tree,$current_step,$target_systolic));
 
         if (!empty($target_systolic)) {
             // Retrieve recent BP readings (last 2 weeks)
-            $filter = "[bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime('-2 weeks')) . "'";
+            //TODO HOW THE HELL DO WE DO THIS IF THERES NO DATA WITHIN 2 weeks?
+            $time_window = "-80 weeks";
+            $filter = "[bp_reading_ts] > '" . date("Y-m-d H:i:s", strtotime($time_window)) . "'";
             $params = array(
                 'project_id'    => $this->enabledProjects["patients"]["pid"],
                 'records'       => array($record_id),
@@ -1092,16 +836,15 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
             $q = \REDCap::getData($params);
             $records = json_decode($q, true);
-
+            
             // Calculate mean pulse over the last 2 weeks
             $pulse_sum = array_sum(array_column($records, 'bp_pulse'));
             $pulse_count = count(array_filter(array_column($records, 'bp_pulse')));
             $mean_bp_pulse = $pulse_count > 0 ? $pulse_sum / $pulse_count : null;
 
-//            $this->emDebug("BP Data for Patient", $records, $mean_bp_pulse);
 
             // Retrieve recent lab values (last 2 weeks)
-            $filter = "[lab_ts] > '" . date("Y-m-d", strtotime('-2 weeks')) . "'";
+            $filter = "[lab_ts] > '" . date("Y-m-d", strtotime($time_window)) . "'";
             $params = array(
                 'project_id'    => $this->enabledProjects["patients"]["pid"],
                 'records'       => array($record_id),
@@ -1122,11 +865,16 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
             // Access current treatment tree and step logic
             $provider_trees = $this->tree->treeLogic($provider_id);
             $treelogic = $provider_trees[$current_tree];
+
+
+
             $current_tree_step = $treelogic["logicTree"][$current_step];
 
             // Evaluate side effects based on labs and BP averages
             $side_effects_next_step = $this->evaluateSideEffects($current_tree_step, $lab_k, $lab_na, $lab_cr, $mean_bp_pulse, $external_avg, $custom_targets);
 
+            // $this->emDebug("side effect or check bp avg with bp records", $records);
+            
             if ($side_effects_next_step !== null) {
                 $next_step = $side_effects_next_step;
             } else {
@@ -1134,7 +882,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
                 $is_above = $this->checkBPvsThreshold($records, $target_systolic, 0.6, $external_avg);
                 if ($is_above) {
                     $next_step = $current_tree_step["bp_status"]["Uncontrolled"] ?? null;
-                    $this->emDebug("bp is above threshold!!!", $next_step, $current_tree_step["step_id"]);
+                    $this->emDebug("bp is above threshold!!!", $current_step, $next_step, $current_tree_step["step_id"]);
                 }
             }
 
@@ -1162,55 +910,6 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
             }
         }
         return;
-    }
-
-
-    //DELETE after VERIFY NEW ONE
-    private function evaluateSideEffects_old($treeStep, $k, $na, $cr, $hr, $systolic_average, $custom_targets = array()) {
-        // Convert incoming parameters to floats to ensure numeric comparisons
-        $k                      = floatval($k);
-        $na                     = floatval($na);
-        $cr                     = floatval($cr);
-        $hr                     = floatval($hr);
-        $systolic_average       = floatval($systolic_average);
-
-        // Retrieve and convert target settings from project settings or custom provided values
-        $target_upper_k         = floatval(array_key_exists("k_upper", $custom_targets) ? $custom_targets["k_upper"] : $this->getProjectSetting("lab-target-k-upper"));
-        $target_lower_k         = floatval(array_key_exists("k_lower", $custom_targets) ? $custom_targets["k_lower"] : $this->getProjectSetting("lab-target-k-lower"));
-        $target_upper_cr        = floatval(array_key_exists("cr_upper", $custom_targets) ? $custom_targets["cr_upper"] : $this->getProjectSetting("lab-target-cr"));
-        $target_lower_na        = floatval(array_key_exists("na_lower", $custom_targets) ? $custom_targets["na_lower"] : $this->getProjectSetting("lab-target-na"));
-        $target_lower_slowhr    = floatval(array_key_exists("hr_lower", $custom_targets) ? $custom_targets["hr_lower"] : $this->getProjectSetting("lab-target-slowhr"));
-        $target_lower_sys       = floatval(array_key_exists("sys_avg_lower", $custom_targets) ? $custom_targets["sys_avg_lower"] : $this->getProjectSetting("target-sys-lower"));
-
-        // Comparisons to determine side effects
-        if (!empty($systolic_average) && $systolic_average < $target_lower_sys) {
-            $this->emDebug("side effect : hypotension $systolic_average < $target_lower_sys");
-            return $treeStep["side_effects"]["hypotension"];
-        }
-        if (!empty($na) && $na < $target_lower_na) {
-            $this->emDebug("side effect : hyponatremia $na < $target_lower_na");
-            return $treeStep["side_effects"]["hyponatremia"];
-        }
-        if (!empty($k) && $k < $target_lower_k) {
-            $this->emDebug("side effect : hypokalemia $k < $target_lower_k");
-            return $treeStep["side_effects"]["hypokalemia"];
-        }
-
-        if (!empty($cr) && $cr > $target_upper_cr) {
-            $this->emDebug("side effect : elevated serum Cr $cr > $target_upper_cr");
-            return $treeStep["side_effects"]["elevated_cr"];
-        }
-        if (!empty($k) && $k > $target_upper_k) {
-            $this->emDebug("side effect : hyperkalemia $k > $target_upper_k");
-            return $treeStep["side_effects"]["hyperkalemia"];
-        }
-        if (!empty($hr) && $hr < $target_lower_slowhr) {
-            $this->emDebug("side effect : slow HR $hr < $target_lower_slowhr");
-            return $treeStep["side_effects"]["slow_hr"];
-        }
-
-        // If no conditions are met, return null
-        return null;
     }
 
     private function evaluateSideEffects($treeStep, $k, $na, $cr, $hr, $systolic_average, $custom_targets = array()) {
@@ -1246,7 +945,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
         // Evaluate side effects and return the appropriate step if any condition is met
         foreach ($side_effects_checks as $effect => $check) {
             if (!empty($check['value']) && $check['condition']) {
-                $this->emDebug("Side effect detected: $effect with value {$check['value']}");
+                $this->emDebug("Side effect detected: $effect with value {$check['value']}", $treeStep);
                 return $treeStep["side_effects"][$effect];
             }
         }
@@ -1254,7 +953,6 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
         // Return null if no side effects are detected
         return null;
     }
-
 
     private function logRecommendations($record_id, $next_step, $current_tree_step, $treelogic, $systolic_mean) {
         $current_meds = implode(", ", $current_tree_step["drugs"]);
@@ -1339,14 +1037,14 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
             print_r($current_tree_step);
 
             //GET PATIENTS CUSTOM TARGETS IF ANY
-//            $custom_targets = array(
-//                "k_upper"   => 5.5,
-//                "k_lower"   => 3.5,
-//                "cr"        => 2.0,
-//                "na"        => 135,
-//                "hr"        => 55,
-//                "sys_avg"   => 105
-//            );
+            //            $custom_targets = array(
+            //                "k_upper"   => 5.5,
+            //                "k_lower"   => 3.5,
+            //                "cr"        => 2.0,
+            //                "na"        => 135,
+            //                "hr"        => 55,
+            //                "sys_avg"   => 105
+            //            );
             $custom_targets= array();
 
             $side_effects_next_step = $this->evaluateSideEffects($current_tree_step, $k_value, $na_value, $cr_value, $hr_value, $systolic_average, $custom_targets);
@@ -1778,7 +1476,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
         ini_set('max_execution_time', 300);
         foreach ($patients_with_tokens as $patient) {
-//            $this->emDebug("patient", $patient);
+            //            $this->emDebug("patient", $patient);
             // Ensure provider_id and omron_client_id are valid
             if (empty($patient["omron_client_id"])) {
                 $this->emDebug("Skipping record due to missing omron_client_id for record_id: " . ($patient["record_id"] ?? 'unknown'));
