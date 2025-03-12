@@ -672,6 +672,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
                 $this->emDebug("Error fetching data for Omron ID $omron_client_id: " . $api_data["reason"]);
                 return [
                     'status' => false,
+					'error' => "Omron API Error: " . ($api_data["reason"] ?? 'Unknown'),
                     'reason' => $api_data["reason"] ?? 'Unknown error',
                     'errorCode' => $api_data["errorCode"] ?? null,
                 ];
@@ -680,6 +681,15 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
             // Process API data if status is successful
             $truncated = $api_data["result"]["truncated"];
             $bp_readings = $api_data["result"]["bloodPressure"];
+
+			// ✅ If API worked but no data, return cleanly
+			if (empty($bp_readings)) {
+				return [
+					'status' => false,
+					'error' => 'Omron API Success: No BP data in the requested timeframe',
+				];
+			}
+
             $bp_instance_data = $this->getBPInstanceData($record_id);
             $next_instance_id = $bp_instance_data["next_instance_id"];
             $used_bp_id = $bp_instance_data["used_bp_id"];
@@ -716,9 +726,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
                 if ($truncated) {
                     return $this->recurseSaveOmronApiData($omron_client_id, $most_recent_reading["dateTime"], $token_details);
                 } else {
-                    $this->evaluateOmronBPavg($record_id);
+                    $mean_above_threshold = $this->evaluateOmronBPavg($record_id);
                     return [
                         'status' => $most_recent_reading,
+						'mean_above_threshold' => $mean_above_threshold["mean"]
                     ];
                 }
             } else {
@@ -738,8 +749,11 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
         // Use external average if provided and determine if it's above the threshold
         if ($external_avg !== null) {
-            return $external_avg > $target_threshold ? $external_avg : false;
-        }
+			return [
+				'mean' => $external_avg,
+				'is_above_threshold' => $external_avg > $target_threshold
+			];
+		}
 
         // Organize data into AM/PM readings for each day
         $ampm_data = [];
@@ -765,6 +779,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
         // Calculate the control threshold and mean
         $required_above_count = floor(count($total_datapoints) * $control_condition);
         $mean_of_data = !empty($total_datapoints) ? round(array_sum($total_datapoints) / count($total_datapoints)) : 0;
+		$is_above_threshold = $above_threshold_counts >= $required_above_count && count($total_datapoints) >= 4;
 
         $calcs = array(
             "total data points" => $total_datapoints, 
@@ -778,7 +793,10 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
             count($total_datapoints) >= 4
         );
         // Return mean if threshold met; otherwise, return false
-        return $above_threshold_counts >= $required_above_count && count($total_datapoints) >= 4 ? $mean_of_data : false;
+        return [
+			'mean' => $mean_of_data,
+			'is_above_threshold' => $is_above_threshold
+		];
     }
 
     public function evaluateOmronBPavg($record_id, $external_avg = null) {
@@ -819,7 +837,7 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
             "hr_lower"      => $patient["custom_target_slowhr"],
         ]);
         
-       $this->emDebug("Initial data for Patient", array($provider_id,$current_tree,$current_step,$target_systolic));
+    //    $this->emDebug("Initial data for Patient", array($provider_id,$current_tree,$current_step,$target_systolic));
 
         if (!empty($target_systolic)) {
             // Retrieve recent BP readings (last 2 weeks)
@@ -866,8 +884,6 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
             $provider_trees = $this->tree->treeLogic($provider_id);
             $treelogic = $provider_trees[$current_tree];
 
-
-
             $current_tree_step = $treelogic["logicTree"][$current_step];
 
             // Evaluate side effects based on labs and BP averages
@@ -875,12 +891,13 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
 
             // $this->emDebug("side effect or check bp avg with bp records", $records);
             
+			$bp_eval = ['mean' => null, 'is_above_threshold' => false];
             if ($side_effects_next_step !== null) {
                 $next_step = $side_effects_next_step;
             } else {
                 // Evaluate BP against threshold if no side effects
-                $is_above = $this->checkBPvsThreshold($records, $target_systolic, 0.6, $external_avg);
-                if ($is_above) {
+                $bp_eval = $this->checkBPvsThreshold($records, $target_systolic, 0.6, $external_avg);
+                if ($bp_eval["is_above_threshold"]) {
                     $next_step = $current_tree_step["bp_status"]["Uncontrolled"] ?? null;
                     $this->emDebug("bp is above threshold!!!", $current_step, $next_step, $current_tree_step["step_id"]);
                 }
@@ -908,8 +925,9 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
                     $this->logRecommendations($record_id, $next_step, $current_tree_step, $treelogic, $systolic_mean ?? false);
                 }
             }
+        	return $bp_eval;
         }
-        return;
+        return ['mean' => null, 'is_above_threshold' => false];
     }
 
     private function evaluateSideEffects($treeStep, $k, $na, $cr, $hr, $systolic_average, $custom_targets = array()) {
@@ -1488,14 +1506,21 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
             $record_id = $patient["record_id"];
             $expiration_date = $patient["omron_token_expire"];
 
-            // Attempt to save Omron data and get status
+			// Attempt to save Omron data and get status
             try {
                 $result = $this->recurseSaveOmronApiData($omron_client_id, $since_today);
-                $this->emDebug("omron api status?", $result);
-                $status = is_array($result) && isset($result['status']) ? $result['status'] : false;
+
+                if (isset($result['error'])) {
+					// Capture Omron API error explicitly
+					$status = ['status' => false, 'error' => $result['error']];
+				} else {
+					$status = is_array($result) && isset($result['status']) ? $result['status'] : false;
+				}
+				
+				$mean_above_threshold = is_array($result) && isset($result['mean_above_threshold']) ? $result['mean_above_threshold'] : false;
             } catch (Exception $e) {
-                $this->emDebug("Error processing record_id $record_id: " . $e->getMessage());
-                $status = false;  // Set status to false if an error occurs
+                $status = ['status' => false, 'error' => "Exception: " . $e->getMessage()];
+            	$mean_above_threshold = false;
             }
 
             // Collect data for display if in testMode
@@ -1505,16 +1530,11 @@ class HTNapi extends \ExternalModules\AbstractExternalModule {
                     'patient_name' => $patient["patient_fname"] . " " . $patient["patient_lname"],
                     'omron_id' => $omron_client_id,
                     'expiration_date' => $expiration_date,
-                    'status' => $status
+                    'status' => $status,
+					'mean_above_threshold' => $mean_above_threshold
                 ];
             }
 
-            // Log success or failure for each patient
-            if ($status) {
-                $this->emDebug("BP data for $since_today was successfully downloaded for record_id $record_id");
-            } else {
-                $this->emDebug("Failed to download BP data for record_id $record_id");
-            }
             usleep(100000);
         }
 

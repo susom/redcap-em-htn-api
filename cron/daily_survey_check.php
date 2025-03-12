@@ -7,7 +7,7 @@ $data = $module->dailyOmronDataPull(null, true);
 
 foreach ($data as &$record) {
     if (is_array($record['status']) && isset($record['status']['id'])) {
-        // If 'status' contains data, create a bullet list in HTML
+        // Case: API worked & returned data → Show last BP reading
         $status = $record['status'];
         $record['status_text'] = "<ul>" .
             "<li><b>Date/Time: " . date("F j, Y, g:i a", strtotime($status['dateTime'])) . "</b></li>" .
@@ -15,9 +15,13 @@ foreach ($data as &$record) {
             "<li>Diastolic: " . $status['diastolic'] . " " . $status['bloodPressureUnits'] . "</li>" .
             "<li>Pulse: " . $status['pulse'] . " " . $status['pulseUnits'] . "</li>" .
             "<li>Device Type: " . $status['deviceType'] . "</li>" .
+            "<li><b>Mean Data</b>: " . $record['mean_above_threshold'] . "mmHg</li>" .
             "</ul>";
+    } elseif (isset($record['status']['error']) && str_contains($record['status']['error'], 'API')) {
+        // Case: API failure → Show error message (only Omron API errors)
+        $record['status_text'] = "<b class='problem'>Error: " . htmlspecialchars($record['status']['error']) . "</b>";
     } else {
-        // If 'status' is false, set 'status_text' to "No data"
+        // Case: API worked but no data found → Show 'No data' message
         $record['status_text'] = "<b class='problem'>No data in last 100 days</b>";
     }
 }
